@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QCM - Gherkin</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            max-width: 700px;
+            width: 100%;
+            padding: 40px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        .progress {
+            background: #e0e0e0;
+            border-radius: 10px;
+            height: 8px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+        .progress-bar {
+            background: #667eea;
+            height: 100%;
+            transition: width 0.3s ease;
+        }
+        .question-number {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        .question {
+            margin-bottom: 30px;
+        }
+        .question-text {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .option {
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+        }
+        .option:hover {
+            border-color: #667eea;
+            background: #f5f5f5;
+        }
+        .option input[type="radio"] {
+            margin-right: 15px;
+            cursor: pointer;
+            width: 18px;
+            height: 18px;
+        }
+        .option-label {
+            font-size: 16px;
+            color: #333;
+            cursor: pointer;
+            flex: 1;
+        }
+        .button-container {
+            display: flex;
+            gap: 10px;
+            margin-top: 30px;
+            justify-content: center;
+        }
+        button {
+            padding: 12px 30px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+        .btn-validate {
+            background: #667eea;
+            color: white;
+        }
+        .btn-validate:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+        }
+        .btn-validate:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .btn-next {
+            background: #4CAF50;
+            color: white;
+        }
+        .btn-next:hover {
+            background: #45a049;
+            transform: translateY(-2px);
+        }
+        .feedback {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            display: none;
+        }
+        .feedback.show {
+            display: block;
+        }
+        .feedback.correct {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .feedback.incorrect {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .feedback-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+        .feedback-text {
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        .result {
+            text-align: center;
+            display: none;
+        }
+        .result.show {
+            display: block;
+        }
+        .result h2 {
+            color: #667eea;
+            font-size: 28px;
+            margin-bottom: 20px;
+        }
+        .result-score {
+            font-size: 48px;
+            color: #667eea;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+        .result-message {
+            font-size: 18px;
+            color: #333;
+            margin-top: 20px;
+        }
+        .btn-restart {
+            background: #667eea;
+            color: white;
+            margin-top: 20px;
+        }
+        .btn-restart:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>QCM - Gherkin</h1>
+            <div class="progress">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+            <div class="question-number" id="questionNumber"></div>
+        </div>
+
+        <div id="quiz" class="quiz">
+            <div class="question" id="question">
+                <div class="question-text" id="questionText"></div>
+                <div class="options" id="options"></div>
+                <div class="feedback" id="feedback">
+                    <div class="feedback-title" id="feedbackTitle"></div>
+                    <div class="feedback-text" id="feedbackText"></div>
+                </div>
+            </div>
+
+            <div class="button-container">
+                <button class="btn-validate" id="validateBtn">Valider</button>
+                <button class="btn-next" id="nextBtn" style="display: none;">Question suivante</button>
+            </div>
+        </div>
+
+        <div class="result" id="result">
+            <h2>QCM terminé !</h2>
+            <div class="result-score" id="scoreDisplay"></div>
+            <div class="result-message" id="resultMessage"></div>
+            <button class="btn-restart" onclick="location.reload()">Recommencer</button>
+        </div>
+    </div>
+
+    <script>
+        const questions = [
+            {
+                question: "Quel est le premier mot-clé obligatoire dans un fichier Gherkin ?",
+                options: ["Scenario", "Feature", "Background", "Rule"],
+                correct: 1,
+                explanation: "Le texte stipule que 'The first primary keyword in a Gherkin document must always be Feature'."
+            },
+            {
+                question: "Quel est le rôle principal du mot-clé Feature ?",
+                options: ["Définir une étape", "Fournir une description de haut niveau et grouper des scénarios", "Ajouter des commentaires", "Créer une table"],
+                correct: 1,
+                explanation: "'The purpose of the Feature keyword is to provide a high-level description of a software feature, and to group related scenarios.'"
+            },
+            {
+                question: "Depuis quelle version Gherkin le mot-clé Rule est-il disponible ?",
+                options: ["Gherkin 3", "Gherkin 5", "Gherkin 6", "Gherkin 7"],
+                correct: 2,
+                explanation: "'Rule (as of Gherkin 6)' indique que ce mot-clé a été introduit en version 6."
+            },
+            {
+                question: "Quel mot-clé décrit l'état initial du système ?",
+                options: ["When", "Then", "Given", "And"],
+                correct: 2,
+                explanation: "'Given steps are used to describe the initial context of the system - the scene of the scenario.'"
+            },
+            {
+                question: "Quel est le but des étapes When ?",
+                options: ["Vérifier les résultats", "Décrire un événement ou une action", "Configurer l'état initial", "Ajouter des commentaires"],
+                correct: 1,
+                explanation: "'When steps are used to describe an event, or an action.'"
+            },
+            {
+                question: "Quel est le but des étapes Then ?",
+                options: ["Configurer l'état initial", "Décrire une action", "Vérifier un résultat ou un résultat attendu", "Ajouter des données"],
+                correct: 2,
+                explanation: "'Then steps are used to describe an expected outcome, or result.'"
+            },
+            {
+                question: "Combien de feature peuvent être dans un seul fichier .feature ?",
+                options: ["Zéro", "Une", "Plusieurs", "Illimité"],
+                correct: 1,
+                explanation: "'You can only have a single Feature in a .feature file.'"
+            },
+            {
+                question: "Quel mot-clé peut remplacer n'importe quel mot-clé d'étape ?",
+                options: ["&", "*", "#", "@"],
+                correct: 1,
+                explanation: "'Gherkin also supports using an asterisk (*) in place of any of the normal step keywords.'"
+            },
+            {
+                question: "Quelle est l'indentation recommandée dans Gherkin ?",
+                options: ["Une tabulation", "Quatre espaces", "Deux espaces", "Pas d'indentation"],
+                correct: 2,
+                explanation: "'The recommended indentation level is two spaces.'"
+            },
+            {
+                question: "Quel mot-clé est utilisé pour ajouter du contexte commun avant chaque scénario ?",
+                options: ["Setup", "Context", "Background", "Common"],
+                correct: 2,
+                explanation: "'A Background allows you to add some context to the scenarios that follow it.'"
+            },
+            {
+                question: "Combien de sets de Background peut avoir une Feature ?",
+                options: ["Un", "Deux", "Trois", "Autant que nécessaire"],
+                correct: 0,
+                explanation: "'You can only have one set of Background steps per Feature or Rule.'"
+            },
+            {
+                question: "Quel mot-clé permet de paramétrer un scénario avec différentes valeurs ?",
+                options: ["Scenario", "Scenario Outline", "Scenario Template", "Les deux B et C"],
+                correct: 3,
+                explanation: "'The keyword Scenario Template is a synonym of the keyword Scenario Outline.'"
+            },
+            {
+                question: "Qu'est-ce qu'un Doc String en Gherkin ?",
+                options: ["Un commentaire", "Une grande portion de texte pour une étape", "Une table de données", "Une variable"],
+                correct: 1,
+                explanation: "'Doc Strings are handy for passing a larger piece of text to a step definition.'"
+            },
+            {
+                question: "Quels délimiteurs peuvent être utilisés pour les Doc Strings ?",
+                options: ["Single quotes", "Triple double quotes ou triple backticks", "Square brackets", "Curly braces"],
+                correct: 1,
+                explanation: "'Doc strings also support using three backticks as the delimiter' en plus des triple double quotes."
+            },
+            {
+                question: "Que sont les Data Tables en Gherkin ?",
+                options: ["Des commentaires", "Des bases de données", "Des listes de valeurs", "Des variables"],
+                correct: 2,
+                explanation: "'Data Tables are handy for passing a list of values to a step definition.'"
+            },
+            {
+                question: "Comment échapper un pipe (|) dans une cellule de tableau ?",
+                options: ["/|", "||", "\\|", "~|"],
+                correct: 2,
+                explanation: "'If you need a | as part of the cell, you can escape it as \\|.'"
+            },
+            {
+                question: "Comment représenter une newline dans une cellule de tableau ?",
+                options: ["/n", "\\n", "~n", "<br>"],
+                correct: 1,
+                explanation: "'If you want to use a newline character in a table cell, you can write this as \\n.'"
+            },
+            {
+                question: "En combien de langues Gherkin a-t-il été traduit ?",
+                options: ["Plus de 30", "Plus de 50", "Plus de 70", "Plus de 100"],
+                correct: 2,
+                explanation: "'Gherkin has been translated to over 70 languages.'"
+            },
+            {
+                question: "Comment spécifier la langue d'un fichier Gherkin ?",
+                options: ["// language: fr", "<!-- language: fr -->", "# language: fr", "@ language: fr"],
+                correct: 2,
+                explanation: "'# language: header on the first line of a feature file tells Cucumber what spoken language to use.'"
+            },
+            {
+                question: "Quel est le mot-clé utilisé pour ajouter du contexte aux scénarios ?",
+                options: ["Setup", "Precondition", "Context", "Background"],
+                correct: 3,
+                explanation: "Background est le mot-clé pour ajouter du contexte qui s'applique à tous les scénarios."
+            },
+            {
+                question: "Peut-on placer du Background au niveau du Rule ?",
+                options: ["Non", "Seulement pour Feature", "Oui", "Seulement si Feature le permet"],
+                correct: 2,
+                explanation: "'Background is also supported at the Rule level.'"
+            },
+            {
+                question: "Quel est le terme alternatif pour Scenario ?",
+                options: ["Test", "Example", "Template", "Outline"],
+                correct: 1,
+                explanation: "'The keyword Scenario is a synonym of the keyword Example.'"
+            },
+            {
+                question: "Combien d'étapes sont recommandées par exemple ?",
+                options: ["2-3", "3-5", "5-7", "7-10"],
+                correct: 1,
+                explanation: "'we recommend 3-5 steps per example.'"
+            },
+            {
+                question: "Quel est le but de Given dans la structure Given-When-Then ?",
+                options: ["Exécuter une action", "Vérifier un résultat", "Configurer le contexte initial", "Ajouter un événement"],
+                correct: 2,
+                explanation: "Given est utilisé pour décrire le contexte initial et configurer le système."
+            },
+            {
+                question: "À quelle partie d'un use case correspondent les Given steps ?",
+                options: ["Action", "Résultat", "Préconditions", "Postconditions"],
+                correct: 2,
+                explanation: "'If you were creating use cases, Given's would be your preconditions.'"
+            },
+            {
+                question: "Pourquoi faut-il éviter de parler d'interaction utilisateur dans les Given ?",
+                options: ["C'est trop complexe", "Ça rend le test plus lent", "Les Given décrivent la configuration, pas l'interaction", "C'est syntaxiquement impossible"],
+                correct: 2,
+                explanation: "'Avoid talking about user interaction in Given's.'"
+            },
+            {
+                question: "Qu'est-ce que Cucumber regarde pour trouver l'implémentation d'une étape ?",
+                options: ["Le mot-clé (Given, When, etc)", "Le texte après le mot-clé", "Le mot-clé et le texte", "Seulement le mot-clé"],
+                correct: 1,
+                explanation: "'The trailing portion (after the keyword) of each step is matched to a code block, called a step definition.'"
+            },
+            {
+                question: "Les mots-clés Given, When, Then doivent-ils être considérés lors du matching ?",
+                options: ["Oui, toujours", "Non, Cucumber les ignore", "Seulement Given et When", "Seulement Then"],
+                correct: 1,
+                explanation: "'Keywords are not taken into account when looking for a step definition.'"
+            },
+            {
+                question: "Peut-on avoir plusieurs Given steps consécutifs ?",
+                options: ["Non", "Seulement deux", "Oui, c'est permis", "Seulement avec And"],
+                correct: 2,
+                explanation: "'It's okay to have several Given steps (use And or But for number 2 and upwards).'"
+            },
+            {
+                question: "Quel est le but de AND dans les étapes ?",
+                options: ["Créer une branche", "Continuer une séquence du même type", "Terminer une séquence", "Inverser la logique"],
+                correct: 1,
+                explanation: "AND est utilisé pour continuer une séquence de Given, When ou Then."
+            },
+            {
+                question: "Quel est le but de BUT dans les étapes ?",
+                options: ["Annuler l'étape précédente", "Continuer avec une négation ou exception", "Terminer le scénario", "Démarrer une nouvelle section"],
+                correct: 1,
+                explanation: "'Or, you could make the example more fluidly structured by replacing the successive Given's or Then's with And's and But's.'"
+            },
+            {
+                question: "Où les commentaires sont-ils autorisés dans Gherkin ?",
+                options: ["Nulle part", "À la fin des lignes", "Seulement au début des lignes", "Anywhere"],
+                correct: 2,
+                explanation: "'Comments are only permitted at the start of a new line.'"
+            },
+            {
+                question: "Quel caractère représente un commentaire en Gherkin ?",
+                options: ["//", "/*", "#", "--"],
+                correct: 2,
+                explanation: "'They begin with zero or more spaces, followed by a hash sign (#).'"
+            },
+            {
+                question: "Les commentaires en bloc sont-ils supportés en Gherkin ?",
+                options: ["Oui", "Non", "Seulement dans Gherkin 6+", "Seulement en français"],
+                correct: 1,
+                explanation: "'Block comments are currently not supported by Gherkin.'"
+            },
+            {
+                question: "Quel type de fichier utilise les règles de Gherkin ?",
+                options: [".txt", ".gherkin", ".feature", ".bdd"],
+                correct: 2,
+                explanation: "Les fichiers Gherkin utilisent l'extension .feature."
+            },
+            {
+                question: "Peut-on mélanger espaces et tabulations pour l'indentation ?",
+                options: ["Non", "Oui", "Seulement au début du fichier", "Seulement dans les commentaires"],
+                correct: 1,
+                explanation: "'Either spaces or tabs may be used for indentation.'"
+            },
+            {
+                question: "Quel est le rôle principal du mot-clé Rule ?",
+                options: ["Grouper des données", "Représenter une règle métier", "Créer une boucle", "Ajouter des tags"],
+                correct: 1,
+                explanation: "'The purpose of the Rule keyword is to represent one business rule that should be implemented.'"
+            },
+            {
+                question: "Quel mot-clé est utilisé dans les Data Tables pour en-tête ?",
+                options: ["header:", "columns:", "Première ligne du tableau", "@"],
+                correct: 2,
+                explanation: "La première ligne du tableau Data Tables fonctionne comme en-têtes."
+            },
+            {
+                question: "Quel est le rôle de Examples dans Scenario Outline ?",
+                options: ["Définir le scénario", "Fournir les données à tester", "Expliquer le scénario", "Ajouter des commentaires"],
+                correct: 1,
+                explanation: "'A Scenario Outline must contain one or more Examples section(s).'"
+            },
+            {
+                question: "Quel mot-clé est un synonyme de Examples ?",
+                options: ["Samples", "Scenarios", "Cases", "Instances"],
+                correct: 1,
+                explanation: "Dans le texte, Examples et Scenarios sont des synonymes."
+            },
+            {
+                question: "Comment sont remplacés les paramètres dans Scenario Outline ?",
+                options: ["$variable", "<variable>", "#{variable}", "{variable}"],
+                correct: 1,
+                explanation: "'The steps can use <> delimited parameters that reference headers in the examples table.'"
+            },
+            {
+                question: "Peut-on utiliser des paramètres dans la description d'un Scenario Outline ?",
+                options: ["Non", "Oui", "Seulement dans les étapes", "Seulement pour Feature"],
+                correct: 1,
+                explanation: "'You can use parameters in Scenario Outline descriptions as well.'"
+            },
+            {
+                question: "Combien de fois est exécuté un Scenario Outline ?",
+                options: ["Une fois", "Deux fois", "Une fois par ligne dans Examples", "Autant que d'étapes"],
+                correct: 2,
+                explanation: "'the Scenario Outline is run once for each row in the Examples section beneath it.'"
+            },
+            {
+                question: "Que doivent vérifier les étapes Then ?",
+                options: ["L'état interne", "Une sortie observable", "Une action utilisateur", "Une configuration"],
+                correct: 1,
+                explanation: "'You should only verify an outcome that is observable for the user.'"
+            },
+            {
+                question: "Faut-il vérifier les changements en base de données dans Then ?",
+                options: ["Oui, c'est important", "Seulement les clés", "Non, résistez à cette tentation", "Seulement si c'est visible"],
+                correct: 2,
+                explanation: "'While it might be tempting to implement Then steps to look in the database - resist that temptation!'"
+            },
+            {
+                question: "Quel type de message un When devrait produire ?",
+                options: ["Un message d'erreur", "Un événement ou une action", "Un résultat", "Un texte d'explication"],
+                correct: 1,
+                explanation: "'When steps are used to describe an event, or an action.'"
+            },
+            {
+                question: "Comment Cucumber exécute-t-il les étapes ?",
+                options: ["En parallèle", "De manière aléatoire", "Une à une dans l'ordre", "Par groupes"],
+                correct: 2,
+                explanation: "'Cucumber executes each step in a scenario one at a time, in the sequence you've written them.'"
+            },
+            {
+                question: "Quel problème survient si on a deux étapes avec le même texte ?",
+                options: ["C'est permis", "C'est une ambiguïté", "Ça crée deux tests", "C'est ignoré"],
+                correct: 1,
+                explanation: "'Cucumber considers the following steps duplicates: Given there is money in my account / Then there is money in my account'"
+            },
+            {
+                question: "Quel élément fournit la description textuelle d'une Feature ?",
+                options: ["Le titre", "Le texte libre sous Feature", "Les scénarios", "Les tags"],
+                correct: 1,
+                explanation: "'You can add free-form text underneath Feature to add more description.'"
+            },
+            {
+                question: "Que faire du texte de description d'une Feature ?",
+                options: ["L'exécuter", "L'ignorer à l'exécution", "Le vérifier", "Le compiler"],
+                correct: 1,
+                explanation: "'These description lines are ignored by Cucumber at runtime, but are available for reporting.'"
+            },
+            {
+                question: "Quand prend fin la description libre d'une Feature ?",
+                options: ["À la fin du fichier", "Au prochain mot-clé principal", "Après 10 lignes", "Jamais"],
+                correct: 1,
+                explanation: "'The free format description for Feature ends when you start a line with the keyword Background, Rule, Example or Scenario Outline.'"
+            },
+            {
+                question: "Peut-on placer des tags au-dessus d'une Feature ?",
+                options: ["Non", "Oui", "Seulement en français", "Seulement sur les Scénarios"],
+                correct: 1,
+                explanation: "'You can place tags above Feature to group related features.'"
+            },
+            {
+                question: "Comment le @ est-il utilisé en Gherkin ?",
+                options: ["Email", "Variable", "Tags", "Commentaire"],
+                correct: 2,
+                explanation: "@ est utilisé pour les tags en Gherkin."
+            },
+            {
+                question: "Peut-on placer des descriptions sous un Scenario ?",
+                options: ["Non", "Oui, comme Feature", "Seulement en anglais", "Seulement avec Background"],
+                correct: 1,
+                explanation: "'Free-form descriptions can also be placed underneath Example/Scenario, Background, Scenario Outline and Rule.'"
+            },
+            {
+                question: "Quel format les descriptions peuvent-elles utiliser ?",
+                options: ["Plain text uniquement", "HTML", "Markdown", "YAML"],
+                correct: 2,
+                explanation: "'Descriptions can be in the form of Markdown - formatters including the official HTML formatter support this.'"
+            },
+            {
+                question: "Peut-on avoir une Background au niveau Rule ?",
+                options: ["Non", "Oui", "Seulement pour Feature", "Seulement si Rule contient Scenario"],
+                correct: 1,
+                explanation: "'Background is also supported at the Rule level.'"
+            },
+            {
+                question: "Quand s'exécute Background par rapport aux Scenarios ?",
+                options: ["Après", "Avant chaque scenario", "À la place", "En même temps"],
+                correct: 1,
+                explanation: "'It can contain one or more Given steps, which are run before each scenario.'"
+            },
+            {
+                question: "Où sont exécutées les Before hooks par rapport à Background ?",
+                options: ["Après Background", "Avant Background", "En même temps", "Cela dépend"],
+                correct: 1,
+                explanation: "'It can contain one or more Given steps, which are run before each scenario, but after any Before hooks.'"
+            },
+            {
+                question: "Quel conseil pour Background est recommandé ?",
+                options: ["En faire long et détaillé", "Le garder court", "Le compiler", "Le dupliquer"],
+                correct: 1,
+                explanation: "'Keep your Background section short.'"
+            },
+            {
+                question: "Pourquoi garder Background court ?",
+                options: ["Pour la performance", "Pour que le lecteur se souvienne du contexte", "Pour moins de code", "Pour simplicité syntaxique"],
+                correct: 1,
+                explanation: "'The client needs to actually remember this stuff when reading the scenarios.'"
+            },
+            {
+                question: "Quel type de noms utiliser dans Background ?",
+                options: ["Génériques (User A)", "Descriptifs et mémorables", "Abrégés", "Techniques"],
+                correct: 1,
+                explanation: "'Use colourful names, and try to tell a story.'"
+            },
+            {
+                question: "Combien de Scenario Outline peut contenir une Feature ?",
+                options: ["Un seul", "Deux maximum", "Plusieurs", "Cela dépend de Rule"],
+                correct: 2,
+                explanation: "On peut avoir plusieurs Scenario Outline dans une Feature."
+            },
+            {
+                question: "Peut-on avoir Background dans un Rule ?",
+                options: ["Non", "Oui", "Seulement si Feature l'a aussi", "Seulement pour Scenario"],
+                correct: 1,
+                explanation: "'Background is also supported at the Rule level.'"
+            },
+            {
+                question: "Comment appelle-t-on une ligne qui commence par #language: ?",
+                options: ["Commentaire", "Directive de langue", "Tag spécial", "En-tête de langue"],
+                correct: 1,
+                explanation: "'# language: header on the first line of a feature file tells Cucumber what spoken language to use.'"
+            },
+            {
+                question: "Quelle est la langue par défaut en Gherkin ?",
+                options: ["Français", "Anglais", "Espagnol", "Allemand"],
+                correct: 1,
+                explanation: "'If you omit this header, Cucumber will default to English (en).'"
+            },
+            {
+                question: "Peut-on configurer la langue par défaut ailleurs que dans le fichier ?",
+                options: ["Non", "Oui, dans la configuration", "Seulement en code", "Seulement pour Feature"],
+                correct: 1,
+                explanation: "'Some Cucumber implementations also let you set the default language in the configuration.'"
+            },
+            {
+                question: "Quel est l'ordre correct d'un exemple ?",
+                options: ["When-Given-Then", "Then-Given-When", "Given-When-Then", "Given-Then-When"],
+                correct: 2,
+                explanation: "L'ordre correct suit le pattern: Describe initial context (Given), describe event (When), describe outcome (Then)."
+            },
+            {
+                question: "Que signifie l'acronyme BDD utilisé avec Gherkin ?",
+                options: ["Behavior Driven Design", "Behavior Driven Development", "Business Driven Design", "Business Driven Development"],
+                correct: 1,
+                explanation: "BDD signifie Behavior Driven Development, un approche utilisée avec Gherkin."
+            },
+            {
+                question: "Quel est le principal avantage d'utiliser Given-When-Then ?",
+                options: ["C'est plus court", "C'est plus clair pour tous les stakeholders", "C'est plus rapide", "C'est obligatoire"],
+                correct: 1,
+                explanation: "Given-When-Then rend les tests plus lisibles et compréhensibles par tous."
+            },
+            {
+                question: "Peut-on avoir un scénario sans aucune étape ?",
+                options: ["Oui", "Non", "Seulement avec Background", "Seulement avec Outline"],
+                correct: 1,
+                explanation: "Techniquement, un scénario peut être vide, mais ce n'est pas recommandé."
+            },
+            {
+                question: "Comment appelle-t-on le texte après le mot-clé dans une étape ?",
+                options: ["Expression", "Texte d'étape", "Description", "Assertion"],
+                correct: 1,
+                explanation: "'The trailing portion (after the keyword) of each step is matched to a code block.'"
+            },
+            {
+                question: "Un Doc String peut-il contenir du Markdown ?",
+                options: ["Non", "Oui", "Seulement avec annotation", "Seulement en français"],
+                correct: 1,
+                explanation: "Les Doc Strings peuvent contenir du Markdown, particulièrement quand annoté."
+            },
+            {
+                question: "Comment annoter un Doc String avec son type de contenu ?",
+                options: ["@markdown", ":markdown", "markdown:", "```markdown"],
+                correct: 3,
+                explanation: "'You specify the content type after the triple quote.'"
+            },
+            {
+                question: "Quelle est la limite de profondeur d'indentation recommandée ?",
+                options: ["2 espaces", "4 espaces", "8 espaces", "Pas de limite"],
+                correct: 0,
+                explanation: "L'indentation recommandée est de deux espaces par niveau."
+            },
+            {
+                question: "Les étapes When peuvent-elles être utilisées sans Given ?",
+                options: ["Non", "Oui", "Seulement avec Background", "Seulement avec Then"],
+                correct: 1,
+                explanation: "Techniquement oui, mais ce n'est pas recommandé car le contexte est important."
+            },
+            {
+                question: "Quel est le rôle d'un Data Table dans une étape ?",
+                options: ["Créer une base de données", "Passer une liste de valeurs", "Valider des données", "Transformer des données"],
+                correct: 1,
+                explanation: "'Data Tables are handy for passing a list of values to a step definition.'"
+            },
+            {
+                question: "Comment Cucumber traite un Doc String dans une définition d'étape ?",
+                options: ["Comme première argument", "Comme dernier argument", "Comme variable globale", "Il l'ignore"],
+                correct: 1,
+                explanation: "'In your step definition, there's no need to find this text and match it in your pattern. It will automatically be passed as the last argument.'"
+            },
+            {
+                question: "L'indentation à l'intérieur d'un Doc String est-elle significative ?",
+                options: ["Non", "Oui", "Seulement au début", "Seulement à la fin"],
+                correct: 1,
+                explanation: "'The indentation inside the triple quotes, however, is significant.'"
+            },
+            {
+                question: "Combien de caractères pour échapper un backslash dans une cellule ?",
+                options: ["\\\\", "\\ ", "\\", "//"],
+                correct: 0,
+                explanation: "'if you need a \\, you can escape that with \\\\.'"
+            },
+            {
+                question: "Quelle est la première priorité quand on écrit une étape When ?",
+                options: ["La syntaxe", "Éviter les hypothèses technologiques", "La performance", "La longueur"],
+                correct: 1,
+                explanation: "'Try hard to come up with examples that don't make any assumptions about technology or user interface.'"
+            },
+            {
+                question: "Qu'est-ce qu'une step definition ?",
+                options: ["Une description d'étape", "Un bloc de code qui implémente une étape", "Une directive Gherkin", "Un commentaire"],
+                correct: 1,
+                explanation: "'The trailing portion of each step is matched to a code block, called a step definition.'"
+            },
+            {
+                question: "Peut-on avoir deux Feature files dans le même dossier ?",
+                options: ["Non", "Oui", "Seulement si names sont différents", "Seulement en sous-dossiers"],
+                correct: 1,
+                explanation: "Aucune limitation sur le nombre de fichiers .feature dans un dossier."
+            },
+            {
+                question: "Quel est l'avantage de Scenario Outline par rapport aux scénarios répétés ?",
+                options: ["Aucun", "C'est plus court et moins répétitif", "C'est plus rapide", "C'est plus lisible"],
+                correct: 1,
+                explanation: "'Copying and pasting scenarios to use different values quickly becomes tedious and repetitive.'"
+            },
+            {
+                question: "Qu'est-ce qui dédente un Doc String ?",
+                options: ["L'ouverture '''", "La fermeture '''", "Le contenu", "L'indentation initiale"],
+                correct: 0,
+                explanation: "'Each line of the Doc String will be dedented according to the opening triple quotes.'"
+            },
+            {
+                question: "Quel est le format du header de langue en Gherkin ?",
+                options: ["@language:", "# language:", "language:", "lang:"],
+                correct: 1,
+                explanation: "'# language: header on the first line.'"
+            },
+            {
+                question: "Peut-on avoir un Scenario sans When ?",
+                options: ["Non", "Oui", "Seulement avec Given", "Seulement avec Background"],
+                correct: 1,
+                explanation: "Techniquement oui, mais ce n'est pas l'intention de Given-When-Then."
+            },
+            {
+                question: "Quel élément rend le code Gherkin exécutable ?",
+                options: ["Les descriptions", "Les étapes avec mots-clés", "Les tags", "Les commentaires"],
+                correct: 1,
+                explanation: "C'est la structure Given-When-Then qui rend le code exécutable par Cucumber."
+            },
+            {
+                question: "Peut-on placer une Feature à l'intérieur d'une autre Feature ?",
+                options: ["Non", "Oui", "Seulement avec Rule", "Seulement au début"],
+                correct: 0,
+                explanation: "'You can only have a single Feature in a .feature file.'"
+            },
+            {
+                question: "Quel est le rôle du texte sous un Rule ?",
+                options: ["C'est du code", "C'est ignoré", "C'est une description comme Feature", "C'est un commentaire obligatoire"],
+                correct: 2,
+                explanation: "Le texte sous Rule peut être une description libre comme sous Feature."
+            },
+            {
+                question: "Peut-on utiliser du HTML dans une description Gherkin ?",
+                options: ["Oui", "Non", "Seulement avec annotation", "Seulement en configuration"],
+                correct: 1,
+                explanation: "Les descriptions supportent Markdown, pas HTML directement."
+            }
+        ];
+
+        let currentQuestion = 0;
+        let score = 0;
+        let answered = false;
+
+        function loadQuestion() {
+            const question = questions[currentQuestion];
+            const progressPercentage = ((currentQuestion + 1) / questions.length) * 100;
+
+            document.getElementById('progressBar').style.width = progressPercentage + '%';
+            document.getElementById('questionNumber').textContent = `Question ${currentQuestion + 1} / ${questions.length}`;
+            document.getElementById('questionText').textContent = question.question;
+
+            const optionsDiv = document.getElementById('options');
+            optionsDiv.innerHTML = '';
+
+            question.options.forEach((option, index) => {
+                const optionDiv = document.createElement('div');
+                optionDiv.className = 'option';
+                optionDiv.innerHTML = `
+                    <input type="radio" id="option${index}" name="answer" value="${index}">
+                    <label for="option${index}" class="option-label">${String.fromCharCode(65 + index)}. ${option}</label>
+                `;
+                optionDiv.addEventListener('click', function() {
+                    document.getElementById(`option${index}`).checked = true;
+                });
+                optionsDiv.appendChild(optionDiv);
+            });
+
+            document.getElementById('feedback').classList.remove('show', 'correct', 'incorrect');
+            document.getElementById('validateBtn').style.display = 'block';
+            document.getElementById('nextBtn').style.display = 'none';
+            answered = false;
+        }
+
+        function validateAnswer() {
+            const selectedAnswer = document.querySelector('input[name="answer"]:checked');
+            if (!selectedAnswer) {
+                alert('Veuillez sélectionner une réponse');
+                return;
+            }
+
+            const userAnswer = parseInt(selectedAnswer.value);
+            const question = questions[currentQuestion];
+            const isCorrect = userAnswer === question.correct;
+
+            if (isCorrect) {
+                score++;
+                document.getElementById('feedback').classList.add('correct');
+                document.getElementById('feedbackTitle').textContent = '✓ Bonne réponse !';
+            } else {
+                document.getElementById('feedback').classList.add('incorrect');
+                document.getElementById('feedbackTitle').textContent = '✗ Mauvaise réponse';
+            }
+
+            document.getElementById('feedbackText').textContent = question.explanation;
+            document.getElementById('feedback').classList.add('show');
+
+            document.getElementById('validateBtn').style.display = 'none';
+            document.getElementById('nextBtn').style.display = 'block';
+            answered = true;
+        }
+
+        function nextQuestion() {
+            currentQuestion++;
+            if (currentQuestion < questions.length) {
+                loadQuestion();
+            } else {
+                showResults();
+            }
+        }
+
+        function showResults() {
+            document.getElementById('quiz').style.display = 'none';
+            document.getElementById('result').classList.add('show');
+
+            const percentage = Math.round((score / questions.length) * 100);
+            document.getElementById('scoreDisplay').textContent = `${score} / ${questions.length}`;
+
+            let message = '';
+            if (percentage === 100) {
+                message = 'Parfait ! Vous êtes un expert Gherkin ! 🎓';
+            } else if (percentage >= 90) {
+                message = 'Excellent ! Vous maîtrisez Gherkin ! 🌟';
+            } else if (percentage >= 80) {
+                message = 'Très bon résultat ! Vous connaissez bien Gherkin ! 👏';
+            } else if (percentage >= 70) {
+                message = 'Bon travail ! Continuez à progresser ! 💪';
+            } else if (percentage >= 60) {
+                message = 'Vous progressez, poursuivez vos efforts ! 📚';
+            } else if (percentage >= 50) {
+                message = 'Vous avez les bases, approfondissez vos connaissances ! 🔍';
+            } else {
+                message = 'À revoir, étudiez davantage Gherkin ! 📖';
+            }
+
+            document.getElementById('resultMessage').textContent = message;
+        }
+
+        document.getElementById('validateBtn').addEventListener('click', validateAnswer);
+        document.getElementById('nextBtn').addEventListener('click', nextQuestion);
+
+        loadQuestion();
+    </script>
+</body>
+</html>

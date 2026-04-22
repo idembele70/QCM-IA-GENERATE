@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QCM - Robot Framework Dos and Don'ts</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: Arial, sans-serif;
+    background: #f0f4f8;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: 100vh;
+    padding: 30px 16px;
+  }
+  .container {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    max-width: 720px;
+    width: 100%;
+    padding: 36px 40px;
+  }
+  h1 {
+    font-size: 1.5rem;
+    color: #1a202c;
+    margin-bottom: 6px;
+  }
+  .subtitle {
+    font-size: 0.9rem;
+    color: #718096;
+    margin-bottom: 28px;
+  }
+  .progress-bar-bg {
+    background: #e2e8f0;
+    border-radius: 999px;
+    height: 8px;
+    margin-bottom: 24px;
+  }
+  .progress-bar-fill {
+    background: #4299e1;
+    height: 8px;
+    border-radius: 999px;
+    transition: width 0.4s ease;
+  }
+  .question-counter {
+    font-size: 0.85rem;
+    color: #718096;
+    margin-bottom: 10px;
+  }
+  .question-text {
+    font-size: 1.1rem;
+    color: #2d3748;
+    font-weight: 600;
+    margin-bottom: 22px;
+    line-height: 1.6;
+  }
+  .options { display: flex; flex-direction: column; gap: 12px; }
+  .option-label {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 12px 16px;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    font-size: 0.97rem;
+    color: #2d3748;
+  }
+  .option-label:hover { border-color: #4299e1; background: #ebf8ff; }
+  .option-label input[type="radio"] { accent-color: #4299e1; width: 18px; height: 18px; }
+  .option-label.correct { border-color: #48bb78; background: #f0fff4; color: #276749; }
+  .option-label.wrong { border-color: #fc8181; background: #fff5f5; color: #9b2c2c; }
+  .option-label.disabled { cursor: default; pointer-events: none; }
+  .btn {
+    margin-top: 24px;
+    padding: 12px 28px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .btn-validate { background: #4299e1; color: #fff; }
+  .btn-validate:hover { background: #3182ce; }
+  .btn-validate:disabled { background: #a0aec0; cursor: default; }
+  .btn-next { background: #48bb78; color: #fff; display: none; }
+  .btn-next:hover { background: #38a169; }
+  .feedback {
+    margin-top: 20px;
+    padding: 14px 18px;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    display: none;
+  }
+  .feedback.correct { background: #f0fff4; border-left: 4px solid #48bb78; color: #276749; }
+  .feedback.wrong { background: #fff5f5; border-left: 4px solid #fc8181; color: #9b2c2c; }
+  .feedback-title { font-weight: 700; margin-bottom: 6px; }
+  .result-box {
+    text-align: center;
+    display: none;
+  }
+  .result-box h2 { font-size: 1.8rem; color: #2d3748; margin-bottom: 16px; }
+  .score-display {
+    font-size: 3rem;
+    font-weight: 700;
+    color: #4299e1;
+    margin: 20px 0;
+  }
+  .score-msg { font-size: 1rem; color: #718096; margin-bottom: 28px; }
+  .btn-restart { background: #4299e1; color: #fff; }
+  .btn-restart:hover { background: #3182ce; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div id="quiz-section">
+    <h1>Robot Framework — Dos and Don'ts</h1>
+    <p class="subtitle">QCM interactif — 24 questions</p>
+    <div class="progress-bar-bg">
+      <div class="progress-bar-fill" id="progress-fill" style="width:0%"></div>
+    </div>
+    <div class="question-counter" id="question-counter">Question 1 / 24</div>
+    <div class="question-text" id="question-text"></div>
+    <div class="options" id="options-container"></div>
+    <div class="feedback" id="feedback">
+      <div class="feedback-title" id="feedback-title"></div>
+      <div id="feedback-body"></div>
+    </div>
+    <button class="btn btn-validate" id="btn-validate" onclick="validate()" disabled>Valider</button>
+    <button class="btn btn-next" id="btn-next" onclick="nextQuestion()">Question suivante</button>
+  </div>
+  <div class="result-box" id="result-box">
+    <h2>QCM terminé !</h2>
+    <div class="score-display" id="score-display"></div>
+    <div class="score-msg" id="score-msg"></div>
+    <button class="btn btn-restart" onclick="restartQuiz()">Recommencer</button>
+  </div>
+</div>
+
+<script>
+const questions = [
+  {
+    question: "Qu'est-ce que Robot Framework selon le document ?",
+    options: [
+      "A. Un framework de tests unitaires pour Python",
+      "B. Un framework générique d'automatisation de tests d'acceptance",
+      "C. Un outil de gestion de projets logiciels",
+      "D. Un framework de tests de performance"
+    ],
+    answer: 1,
+    explanation: "Le document précise que Robot Framework est 'a generic acceptance level test automation framework', c'est-à-dire un framework générique d'automatisation de tests d'acceptance."
+  },
+  {
+    question: "Quels sont les trois objectifs les plus importants cités dans le document ?",
+    options: [
+      "A. Facile à écrire, rapide à déployer, simple à configurer",
+      "B. Facile à comprendre, facile à maintenir, rapide à exécuter",
+      "C. Modulaire, extensible, documenté",
+      "D. Réutilisable, testable, versionnable"
+    ],
+    answer: 1,
+    explanation: "La section 'Most important goals' liste exactement ces trois objectifs : Easy to understand, Easy to maintain, Fast to execute."
+  },
+  {
+    question: "Selon le document, que doit indiquer un bon nom dans Robot Framework ?",
+    options: [
+      "A. 'Comment' l'action est réalisée",
+      "B. 'Quand' l'action est exécutée",
+      "C. 'Quoi' est fait, pas 'comment'",
+      "D. 'Qui' exécute l'action"
+    ],
+    answer: 2,
+    explanation: "La section Naming indique clairement : 'Name should tell \"what\", not \"how\"'. Le nom doit décrire ce qui est fait, pas les détails d'implémentation."
+  },
+  {
+    question: "Quels éléments doit-on bien nommer selon la section Naming ?",
+    options: [
+      "A. Uniquement les test cases et les keywords",
+      "B. Uniquement les variables et les fichiers",
+      "C. Les test cases, suites, keywords, variables, libraries, resource files…",
+      "D. Uniquement les suites et les libraries"
+    ],
+    answer: 2,
+    explanation: "La section Naming indique qu'il est 'Very important to name well test cases, test suites, keywords, variables, libraries, resource files...' — tous ces éléments doivent être bien nommés."
+  },
+  {
+    question: "Quelle est la catégorie 'DO' dans la classification des pratiques du document ?",
+    options: [
+      "A. Une pratique qui fonctionne dans de nombreux contextes",
+      "B. Une pratique à éviter mais parfois nécessaire",
+      "C. Une pratique très bonne et généralement recommandée",
+      "D. Un anti-pattern à ne pas utiliser"
+    ],
+    answer: 2,
+    explanation: "Selon la section 'Example categorization', DO désigne 'A very good and generally recommended practice' — une pratique très bonne et généralement recommandée."
+  },
+  {
+    question: "Quelle est la catégorie 'DON'T' dans la classification du document ?",
+    options: [
+      "A. Une pratique qui fonctionne dans de nombreux contextes",
+      "B. Un anti-pattern qui ne devrait pas être utilisé",
+      "C. Une pratique à éviter mais parfois nécessaire",
+      "D. Une pratique très bonne et recommandée"
+    ],
+    answer: 1,
+    explanation: "La section 'Example categorization' définit DON'T comme 'An anti-pattern, should not be used' — un anti-pattern qui ne devrait pas être utilisé."
+  },
+  {
+    question: "Quelle est la différence entre 'TRY' et 'AVOID' selon le document ?",
+    options: [
+      "A. TRY est interdit, AVOID est obligatoire",
+      "B. TRY fonctionne dans beaucoup de contextes, AVOID devrait être évité mais parfois nécessaire",
+      "C. TRY et AVOID sont synonymes",
+      "D. TRY est réservé aux débutants, AVOID aux experts"
+    ],
+    answer: 1,
+    explanation: "TRY est défini comme 'A practice that works in many contexts' et AVOID comme 'A practice that typically should be avoided but may sometimes be necessary'."
+  },
+  {
+    question: "Dans l'exemple 'DO: Appropriate abstraction level', que fait le test case 'Valid login' ?",
+    options: [
+      "A. Il utilise directement des selectors CSS et des URLs brutes",
+      "B. Il utilise des keywords de haut niveau comme 'Open browser to login page' et 'Submit credentials'",
+      "C. Il utilise uniquement la commande Sleep pour synchroniser",
+      "D. Il est documenté avec des commentaires en italique"
+    ],
+    answer: 1,
+    explanation: "Le bon exemple DO montre un test case 'Valid login' utilisant des keywords de haut niveau : 'Open browser to login page', 'Input user name', 'Submit credentials', 'Welcome page should be open' — sans détails techniques."
+  },
+  {
+    question: "Pourquoi l'exemple 'DON'T: Too low abstraction level' est-il un anti-pattern ?",
+    options: [
+      "A. Parce qu'il manque des assertions",
+      "B. Parce qu'il expose des détails techniques bas niveau comme les selectors et les URLs directement dans le test case",
+      "C. Parce qu'il n'utilise pas de variables",
+      "D. Parce qu'il n'a pas de teardown"
+    ],
+    answer: 1,
+    explanation: "Le DON'T montre un test avec des détails bas niveau : 'Open browser ${LOGIN URL} ${BROWSER}', 'Input text username_field demo', 'Click button login_button' — les détails d'implémentation exposés réduisent la lisibilité."
+  },
+  {
+    question: "Pourquoi utiliser des commentaires au lieu d'abstractions est un anti-pattern ('DON'T: Comments instead of abstraction') ?",
+    options: [
+      "A. Les commentaires sont interdits dans Robot Framework",
+      "B. Les commentaires remplacent mal l'abstraction : le code reste bas niveau et verbeux avec des commentaires qui redécrivent chaque étape",
+      "C. Les commentaires ralentissent l'exécution des tests",
+      "D. Les commentaires ne s'affichent pas dans les rapports"
+    ],
+    answer: 1,
+    explanation: "Dans l'exemple DON'T, des commentaires comme '# Open browser to login page' ou '# Input user name' sont ajoutés devant chaque commande bas niveau — cela duplique l'information sans apporter l'abstraction que donnent de bons keywords."
+  },
+  {
+    question: "Que montre l'exemple 'DON'T: Documentation instead of abstraction' ?",
+    options: [
+      "A. Il manque de documentation dans les keywords",
+      "B. Une documentation [Documentation] qui liste toutes les étapes en texte, puis répète les mêmes étapes bas niveau dans le code",
+      "C. L'utilisation de la keyword [Documentation] est interdite",
+      "D. La documentation doit toujours être en anglais"
+    ],
+    answer: 1,
+    explanation: "L'exemple DON'T montre un test qui utilise [Documentation] pour décrire toutes les étapes (Open browser, Input user name, etc.) puis répète exactement les mêmes étapes en code bas niveau — la documentation masque le manque d'abstraction."
+  },
+  {
+    question: "Quand faut-il utiliser le style data-driven selon le document ?",
+    options: [
+      "A. Pour tout type de test sans exception",
+      "B. Pour éviter de répéter des workflows identiques et représenter des règles métier",
+      "C. Uniquement pour les tests de performance",
+      "D. Pour remplacer les keywords de haut niveau"
+    ],
+    answer: 1,
+    explanation: "La section 'DO: Use data-driven style' précise qu'il faut l'utiliser 'to avoid repeating workflows and to represent business rules' — pour éviter la répétition et modéliser les règles métier."
+  },
+  {
+    question: "Dans l'exemple data-driven, quel est le rôle de 'Test Template' ?",
+    options: [
+      "A. Il définit le navigateur à utiliser",
+      "B. Il spécifie un keyword réutilisé pour chaque ligne de données du test case",
+      "C. Il initialise les variables globales",
+      "D. Il ferme le navigateur après chaque test"
+    ],
+    answer: 1,
+    explanation: "Dans l'exemple, 'Test Template    Login with invalid credentials should fail' définit le keyword qui sera appliqué pour chaque ligne de données — chaque test case (Invalid user name, Invalid password, etc.) utilise ce template avec ses propres données."
+  },
+  {
+    question: "Que recommande la section 'TRY: Gherkin style (ATDD/BDD)' ?",
+    options: [
+      "A. D'éviter complètement les mots Given/When/Then",
+      "B. D'utiliser les mots-clés Given, When, Then pour écrire des tests dans un style BDD/ATDD",
+      "C. De remplacer Robot Framework par Cucumber",
+      "D. D'écrire tous les tests en langage naturel sans code"
+    ],
+    answer: 1,
+    explanation: "L'exemple TRY montre un test 'Valid login' utilisant 'Given login page is open', 'When user \"demo\" logs in with password \"mode\"', 'Then welcome page should be open' — le style Gherkin/BDD est possible et recommandé à essayer."
+  },
+  {
+    question: "Pourquoi les tests sans vérifications sont un anti-pattern ('DON'T: Tests without checks') ?",
+    options: [
+      "A. Parce qu'ils s'exécutent trop lentement",
+      "B. Parce qu'un test qui n'a aucune assertion ne peut pas échouer pour les bonnes raisons et ne valide rien",
+      "C. Parce qu'ils utilisent trop de variables",
+      "D. Parce qu'ils ne respectent pas la nomenclature"
+    ],
+    answer: 1,
+    explanation: "L'exemple DON'T montre un test 'Valid login' qui ouvre le navigateur, saisit les credentials et les soumet — sans aucune vérification comme 'Welcome page should be open'. Un test sans assertion n'est pas fiable."
+  },
+  {
+    question: "Que signifie 'AVOID: Tests with unrelated checks' ?",
+    options: [
+      "A. Il ne faut jamais faire plusieurs assertions dans un test",
+      "B. Il faut éviter de mélanger des vérifications non liées à l'objectif principal du test dans un même test case",
+      "C. Les tests doivent toujours avoir exactement une assertion",
+      "D. Les vérifications doivent toujours être en fin de test"
+    ],
+    answer: 1,
+    explanation: "L'exemple AVOID montre 'Change password' qui contient aussi une vérification de login et une nouvelle connexion — des vérifications sans rapport direct avec le changement de mot de passe. Chaque test doit rester focalisé."
+  },
+  {
+    question: "Pourquoi faut-il éviter les dépendances entre tests ('AVOID: Dependencies between tests') ?",
+    options: [
+      "A. Parce que cela augmente la vitesse d'exécution",
+      "B. Parce qu'un test qui dépend d'un autre ne peut pas s'exécuter indépendamment et crée des cascades d'échecs",
+      "C. Parce que les dépendances consomment trop de mémoire",
+      "D. Parce que Robot Framework ne supporte pas les dépendances"
+    ],
+    answer: 1,
+    explanation: "L'exemple AVOID montre 'Change password' qui suppose que 'Valid login' s'est exécuté avant, et 'Login with new password' qui dépend de 'Change password' — si un test échoue, tous les suivants échouent aussi."
+  },
+  {
+    question: "Que recommande 'DO: Use teardowns for cleanup' ?",
+    options: [
+      "A. De supprimer les données de test avant chaque test",
+      "B. D'utiliser [Teardown] pour effectuer le nettoyage (ex. fermer le navigateur) même si le test échoue",
+      "C. De ne jamais fermer le navigateur après un test",
+      "D. De placer toute la logique de test dans le teardown"
+    ],
+    answer: 1,
+    explanation: "L'exemple DO montre '[Teardown]    Close browser' à la fin du test — le teardown garantit que le nettoyage est effectué même si le test échoue, rendant les tests plus robustes et indépendants."
+  },
+  {
+    question: "Quel est l'avantage du suite setup/teardown selon 'DO: Use suite setup/teardown to speed up execution' ?",
+    options: [
+      "A. Il permet de sauter certains tests automatiquement",
+      "B. Il mutualise les opérations coûteuses (ex. ouvrir/fermer le navigateur) pour toute la suite au lieu de les répéter à chaque test",
+      "C. Il remplace les variables globales",
+      "D. Il génère automatiquement la documentation"
+    ],
+    answer: 1,
+    explanation: "L'exemple montre Suite Setup 'Open browser to login page' et Suite Teardown 'Close browser' — le navigateur est ouvert une fois pour tous les tests de la suite, ce qui accélère l'exécution globale."
+  },
+  {
+    question: "Que recommande 'TRY: Move suite setup/teardown to directory level initialization files' ?",
+    options: [
+      "A. De déplacer la logique des tests dans des fichiers Python",
+      "B. De placer le setup/teardown de suite dans des fichiers d'initialisation au niveau répertoire pour gérer des suites enfants",
+      "C. De supprimer tous les teardowns",
+      "D. D'utiliser des variables globales à la place des setups"
+    ],
+    answer: 1,
+    explanation: "L'exemple TRY montre un fichier avec Documentation indiquant 'Child suites contain tests for valid and invalid login' avec Suite Setup et Suite Teardown — déplacer ces configurations à un niveau répertoire permet de les partager entre plusieurs suites."
+  },
+  {
+    question: "Pourquoi doit-on utiliser des variables plutôt que du hard coding ('DO: Use variables to avoid hard coding') ?",
+    options: [
+      "A. Pour rendre le code plus difficile à lire",
+      "B. Pour centraliser les valeurs configurables (URLs, noms de navigateurs, délais) et faciliter la maintenance",
+      "C. Parce que Robot Framework n'accepte pas les valeurs littérales",
+      "D. Pour accélérer l'exécution des tests"
+    ],
+    answer: 1,
+    explanation: "L'exemple GOOD montre ${LOGIN URL}  http://localhost:7272/, ${BROWSER}  Firefox, ${DELAY}  0.1 définis en variables — la version BAD utilise les valeurs directement. Les variables centralisent et facilitent les changements."
+  },
+  {
+    question: "Que signifie 'DON'T: Overuse variables' ?",
+    options: [
+      "A. Il ne faut jamais utiliser de variables dans Robot Framework",
+      "B. Il ne faut pas créer de variables pour des valeurs simples et constantes qui n'ont pas besoin d'être paramétrées",
+      "C. Les variables doivent toujours être en majuscules",
+      "D. Les variables ne peuvent pas être utilisées dans les keywords"
+    ],
+    answer: 1,
+    explanation: "L'exemple BAD montre ${USERNAME FIELD}  username_field dans les Variables puis son utilisation dans un keyword — la version GOOD utilise directement username_field dans le keyword. Créer une variable pour une valeur fixe simple est inutilement complexe."
+  },
+  {
+    question: "Que déconseille 'AVOID: Variable assignment on test case level' ?",
+    options: [
+      "A. D'utiliser des variables dans les keywords",
+      "B. D'assigner des variables directement dans les test cases plutôt que de déléguer cette logique aux keywords",
+      "C. De retourner des valeurs depuis les keywords",
+      "D. D'utiliser ${status} comme nom de variable"
+    ],
+    answer: 1,
+    explanation: "L'exemple OK(ish) montre ${status} = Withdraw from account $50 directement dans le test case. La version GOOD délègue tout au keyword sans assigner de variable dans le test — les test cases doivent rester déclaratifs."
+  },
+  {
+    question: "Quelle est la bonne approche pour la synchronisation selon le document ('DO: Use polling / DON'T: Use sleeping') ?",
+    options: [
+      "A. Utiliser Sleep avec un délai fixe suffisamment long",
+      "B. Utiliser le polling (attendre qu'une condition soit vraie) plutôt que Sleep avec un délai arbitraire",
+      "C. Ne jamais synchroniser les tests",
+      "D. Utiliser des threads parallèles pour la synchronisation"
+    ],
+    answer: 1,
+    explanation: "L'exemple GOOD montre 'Wait until created  ${path}' (polling) après 'Initiate results downloading'. L'exemple VERY BAD utilise 'Sleep  10 seconds' — le polling attend la vraie condition, Sleep introduit des délais arbitraires fragiles."
+  }
+];
+
+let currentQuestion = 0;
+let score = 0;
+let selectedOption = null;
+
+function shuffleArray(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function loadQuestion() {
+  const q = questions[currentQuestion];
+  document.getElementById('question-counter').textContent = `Question ${currentQuestion + 1} / ${questions.length}`;
+  document.getElementById('question-text').textContent = q.question;
+  document.getElementById('progress-fill').style.width = `${(currentQuestion / questions.length) * 100}%`;
+
+  const container = document.getElementById('options-container');
+  container.innerHTML = '';
+  selectedOption = null;
+
+  q.options.forEach((opt, idx) => {
+    const label = document.createElement('label');
+    label.className = 'option-label';
+    label.innerHTML = `<input type="radio" name="option" value="${idx}"> ${opt}`;
+    label.querySelector('input').addEventListener('change', () => {
+      selectedOption = idx;
+      document.getElementById('btn-validate').disabled = false;
+    });
+    container.appendChild(label);
+  });
+
+  document.getElementById('feedback').style.display = 'none';
+  document.getElementById('btn-validate').style.display = 'inline-block';
+  document.getElementById('btn-validate').disabled = true;
+  document.getElementById('btn-next').style.display = 'none';
+}
+
+function validate() {
+  if (selectedOption === null) return;
+  const q = questions[currentQuestion];
+  const labels = document.querySelectorAll('.option-label');
+  const feedback = document.getElementById('feedback');
+  const fbTitle = document.getElementById('feedback-title');
+  const fbBody = document.getElementById('feedback-body');
+
+  labels.forEach((lbl, idx) => {
+    lbl.classList.add('disabled');
+    if (idx === q.answer) lbl.classList.add('correct');
+    else if (idx === selectedOption && selectedOption !== q.answer) lbl.classList.add('wrong');
+  });
+
+  if (selectedOption === q.answer) {
+    score++;
+    feedback.className = 'feedback correct';
+    fbTitle.textContent = '✅ Bonne réponse !';
+  } else {
+    feedback.className = 'feedback wrong';
+    fbTitle.textContent = '❌ Mauvaise réponse';
+  }
+
+  fbBody.textContent = q.explanation;
+  feedback.style.display = 'block';
+  document.getElementById('btn-validate').style.display = 'none';
+
+  if (currentQuestion < questions.length - 1) {
+    document.getElementById('btn-next').style.display = 'inline-block';
+    document.getElementById('btn-next').textContent = 'Question suivante';
+  } else {
+    document.getElementById('btn-next').style.display = 'inline-block';
+    document.getElementById('btn-next').textContent = 'Voir le résultat';
+  }
+}
+
+function nextQuestion() {
+  currentQuestion++;
+  if (currentQuestion < questions.length) {
+    loadQuestion();
+  } else {
+    showResult();
+  }
+}
+
+function showResult() {
+  document.getElementById('quiz-section').style.display = 'none';
+  const resultBox = document.getElementById('result-box');
+  resultBox.style.display = 'block';
+  document.getElementById('score-display').textContent = `${score} / ${questions.length}`;
+
+  let msg = '';
+  const ratio = score / questions.length;
+  if (ratio >= 0.9) msg = 'Excellent ! Vous maîtrisez parfaitement les bonnes pratiques Robot Framework.';
+  else if (ratio >= 0.7) msg = 'Très bien ! Vous avez une bonne connaissance des Dos and Don\'ts.';
+  else if (ratio >= 0.5) msg = 'Correct. Relisez les sections sur l\'abstraction et les variables pour consolider vos acquis.';
+  else msg = 'Des progrès sont à faire. Reprenez le document et retentez le QCM !';
+
+  document.getElementById('score-msg').textContent = msg;
+}
+
+function restartQuiz() {
+  currentQuestion = 0;
+  score = 0;
+  selectedOption = null;
+  document.getElementById('quiz-section').style.display = 'block';
+  document.getElementById('result-box').style.display = 'none';
+  loadQuestion();
+}
+
+loadQuestion();
+</script>
+</body>
+</html>

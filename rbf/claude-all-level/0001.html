@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>QCM Robot Framework</title>
+<style>
+body { font-family: Arial, sans-serif; max-width: 800px; margin: auto; }
+h1 { text-align: center; }
+.progress { margin: 10px 0; }
+.progress-bar { height: 20px; background: #ddd; border-radius: 10px; overflow: hidden; }
+.progress-bar-fill { height: 100%; width: 0%; background: #4caf50; transition: width 0.3s; }
+.options { margin: 15px 0; }
+button { padding: 10px 15px; margin-top: 10px; }
+.result { margin-top: 15px; font-weight: bold; }
+.explanation { margin-top: 10px; font-style: italic; }
+</style>
+</head>
+<body>
+
+<h1>QCM Robot Framework</h1>
+
+<div class="progress">
+  <div id="progressText"></div>
+  <div class="progress-bar">
+    <div id="progressBar" class="progress-bar-fill"></div>
+  </div>
+</div>
+
+<div id="quiz"></div>
+
+<script>
+const questions = [
+{
+question: "Qu’est-ce que Robot Framework ?",
+options: [
+"Un langage de programmation",
+"Un framework d’automatisation de tests open source",
+"Un IDE de tests",
+"Un outil uniquement dédié au RPA"
+],
+answer: 1,
+explanation: "Le texte précise que Robot Framework est un framework d’automatisation de tests open source basé sur Python."
+},
+{
+question: "Quel type d’approche utilise Robot Framework ?",
+options: [
+"Data-driven",
+"Object-oriented",
+"Keyword-driven",
+"Behavior-driven"
+],
+answer: 2,
+explanation: "Robot Framework utilise une syntaxe de mots-clés (keyword-driven)."
+},
+{
+question: "À quels types de tests Robot Framework est-il principalement utilisé ?",
+options: [
+"Tests unitaires uniquement",
+"Tests d’acceptation et end-to-end",
+"Tests de performance uniquement",
+"Tests réseau bas niveau"
+],
+answer: 1,
+explanation: "Le guide mentionne tests d’acceptation, end-to-end et RPA."
+},
+{
+question: "Quelle section d’un fichier .robot contient les cas de test ?",
+options: [
+"*** Settings ***",
+"*** Variables ***",
+"*** Test Cases ***",
+"*** Keywords ***"
+],
+answer: 2,
+explanation: "Les cas de test sont définis dans la section *** Test Cases ***."
+},
+{
+question: "Quelle section est utilisée pour définir des mots-clés personnalisés ?",
+options: [
+"*** Variables ***",
+"*** Keywords ***",
+"*** Settings ***",
+"*** Test Cases ***"
+],
+answer: 1,
+explanation: "Les mots-clés personnalisés sont définis dans *** Keywords ***."
+},
+{
+question: "Quel type de variable représente @{LIST} ?",
+options: [
+"Scalaire",
+"Dictionnaire",
+"Liste",
+"Variable d’environnement"
+],
+answer: 2,
+explanation: "@{LIST} est une variable liste."
+},
+{
+question: "Quelle syntaxe permet de passer une variable d’environnement ?",
+options: [
+"${ENV}",
+"%{NOM}",
+"&{ENV}",
+"@{ENV}"
+],
+answer: 1,
+explanation: "Les variables d’environnement utilisent la syntaxe %{NOM}."
+},
+{
+question: "Quelle commande lance tous les tests du dossier tests/ ?",
+options: [
+"robot run tests/",
+"robot tests/",
+"robot execute tests/",
+"robot --all tests/"
+],
+answer: 1,
+explanation: "La commande de base est robot tests/."
+},
+{
+question: "Que fait Test Setup ?",
+options: [
+"Exécuté avant toute la suite",
+"Exécuté après la suite",
+"Exécuté avant chaque test",
+"Exécuté uniquement une fois"
+],
+answer: 2,
+explanation: "Test Setup est exécuté avant chaque test."
+},
+{
+question: "À quoi sert Suite Setup ?",
+options: [
+"Avant chaque test",
+"Après chaque test",
+"Avant toute la suite",
+"Avant chaque mot-clé"
+],
+answer: 2,
+explanation: "Suite Setup s’exécute une seule fois avant toute la suite."
+},
+{
+question: "Quel dossier contient les Page Objects dans l’exemple ?",
+options: [
+"tests/",
+"libraries/",
+"resources/pages/",
+"results/"
+],
+answer: 2,
+explanation: "Le dossier pages se trouve dans resources."
+},
+{
+question: "Quel est l’objectif du Page Object Model ?",
+options: [
+"Accélérer l’exécution",
+"Centraliser les rapports",
+"Améliorer la maintenabilité",
+"Remplacer Selenium"
+],
+answer: 2,
+explanation: "Le POM améliore la maintenabilité et réduit la duplication."
+},
+{
+question: "Comment applique-t-on des tags à un test ?",
+options: [
+"[Tags]",
+"[Labels]",
+"[Groups]",
+"[Annotations]"
+],
+answer: 0,
+explanation: "Les tags sont définis avec [Tags]."
+},
+{
+question: "Quelle commande inclut uniquement les tests smoke ?",
+options: [
+"robot --only smoke",
+"robot --include smoke tests/",
+"robot --tag smoke",
+"robot --filter smoke"
+],
+answer: 1,
+explanation: "--include smoke permet de filtrer par tag."
+},
+{
+question: "Quelle librairie est intégrée par défaut ?",
+options: [
+"SeleniumLibrary",
+"RequestsLibrary",
+"BuiltIn",
+"Browser Library"
+],
+answer: 2,
+explanation: "BuiltIn fait partie des librairies intégrées."
+},
+{
+question: "Dans une librairie Python custom, que définit ROBOT_LIBRARY_SCOPE ?",
+options: [
+"La version",
+"Le périmètre d’exécution",
+"La documentation",
+"Le nom du fichier"
+],
+answer: 1,
+explanation: "ROBOT_LIBRARY_SCOPE définit la portée (GLOBAL, TEST, SUITE)."
+},
+{
+question: "Quel moteur utilise Browser Library ?",
+options: [
+"Selenium",
+"Puppeteer",
+"Playwright",
+"Cypress"
+],
+answer: 2,
+explanation: "Browser Library est basée sur Playwright."
+},
+{
+question: "Quelle bonne pratique remplace Sleep ?",
+options: [
+"Wait Until Element Is Visible",
+"Run Keyword",
+"Delay",
+"Pause Execution"
+],
+answer: 0,
+explanation: "Les waits explicites sont recommandés."
+},
+{
+question: "Quels fichiers aident à débuguer un test flaky ?",
+options: [
+"README.md",
+"log.html et report.html",
+"requirements.txt",
+"output.xml seulement"
+],
+answer: 1,
+explanation: "Le texte mentionne log.html et report.html."
+},
+{
+question: "Quelle différence principale entre tests et RPA ?",
+options: [
+"Les outils utilisés",
+"La logique métier",
+"L’automatisation existe seulement en RPA",
+"Aucune différence"
+],
+answer: 1,
+explanation: "Le RPA automatise un processus métier avec gestion d’état."
+}
+];
+
+let current = 0;
+let score = 0;
+
+function renderQuestion() {
+const q = questions[current];
+const quiz = document.getElementById("quiz");
+quiz.innerHTML = `
+<h2>${q.question}</h2>
+<div class="options">
+${q.options.map((opt, i) => `
+<label>
+<input type="radio" name="option" value="${i}"> ${opt}
+</label><br>
+`).join("")}
+</div>
+<button onclick="validate()">Valider</button>
+`;
+updateProgress();
+}
+
+function validate() {
+const radios = document.querySelectorAll("input[name='option']");
+let selected = null;
+radios.forEach(r => {
+if (r.checked) selected = parseInt(r.value);
+r.disabled = true;
+});
+if (selected === null) return;
+
+const q = questions[current];
+let resultText = "";
+if (selected === q.answer) {
+score++;
+resultText = "✅ Bonne réponse !";
+} else {
+resultText = "❌ Mauvaise réponse";
+}
+document.getElementById("quiz").innerHTML += `
+<div class="result">${resultText}</div>
+<div class="explanation">${q.explanation}</div>
+<button onclick="next()">Question suivante</button>
+`;
+}
+
+function next() {
+current++;
+if (current < questions.length) {
+renderQuestion();
+} else {
+document.getElementById("quiz").innerHTML = `
+<h2>QCM terminé</h2>
+<p>Votre score : ${score} / ${questions.length}</p>
+`;
+updateProgress(true);
+}
+}
+
+function updateProgress(final=false) {
+const text = final ? "Terminé" : `Question ${current + 1} / ${questions.length}`;
+document.getElementById("progressText").innerText = text;
+document.getElementById("progressBar").style.width =
+(final ? 100 : ((current) / questions.length) * 100) + "%";
+}
+
+renderQuestion();
+</script>
+
+</body>
+</html>

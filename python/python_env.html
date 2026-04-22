@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QCM - Environnements Virtuels Python</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            max-width: 700px;
+            width: 100%;
+            padding: 40px;
+        }
+        
+        .progress-bar {
+            background: #e0e0e0;
+            height: 8px;
+            border-radius: 4px;
+            margin-bottom: 30px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            background: #667eea;
+            height: 100%;
+            transition: width 0.3s ease;
+        }
+        
+        .question-counter {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 15px;
+        }
+        
+        .question {
+            font-size: 20px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 25px;
+        }
+        
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 25px;
+        }
+        
+        .option {
+            position: relative;
+        }
+        
+        .option input[type="radio"] {
+            position: absolute;
+            opacity: 0;
+            cursor: pointer;
+        }
+        
+        .option label {
+            display: block;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+        
+        .option input[type="radio"]:checked + label {
+            background: #f0f4ff;
+            border-color: #667eea;
+        }
+        
+        .option label:hover {
+            border-color: #667eea;
+        }
+        
+        .feedback {
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .feedback.show {
+            display: block;
+        }
+        
+        .feedback.correct {
+            background: #d4edda;
+            border-left: 4px solid #28a745;
+            color: #155724;
+        }
+        
+        .feedback.incorrect {
+            background: #f8d7da;
+            border-left: 4px solid #dc3545;
+            color: #721c24;
+        }
+        
+        .feedback-title {
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        
+        .explanation {
+            font-size: 14px;
+            margin-top: 8px;
+            line-height: 1.5;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+        }
+        
+        button {
+            flex: 1;
+            padding: 12px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-validate {
+            background: #667eea;
+            color: white;
+        }
+        
+        .btn-validate:hover:not(:disabled) {
+            background: #5568d3;
+        }
+        
+        .btn-validate:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .btn-next {
+            background: #28a745;
+            color: white;
+        }
+        
+        .btn-next:hover {
+            background: #218838;
+        }
+        
+        .btn-next:disabled {
+            display: none;
+        }
+        
+        .finish-screen {
+            display: none;
+            text-align: center;
+        }
+        
+        .finish-screen.show {
+            display: block;
+        }
+        
+        .finish-title {
+            font-size: 32px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 20px;
+        }
+        
+        .score-display {
+            font-size: 48px;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+        
+        .score-text {
+            font-size: 18px;
+            color: #666;
+            margin-bottom: 30px;
+        }
+        
+        .restart-btn {
+            background: #667eea;
+            color: white;
+            padding: 12px 30px;
+        }
+        
+        .restart-btn:hover {
+            background: #5568d3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+        
+        <div id="quizContent">
+            <div class="question-counter" id="counter"></div>
+            <div class="question" id="question"></div>
+            <div class="options" id="options"></div>
+            <div class="feedback" id="feedback"></div>
+            <div class="button-group">
+                <button class="btn-validate" id="validateBtn">Valider</button>
+                <button class="btn-next" id="nextBtn">Question suivante</button>
+            </div>
+        </div>
+        
+        <div class="finish-screen" id="finishScreen">
+            <div class="finish-title">QCM terminé !</div>
+            <div class="score-display" id="scoreDisplay"></div>
+            <div class="score-text" id="scoreText"></div>
+            <button class="restart-btn" id="restartBtn">Recommencer</button>
+        </div>
+    </div>
+
+    <script>
+        const questions = [
+            {
+                question: "Qu'est-ce qu'un environnement virtuel en Python ?",
+                options: ["Un dossier contenant uniquement les programmes", "Un environnement isolé avec son propre interpréteur Python et ses packages", "Un navigateur web pour programmer", "Un éditeur de code"],
+                correct: 1,
+                explanation: "Selon le texte, un environnement virtuel en Python est un environnement isolé sur votre ordinateur où vous pouvez exécuter et tester vos projets Python, avec son propre interpréteur Python et son propre ensemble de packages installés."
+            },
+            {
+                question: "Quel module Python est utilisé pour créer des environnements virtuels ?",
+                options: ["pip", "conda", "venv", "virtualenv"],
+                correct: 2,
+                explanation: "Le texte indique que Python a le module intégré venv pour créer des environnements virtuels. C'est le module officiel fourni avec Python."
+            },
+            {
+                question: "Quelle commande crée un environnement virtuel nommé 'myfirstproject' sur Windows ?",
+                options: ["python install myfirstproject", "python -m venv myfirstproject", "pip create myfirstproject", "python create virtual myfirstproject"],
+                correct: 1,
+                explanation: "Selon le texte, la commande est 'python -m venv myfirstproject'. Le module venv est invoqué avec l'option -m et le nom du projet est passé en paramètre."
+            },
+            {
+                question: "Comment active-t-on un environnement virtuel sur Windows ?",
+                options: ["python myfirstproject", "myfirstproject\\Scripts\\activate", "activate myfirstproject", "start myfirstproject"],
+                correct: 1,
+                explanation: "Le texte montre clairement que la commande pour activer l'environnement sur Windows est 'myfirstproject\\Scripts\\activate'. Après activation, le prompt change pour afficher le nom de l'environnement."
+            },
+            {
+                question: "Quels sont les avantages d'utiliser des environnements virtuels ?",
+                options: ["Augmenter la vitesse d'exécution du code", "Prévenir les conflits de versions de packages, rendre les projets portables, garder Python clean", "Réduire l'utilisation de la mémoire", "Compiler le code plus rapidement"],
+                correct: 1,
+                explanation: "Le texte énumère que les environnements virtuels préviennent les conflits de version entre projets, rendent les projets plus portables et reproductibles, gardent l'installation Python système propre, et permettent de tester avec différentes versions Python."
+            },
+            {
+                question: "Quel package a été installé dans l'exemple fourni ?",
+                options: ["numpy", "pandas", "cowsay", "django"],
+                correct: 2,
+                explanation: "Le texte montre un exemple d'installation du package 'cowsay' avec la commande 'pip install cowsay' dans l'environnement virtuel activé."
+            },
+            {
+                question: "Que se passe-t-il si on exécute un script utilisant 'cowsay' hors de l'environnement virtuel ?",
+                options: ["Le script s'exécute normalement", "Un message d'erreur ModuleNotFoundError apparaît car 'cowsay' est manquant", "Le script s'exécute mais plus lentement", "L'ordinateur redémarre automatiquement"],
+                correct: 1,
+                explanation: "Le texte montre qu'en essayant d'exécuter test.py en dehors de l'environnement virtuel, une erreur 'ModuleNotFoundError: No module named cowsay' s'affiche, car le package n'a été installé que dans l'environnement virtuel."
+            },
+            {
+                question: "Quelle commande désactive un environnement virtuel ?",
+                options: ["delete", "exit", "deactivate", "stop"],
+                correct: 2,
+                explanation: "Le texte indique clairement que pour désactiver l'environnement virtuel, on utilise la commande 'deactivate'. Après cela, on revient à l'interface de ligne de commande normale."
+            },
+            {
+                question: "Quelle est la structure des dossiers créés lors de la création d'un environnement virtuel ?",
+                options: ["Uniquement un fichier config.txt", "Include, Lib, Scripts, .gitignore, pyvenv.cfg", "Un seul dossier 'bin' avec tous les fichiers", "Aucun fichier n'est créé"],
+                correct: 1,
+                explanation: "Selon le texte, la structure des fichiers/dossiers créés inclut : Include, Lib, Scripts, .gitignore, et pyvenv.cfg. Ces dossiers et fichiers constituent l'environnement isolé."
+            },
+            {
+                question: "Comment supprimer un environnement virtuel ?",
+                options: ["Utiliser 'pip uninstall', il supprime automatiquement l'environnement", "Simplement supprimer son dossier avec tout son contenu", "C'est impossible, il reste installé pour toujours", "Utiliser la commande 'python -m remove'"],
+                correct: 1,
+                explanation: "Le texte explique que pour supprimer un environnement virtuel, on peut simplement supprimer son dossier avec tout son contenu, soit directement dans le système de fichiers, soit via la ligne de commande. C'est l'avantage des environnements virtuels : ils ne dépendent d'aucun autre projet."
+            },
+            {
+                question: "Quel est le principal avantage de l'isolation des environnements virtuels ?",
+                options: ["Améliorer la sécurité globale du système", "Éviter que les packages d'un projet n'interfèrent avec d'autres projets", "Accélérer l'exécution du code", "Réduire l'espace disque utilisé"],
+                correct: 1,
+                explanation: "Le texte souligne que les environnements virtuels permettent de gérer les dépendances spécifiques au projet sans interférer avec d'autres projets ou l'installation Python originale."
+            },
+            {
+                question: "Que signifie l'apparition de '(myfirstproject)' devant le prompt de commande ?",
+                options: ["Qu'on est en train de télécharger un fichier", "Que l'environnement virtuel myfirstproject est activé", "Qu'une erreur s'est produite", "Qu'on doit redémarrer l'ordinateur"],
+                correct: 1,
+                explanation: "Le texte montre que après activation de l'environnement virtuel, le prompt change pour afficher '(myfirstproject) C:\\Users\\Your Name>' indiquant que l'environnement virtuel est actif."
+            },
+            {
+                question: "Comment installer le package 'cowsay' dans un environnement virtuel activé ?",
+                options: ["pip download cowsay", "pip install cowsay", "python cowsay", "apt-get cowsay"],
+                correct: 1,
+                explanation: "Le texte montre la commande 'pip install cowsay' pour installer le package cowsay dans l'environnement virtuel activé."
+            },
+            {
+                question: "Quel est le contenu du fichier test.py utilisé dans l'exemple ?",
+                options: ["import cowsay et cowsay.cow('Good Mooooorning!')", "print('Good Mooooorning!')", "pip install cowsay", "activate myfirstproject"],
+                correct: 0,
+                explanation: "Le texte montre que le fichier test.py contient deux lignes : 'import cowsay' et 'cowsay.cow(\"Good Mooooorning!\")' qui affiche une vache parlante."
+            },
+            {
+                question: "Qu'est-ce que le fichier 'pyvenv.cfg' ?",
+                options: ["Un fichier de configuration créé lors de la création d'un environnement virtuel", "Un script Python à exécuter", "Un fichier contenant les packages à installer", "Un fichier de log d'erreurs"],
+                correct: 0,
+                explanation: "Le texte liste 'pyvenv.cfg' parmi les fichiers et dossiers créés lors de la création d'un environnement virtuel, indiquant que c'est un fichier de configuration de l'environnement virtuel."
+            },
+            {
+                question: "Où doit-on placer le fichier test.py selon l'exemple ?",
+                options: ["À l'intérieur du dossier myfirstproject", "Dans le même dossier que myfirstproject, pas à l'intérieur", "Dans le dossier Scripts", "Dans n'importe quel dossier"],
+                correct: 1,
+                explanation: "Le texte précise : 'You can place it wherever you want, but I will place it in the same location as the myfirstproject folder - not in the folder, but in the same location.'"
+            },
+            {
+                question: "Que montre le symbole '\\' dans les chemins d'accès comme 'myfirstproject\\Scripts\\activate' ?",
+                options: ["Une division mathématique", "Un séparateur de dossiers sur Windows", "Un caractère d'échappement", "Une commande à exécuter"],
+                correct: 1,
+                explanation: "Le texte utilise la convention Windows avec les backslash '\\' pour séparer les dossiers dans les chemins d'accès (myfirstproject\\Scripts\\activate)."
+            },
+            {
+                question: "Quelle version pip était disponible selon la sortie d'installation ?",
+                options: ["25.0.1", "25.1.1", "24.0.0", "26.0.0"],
+                correct: 0,
+                explanation: "Le texte montre dans la sortie d'installation du cowsay : '[notice] A new release of pip is available: 25.0.1 -> 25.1.1' indiquant que la version courante était 25.0.1."
+            },
+            {
+                question: "Quel avantage principal présente les environnements virtuels pour les projets existants ?",
+                options: ["Augmenter les performances", "Pouvoir supprimer le projet complètement sans affecter autres projets", "Réduire l'utilisation du processeur", "Améliorer la compilation"],
+                correct: 1,
+                explanation: "Le texte souligne que grâce à l'isolation, aucun autre projet ne dépend de l'environnement virtuel, ce qui permet de le supprimer facilement sans risque d'endommager d'autres projets."
+            },
+            {
+                question: "Selon le texte, pourquoi est-il important de test avec différentes versions Python ?",
+                options: ["C'est une perte de temps", "C'est un des avantages des environnements virtuels listés dans le texte", "Cela augmente la taille des fichiers", "C'est inutile pour les projets modernes"],
+                correct: 1,
+                explanation: "Le texte énumère parmi les raisons d'utiliser les environnements virtuels : 'Allows testing with different Python versions', ce qui facilite la vérification de la compatibilité."
+            }
+        ];
+
+        let currentQuestion = 0;
+        let score = 0;
+        let answered = false;
+
+        function init() {
+            currentQuestion = 0;
+            score = 0;
+            answered = false;
+            showQuestion();
+        }
+
+        function showQuestion() {
+            answered = false;
+            const q = questions[currentQuestion];
+            
+            // Update counter
+            document.getElementById('counter').textContent = `Question ${currentQuestion + 1} / ${questions.length}`;
+            
+            // Update progress bar
+            const progress = ((currentQuestion + 1) / questions.length) * 100;
+            document.getElementById('progressFill').style.width = progress + '%';
+            
+            // Show question
+            document.getElementById('question').textContent = q.question;
+            
+            // Create options
+            const optionsDiv = document.getElementById('options');
+            optionsDiv.innerHTML = '';
+            q.options.forEach((option, index) => {
+                const div = document.createElement('div');
+                div.className = 'option';
+                div.innerHTML = `
+                    <input type="radio" id="option${index}" name="answer" value="${index}">
+                    <label for="option${index}">${String.fromCharCode(65 + index)}. ${option}</label>
+                `;
+                optionsDiv.appendChild(div);
+            });
+            
+            // Reset feedback
+            const feedback = document.getElementById('feedback');
+            feedback.classList.remove('show', 'correct', 'incorrect');
+            
+            // Reset buttons
+            document.getElementById('validateBtn').disabled = false;
+            document.getElementById('nextBtn').disabled = true;
+        }
+
+        function checkAnswer() {
+            const selected = document.querySelector('input[name="answer"]:checked');
+            if (!selected) {
+                alert('Veuillez sélectionner une réponse');
+                return;
+            }
+            
+            answered = true;
+            const selectedIndex = parseInt(selected.value);
+            const q = questions[currentQuestion];
+            const isCorrect = selectedIndex === q.correct;
+            
+            if (isCorrect) {
+                score++;
+            }
+            
+            // Show feedback
+            const feedback = document.getElementById('feedback');
+            feedback.innerHTML = `
+                <div class="feedback-title">${isCorrect ? '✓ Bonne réponse !' : '✗ Mauvaise réponse'}</div>
+                <div class="explanation">${q.explanation}</div>
+            `;
+            feedback.classList.add('show');
+            feedback.classList.add(isCorrect ? 'correct' : 'incorrect');
+            
+            // Update buttons
+            document.getElementById('validateBtn').disabled = true;
+            document.getElementById('nextBtn').disabled = false;
+        }
+
+        function nextQuestion() {
+            currentQuestion++;
+            if (currentQuestion < questions.length) {
+                showQuestion();
+            } else {
+                showFinishScreen();
+            }
+        }
+
+        function showFinishScreen() {
+            document.getElementById('quizContent').style.display = 'none';
+            document.getElementById('finishScreen').classList.add('show');
+            document.getElementById('scoreDisplay').textContent = `${score}/${questions.length}`;
+            document.getElementById('scoreText').textContent = `Votre score : ${score} / ${questions.length}`;
+        }
+
+        function restart() {
+            document.getElementById('quizContent').style.display = 'block';
+            document.getElementById('finishScreen').classList.remove('show');
+            init();
+        }
+
+        document.getElementById('validateBtn').addEventListener('click', checkAnswer);
+        document.getElementById('nextBtn').addEventListener('click', nextQuestion);
+        document.getElementById('restartBtn').addEventListener('click', restart);
+
+        init();
+    </script>
+</body>
+</html>

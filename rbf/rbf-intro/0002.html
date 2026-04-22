@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>QCM – Introduction à Robot Framework</title>
+<style>
+body { font-family: Arial, sans-serif; margin: 40px; }
+.question { font-size: 20px; margin-bottom: 20px; }
+.options label { display: block; margin: 8px 0; cursor: pointer; }
+button { margin-top: 20px; padding: 10px 20px; }
+.feedback { margin-top: 20px; font-weight: bold; }
+.explanation { margin-top: 10px; font-style: italic; }
+</style>
+</head>
+<body>
+
+<div id="quiz">
+  <div id="question" class="question"></div>
+  <div id="options" class="options"></div>
+  <button id="validateBtn">Valider</button>
+  <div id="feedback" class="feedback"></div>
+  <div id="explanation" class="explanation"></div>
+  <button id="nextBtn" style="display:none;">Question suivante</button>
+</div>
+
+<script>
+const questions = [
+  {
+    question: "Quel est l’objectif principal de Robot Framework ?",
+    options: [
+      "Créer des applications web",
+      "Automatiser les tests avec une approche par mots-clés",
+      "Gérer des bases de données",
+      "Développer des interfaces graphiques"
+    ],
+    correct: 1,
+    explanation: "Robot Framework est un framework générique d’automatisation de tests basé sur une approche keyword-driven."
+  },
+  {
+    question: "Quelle approche de tests est utilisée par Robot Framework ?",
+    options: [
+      "Test orienté objets",
+      "Test basé sur le modèle MVC",
+      "Keyword-driven testing",
+      "Test manuel assisté"
+    ],
+    correct: 2,
+    explanation: "Le document précise que Robot Framework utilise l’approche keyword-driven testing."
+  },
+  {
+    question: "Quel langage est principalement utilisé pour implémenter Robot Framework ?",
+    options: [
+      "Java",
+      "C++",
+      "Python",
+      "JavaScript"
+    ],
+    correct: 2,
+    explanation: "Robot Framework est implémenté avec Python."
+  },
+  {
+    question: "Quel type de licence possède Robot Framework ?",
+    options: [
+      "GPL",
+      "MIT",
+      "Apache 2",
+      "Licence propriétaire"
+    ],
+    correct: 2,
+    explanation: "Le framework est open source et distribué sous licence Apache 2."
+  },
+  {
+    question: "Quel type de tests Robot Framework permet-il de réaliser ?",
+    options: [
+      "Uniquement des tests unitaires",
+      "Uniquement des tests de performance",
+      "Tests automatisés et ATDD",
+      "Seulement des tests manuels"
+    ],
+    correct: 2,
+    explanation: "Robot Framework est adapté aussi bien aux tests automatisés classiques qu’à l’ATDD."
+  },
+  {
+    question: "Quel élément définit les cas de test dans Robot Framework ?",
+    options: [
+      "Des scripts compilés",
+      "Des fichiers texte lisibles",
+      "Des bases de données XML",
+      "Des interfaces graphiques"
+    ],
+    correct: 1,
+    explanation: "Les suites de tests Robot Framework sont créées à partir de fichiers texte simples."
+  },
+  {
+    question: "Quel composant permet d’interagir avec le système sous test ?",
+    options: [
+      "Les rapports",
+      "Les variables",
+      "Les bibliothèques de test",
+      "Les plugins IDE"
+    ],
+    correct: 2,
+    explanation: "Les bibliothèques de test fournissent les mots-clés permettant d’interagir avec l’application testée."
+  },
+  {
+    question: "Quelle bibliothèque est couramment utilisée pour tester des applications web ?",
+    options: [
+      "OperatingSystem",
+      "SeleniumLibrary",
+      "String",
+      "XML"
+    ],
+    correct: 1,
+    explanation: "SeleniumLibrary est une bibliothèque externe utilisée pour l’automatisation de tests web."
+  },
+  {
+    question: "À quoi servent les mots-clés de haut niveau ?",
+    options: [
+      "À réduire la lisibilité",
+      "À encapsuler des actions complexes",
+      "À supprimer du code Python",
+      "À générer des rapports"
+    ],
+    correct: 1,
+    explanation: "Les mots-clés de haut niveau permettent de regrouper plusieurs actions en une seule plus lisible."
+  },
+  {
+    question: "Comment sont définies les variables dans Robot Framework ?",
+    options: [
+      "Dans une base SQL",
+      "Dans la section *** Variables ***",
+      "En ligne de code Python uniquement",
+      "Dans le navigateur"
+    ],
+    correct: 1,
+    explanation: "Les variables sont définies simplement dans la section *** Variables ***."
+  },
+  {
+    question: "Quel est l’avantage principal des tags ?",
+    options: [
+      "Modifier l’interface graphique",
+      "Catégoriser et sélectionner les tests",
+      "Compiler les tests",
+      "Créer des rapports PDF"
+    ],
+    correct: 1,
+    explanation: "Les tags servent à catégoriser les tests et à filtrer leur exécution."
+  },
+  {
+    question: "Quel outil fournit une interface graphique pour Robot Framework ?",
+    options: [
+      "Jenkins",
+      "Maven",
+      "RIDE",
+      "Git"
+    ],
+    correct: 2,
+    explanation: "RIDE est un éditeur graphique dédié à Robot Framework."
+  },
+  {
+    question: "Quel format de sortie Robot Framework peut-il produire ?",
+    options: [
+      "Uniquement HTML",
+      "Uniquement PDF",
+      "XML et HTML",
+      "CSV uniquement"
+    ],
+    correct: 2,
+    explanation: "Les résultats sont produits notamment en XML et HTML."
+  },
+  {
+    question: "Avec quels outils d’intégration continue Robot Framework peut-il s’intégrer ?",
+    options: [
+      "Photoshop et GIMP",
+      "Jenkins, Ant, Maven",
+      "Excel uniquement",
+      "Docker seulement"
+    ],
+    correct: 1,
+    explanation: "Le document mentionne l’intégration avec Jenkins, Ant et Maven."
+  },
+  {
+    question: "Quel est un avantage clé de la syntaxe Robot Framework ?",
+    options: [
+      "Elle est complexe",
+      "Elle est dépendante du langage",
+      "Elle est simple et lisible",
+      "Elle nécessite une compilation"
+    ],
+    correct: 2,
+    explanation: "La syntaxe keyword-driven est conçue pour être simple et lisible."
+  }
+];
+
+let current = 0;
+let score = 0;
+
+const questionEl = document.getElementById("question");
+const optionsEl = document.getElementById("options");
+const feedbackEl = document.getElementById("feedback");
+const explanationEl = document.getElementById("explanation");
+const validateBtn = document.getElementById("validateBtn");
+const nextBtn = document.getElementById("nextBtn");
+
+function loadQuestion() {
+  const q = questions[current];
+  questionEl.textContent = q.question;
+  optionsEl.innerHTML = "";
+  feedbackEl.textContent = "";
+  explanationEl.textContent = "";
+  nextBtn.style.display = "none";
+
+  q.options.forEach((opt, idx) => {
+    const label = document.createElement("label");
+    label.innerHTML = `<input type="radio" name="option" value="${idx}"> ${opt}`;
+    optionsEl.appendChild(label);
+  });
+}
+
+validateBtn.onclick = () => {
+  const selected = document.querySelector('input[name="option"]:checked');
+  if (!selected) return;
+
+  const answer = parseInt(selected.value);
+  const q = questions[current];
+
+  if (answer === q.correct) {
+    feedbackEl.textContent = "✅ Bonne réponse !";
+    score++;
+  } else {
+    feedbackEl.textContent = "❌ Mauvaise réponse";
+  }
+  explanationEl.textContent = q.explanation;
+  nextBtn.style.display = "inline-block";
+};
+
+nextBtn.onclick = () => {
+  current++;
+  if (current < questions.length) {
+    loadQuestion();
+  } else {
+    document.getElementById("quiz").innerHTML = `
+      <h2>QCM terminé</h2>
+      <p>Votre score : ${score} / ${questions.length}</p>
+    `;
+  }
+};
+
+loadQuestion();
+</script>
+
+</body>
+</html>

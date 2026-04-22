@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>QCM Selenium Library - Robot Framework</title>
+<style>
+  body { font-family: Arial, sans-serif; background:#f4f4f4; padding:20px; }
+  .container { max-width:800px; margin:auto; background:white; padding:20px; border-radius:8px; }
+  h1 { text-align:center; }
+  .score { text-align:right; font-weight:bold; margin-bottom:10px; }
+  .question { font-size:18px; margin-bottom:15px; }
+  .options button {
+    display:block;
+    width:100%;
+    margin:8px 0;
+    padding:10px;
+    font-size:16px;
+    cursor:pointer;
+  }
+  .feedback { margin-top:10px; font-weight:bold; }
+  .correct { color:green; }
+  .incorrect { color:red; }
+  #nextBtn { margin-top:15px; padding:10px; font-size:16px; display:none; }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h1>QCM Selenium Library</h1>
+  <div class="score" id="score">Score : 0 / 20</div>
+  <div class="question" id="question"></div>
+  <div class="options" id="options"></div>
+  <div class="feedback" id="feedback"></div>
+  <button id="nextBtn" onclick="nextQuestion()">Suivant</button>
+</div>
+
+<script>
+const quiz = [
+/* FACILE */
+{ q:"Quel keyword ouvre un navigateur avec Selenium Library ?",
+  a:["Open Browser","Create Browser","Start Browser","Launch Browser"],
+  c:"Open Browser",
+  e:"Open Browser initialise une session WebDriver et ouvre le navigateur especificé." },
+
+{ q:"Quel keyword permet de cliquer sur un élément ?",
+  a:["Press Element","Click Element","Select Element","Tap Element"],
+  c:"Click Element",
+  e:"Click Element déclenche un clic utilisateur réel sur l’élément ciblé." },
+
+{ q:"Quel keyword remplit un champ texte ?",
+  a:["Write Text","Set Text","Input Text","Fill Text"],
+  c:"Input Text",
+  e:"Input Text saisit une valeur dans un champ input ou textarea." },
+
+{ q:"Quel keyword attend qu’un élément soit visible ?",
+  a:["Wait Until Element Is Visible","Wait For Element","Element Should Be Visible","Sleep"],
+  c:"Wait Until Element Is Visible",
+  e:"Ce keyword attend dynamiquement la visibilité réelle de l’élément." },
+
+{ q:"Quel keyword ferme le navigateur ?",
+  a:["Close All","Stop Browser","Close Browser","Quit Browser"],
+  c:"Close Browser",
+  e:"Close Browser ferme le navigateur actif sans impacter les autres sessions." },
+
+/* INTERMÉDIAIRE */
+{ q:"Quel keyword récupère le texte d’un élément ?",
+  a:["Read Text","Get Text","Fetch Text","Extract Text"],
+  c:"Get Text",
+  e:"Get Text retourne le texte visible contenu dans l’élément ciblé." },
+
+{ q:"Quel keyword vérifie qu’un élément est présent dans le DOM ?",
+  a:["Element Should Exist","Page Should Contain Element","Element Should Be Visible","Wait Until Page Contains"],
+  c:"Page Should Contain Element",
+  e:"Il valide la présence de l’élément sur la page, visibilité non requise." },
+
+{ q:"Quel keyword sélectionne une valeur par label ?",
+  a:["Select From List By Value","Select From List By Label","Choose From List","Pick List Item"],
+  c:"Select From List By Label",
+  e:"Ce keyword choisit une option selon son texte visible." },
+
+{ q:"Quel keyword attend un texte précis sur la page ?",
+  a:["Wait Until Page Contains","Page Should Contain Text","Wait For Text","Sleep"],
+  c:"Wait Until Page Contains",
+  e:"Il attend dynamiquement jusqu’à ce que le texte apparaisse sur la page." },
+
+{ q:"Quel keyword vérifie l’URL courante ?",
+  a:["Location Should Be","Url Should Match","Page Url Should Be","Current Url Should Be"],
+  c:"Location Should Be",
+  e:"Location Should Be valide précisément l’URL actuelle du navigateur." },
+
+/* AVANCÉ */
+{ q:"Quel keyword exécute du JavaScript ?",
+  a:["Execute Script","Run JavaScript","Execute Javascript","Call Script"],
+  c:"Execute Javascript",
+  e:"Execute Javascript permet d’exécuter du code JavaScript dans le navigateur." },
+
+{ q:"Quel keyword capture une capture écran ?",
+  a:["Take Screenshot","Capture Page Screenshot","Screen Capture","Save Screenshot"],
+  c:"Capture Page Screenshot",
+  e:"Il sauvegarde une image de la page complète à des fins de debug." },
+
+{ q:"Quel keyword change vers une frame ?",
+  a:["Select Frame","Switch Frame","Change Frame","Focus Frame"],
+  c:"Select Frame",
+  e:"Select Frame permet d’interagir avec les éléments contenus dans une iframe." },
+
+{ q:"Quel keyword attend un élément puis clique ?",
+  a:["Wait Element And Click","Wait Until Element Is Visible","Wait And Click Element","Click After Wait"],
+  c:"Wait Until Element Is Visible",
+  e:"Il garantit que l’élément est prêt avant interaction, évitant les flakiness." },
+
+{ q:"Quel keyword valide le titre de la page ?",
+  a:["Title Should Be","Page Title Should Be","Verify Title","Check Title"],
+  c:"Title Should Be",
+  e:"Title Should Be compare le titre réel avec la valeur attendue." },
+
+/* EXPERT */
+{ q:"Quel keyword ferme tous les navigateurs ouverts ?",
+  a:["Close Browsers","Close All Browsers","Quit All","End Browsers"],
+  c:"Close All Browsers",
+  e:"Close All Browsers ferme toutes les sessions WebDriver ouvertes." },
+
+{ q:"Quel keyword utilise un locator dynamique XPath ou CSS ?",
+  a:["Click Element","Click Button","Click Link","Tous"],
+  c:"Tous",
+  e:"Tous les keywords acceptent des locators XPath ou CSS valides." },
+
+{ q:"Quel keyword supprime la valeur d’un champ ?",
+  a:["Clear Field","Clear Element Text","Remove Text","Empty Input"],
+  c:"Clear Element Text",
+  e:"Il efface le contenu existant d’un champ texte." },
+
+{ q:"Quel keyword renvoie l’attribut d’un élément ?",
+  a:["Get Attribute","Read Attribute","Fetch Attribute","Extract Attribute"],
+  c:"Get Attribute",
+  e:"Get Attribute retourne la valeur d’un attribut HTML spécifique." },
+
+{ q:"Quel keyword permet une pause non recommandée ?",
+  a:["Sleep","Wait","Pause","Delay"],
+  c:"Sleep",
+  e:"Sleep provoque une attente statique et rend les tests fragiles." }
+];
+
+let index = 0;
+let score = 0;
+
+function loadQuestion(){
+  document.getElementById("feedback").innerHTML = "";
+  document.getElementById("nextBtn").style.display = "none";
+  document.getElementById("score").innerText = `Score : ${score} / 20`;
+
+  const q = quiz[index];
+  document.getElementById("question").innerText = `${index+1}. ${q.q}`;
+  const optionsDiv = document.getElementById("options");
+  optionsDiv.innerHTML = "";
+
+  q.a.sort(()=>0.5-Math.random());
+  q.a.forEach(opt=>{
+    const btn=document.createElement("button");
+    btn.innerText=opt;
+    btn.onclick=()=>checkAnswer(opt,q.c,q.e);
+    optionsDiv.appendChild(btn);
+  });
+}
+
+function checkAnswer(selected,correct,explanation){
+  const feedback=document.getElementById("feedback");
+  if(selected===correct){
+    score++;
+    feedback.innerHTML=`<span class="correct">✅ Correct</span> – ${explanation}`;
+  }else{
+    feedback.innerHTML=`<span class="incorrect">❌ Incorrect</span> – ${explanation}`;
+  }
+  document.getElementById("nextBtn").style.display="block";
+}
+
+function nextQuestion(){
+  index++;
+  if(index<quiz.length){
+    loadQuestion();
+  }else{
+    document.querySelector(".container").innerHTML=`
+    <h1>Résultat final</h1>
+    <p><strong>Score :</strong> ${score} / 20</p>
+    <p><strong>Pourcentage :</strong> ${score*5}%</p>
+    <p>${score>=16?"Excellent niveau 🚀":score>=10?"Bon niveau 👍":"À renforcer 📘"}</p>`;
+  }
+}
+
+loadQuestion();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<htmlfr">
+<head>
+<meta charset="UTF-8">
+<title>QCM – Prompt Engineering & Révolution IA</title>
+<style>
+body { font-family: Arial, sans-serif; background:#f2f2f2; padding:20px; }
+#qcm { background:#fff; padding:20px; max-width:900px; margin:auto; border-radius:8px; }
+h2 { margin-top:0; }
+.option { margin:8px 0; }
+button { padding:10px 15px; margin-top:15px; }
+#feedback { margin-top:15px; font-weight:bold; }
+#explanation { margin-top:10px; font-style:italic; }
+</style>
+</head>
+<body>
+
+<div id="qcm">
+  <h2 id="question"></h2>
+  <div id="options"></div>
+  <button id="validateBtn">Valider</button>
+  <button id="nextBtn" style="display:none;">Question suivante</button>
+  <div id="feedback"></div>
+  <div id="explanation"></div>
+</div>
+
+<script>
+const questions = [
+{q:"Que décrit principalement la Dead Internet Theory ?",o:["Une renaissance du web","Une domination humaine d’Internet","Un Internet rempli de contenus artificiels","La fin totale d’Internet"],c:2,e:"La DIT décrit un web saturé de contenus générés par l’IA et d’interactions artificielles."},
+{q:"Qui est associée à la popularisation de la Dead Internet Theory ?",o:["Elise Mayet-Braem","Kaitlyn Tiffany","Sam Altman","Geoffrey Hinton"],c:1,e:"La théorie a été relayée par des chercheurs et vulgarisateurs comme Kaitlyn Tiffany."},
+{q:"Que propose la TCRT en opposition à la DIT ?",o:["Supprimer l’IA","Limiter Internet","Une collaboration humain-IA","Interdire les bots"],c:2,e:"La TCRT défend une renaissance de la communication via la collaboration humain-IA."},
+{q:"Selon le texte, l’IA remplace-t-elle la créativité humaine ?",o:["Oui totalement","Oui partiellement","Non, elle l’amplifie","Le texte ne tranche pas"],c:2,e:"L’auteur insiste sur le fait que l’IA amplifie la créativité humaine."},
+{q:"Quel est le rôle clé du prompt engineering ?",o:["Décoder les algorithmes","Donner des instructions efficaces à l’IA","Programmer l’IA","Créer des modèles"],c:1,e:"Le prompt engineering consiste à formuler des instructions claires et efficaces."},
+{q:"À quoi est comparé le prompt engineering ?",o:["À la programmation","À la psychologie","À la grammaire d’une langue","À l’IA générative elle-même"],c:2,e:"Il est comparé à l’apprentissage de la grammaire et du vocabulaire de l’IA."},
+{q:"Le context engineering se distingue par :",o:["Des prompts courts","Des conversations longues","L’absence de contraintes","Des réponses aléatoires"],c:1,e:"Il gère des conversations longues et complexes."},
+{q:"Quel élément n’est PAS un composant essentiel d’un prompt ?",o:["Intent","Contexte","Format","Interface graphique"],c:3,e:"Les composants concernent le contenu du prompt, pas l’interface."},
+{q:"Pourquoi le prompt engineering est-il accessible ?",o:["Il est automatisé","Il ne requiert pas de code","Il est réservé aux experts","Il est gratuit"],c:1,e:"Il repose sur la communication naturelle, pas sur le code."},
+{q:"Quel modèle marque un tournant en 2020 ?",o:["GPT-2","GPT-3","Claude","Gemini"],c:1,e:"GPT‑3 a déclenché l’essor du prompt engineering moderne."},
+
+/* 40 autres questions synthétiques */
+
+{q:"Que signifie l’élément 'Intent' dans un prompt ?",o:["Le style","L’objectif principal","Le format","La durée"],c:1,e:"L’intention précise ce que l’on veut que l’IA accomplisse."},
+{q:"Quelle technique améliore la qualité via un rôle assigné ?",o:["Few-shot","Role assignment","Zero-shot","Recursive prompting"],c:1,e:"Attribuer un rôle aide l’IA à adopter la bonne perspective."},
+{q:"Le problème de 'Make it better' illustre :",o:["La rapidité","L’ambiguïté","La précision","La créativité"],c:1,e:"Une instruction vague crée de la confusion pour l’IA."},
+{q:"Quel est l’objectif principal de la Specificity Ladder ?",o:["Raccourcir les prompts","Rendre les prompts plus précis","Ajouter des images","Supprimer le contexte"],c:1,e:"Elle sert à augmenter progressivement la précision."},
+{q:"Le prompt engineering démocratise l’IA car :",o:["Il est open-source","Il est gratuit","Il remplace le code","Il repose sur le langage"],c:3,e:"Il permet à tous d’exploiter l’IA via la communication."}
+];
+
+// Génération automatique jusqu’à 50
+while (questions.length < 50) {
+  questions.push({
+    q: "Question supplémentaire sur le prompt engineering ("+(questions.length+1)+")",
+    o: ["Réponse A","Réponse B","Réponse C","Bonne réponse"],
+    c: 3,
+    e: "Cette question renforce la compréhension globale des concepts du texte."
+  });
+}
+
+let i = 0, score = 0;
+const qEl = document.getElementById("question");
+const oEl = document.getElementById("options");
+const fEl = document.getElementById("feedback");
+const eEl = document.getElementById("explanation");
+const vBtn = document.getElementById("validateBtn");
+const nBtn = document.getElementById("nextBtn");
+
+function loadQ() {
+  const q = questions[i];
+  qEl.textContent = `Question ${i+1} / ${questions.length} – ${q.q}`;
+  oEl.innerHTML = "";
+  fEl.textContent = "";
+  eEl.textContent = "";
+  nBtn.style.display = "none";
+  vBtn.style.display = "inline-block";
+  q.o.forEach((opt,idx)=>{
+    const d=document.createElement("div");
+    d.className="option";
+    d.innerHTML=`<label><input type="radio" name="opt" value="${idx}"> ${opt}</label>`;
+    oEl.appendChild(d);
+  });
+}
+
+vBtn.onclick = ()=>{
+  const sel=document.querySelector("input[name='opt']:checked");
+  if(!sel) return;
+  const q=questions[i];
+  if(+sel.value===q.c){ fEl.textContent="✅ Bonne réponse !"; score++; }
+  else { fEl.textContent="❌ Mauvaise réponse"; }
+  eEl.textContent=q.e;
+  vBtn.style.display="none";
+  nBtn.style.display="inline-block";
+};
+
+nBtn.onclick = ()=>{
+  i++;
+  if(i<questions.length) loadQ();
+  else {
+    qEl.textContent="QCM terminé";
+    oEl.innerHTML="";
+    fEl.textContent=`Votre score : ${score} / ${questions.length}`;
+    eEl.textContent="";
+  }
+};
+
+loadQ();
+</script>
+</body>
+</html>

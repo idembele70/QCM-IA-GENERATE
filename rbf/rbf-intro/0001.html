@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>QCM Robot Framework</title>
+<style>
+body { font-family: Arial, sans-serif; background:#f4f4f4; padding:20px; }
+#qcm { background:#fff; padding:20px; max-width:800px; margin:auto; border-radius:8px; }
+h2 { margin-top:0; }
+.options label { display:block; margin:8px 0; cursor:pointer; }
+button { margin-top:15px; padding:8px 15px; }
+#feedback { margin-top:15px; font-weight:bold; }
+</style>
+</head>
+<body>
+<div id="qcm">
+<h2 id="question"></h2>
+<div id="options" class="options"></div>
+<button id="validateBtn">Valider</button>
+<div id="feedback"></div>
+<button id="nextBtn" style="display:none;">Question suivante</button>
+</div>
+
+<script>
+const questions = [
+{
+q: "Qu’est-ce que Robot Framework ?",
+options: [
+"A. Un langage de programmation",
+"B. Un framework de test automatisé générique",
+"C. Un outil uniquement pour Selenium",
+"D. Un IDE de développement"
+],
+answer: 1,
+explanation: "Robot Framework est présenté comme un framework générique de test automatisé basé sur des mots-clés."
+},
+{
+q: "Quelle approche Robot Framework utilise-t-il principalement ?",
+options: [
+"A. Test-driven development",
+"B. Behavior-driven development",
+"C. Keyword-driven testing",
+"D. Model-based testing"
+],
+answer: 2,
+explanation: "Le document indique que Robot Framework utilise l’approche keyword-driven."
+},
+{
+q: "Dans quel langage Robot Framework est-il implémenté ?",
+options: [
+"A. Java",
+"B. C++",
+"C. Python",
+"D. Ruby"
+],
+answer: 2,
+explanation: "Robot Framework est implémenté en Python selon les faits rapides."
+},
+{
+q: "Quels environnements peuvent exécuter Robot Framework ?",
+options: [
+"A. Uniquement Python natif",
+"B. Python et Ruby",
+"C. Jython et IronPython",
+"D. PHP et JavaScript"
+],
+answer: 2,
+explanation: "Le framework fonctionne aussi sur Jython (JVM) et IronPython (.NET)."
+},
+{
+q: "Quel type de licence utilise Robot Framework ?",
+options: [
+"A. GPL",
+"B. MIT",
+"C. Apache 2",
+"D. Propriétaire"
+],
+answer: 2,
+explanation: "Robot Framework est open source sous licence Apache 2."
+},
+{
+q: "Où est hébergé Robot Framework ?",
+options: [
+"A. GitLab",
+"B. Bitbucket",
+"C. SourceForge",
+"D. GitHub"
+],
+answer: 3,
+explanation: "Le framework est hébergé sur GitHub."
+},
+{
+q: "Quel type de syntaxe est utilisé pour écrire les tests ?",
+options: [
+"A. Syntaxe XML",
+"B. Syntaxe orientée objet",
+"C. Syntaxe simple basée sur des mots-clés",
+"D. Syntaxe JSON"
+],
+answer: 2,
+explanation: "Les tests sont écrits avec une syntaxe keyword simple."
+},
+{
+q: "Que représente la section *** Test Cases *** ?",
+options: [
+"A. Les bibliothèques",
+"B. Les cas de tests",
+"C. Les variables globales",
+"D. Les résultats"
+],
+answer: 1,
+explanation: "Cette section contient la définition des cas de test."
+},
+{
+q: "Que permet le data-driven testing ?",
+options: [
+"A. Créer des bibliothèques",
+"B. Exécuter plusieurs variantes de tests avec des données",
+"C. Générer des rapports",
+"D. Déployer l’application"
+],
+answer: 1,
+explanation: "Le data-driven testing permet de tester plusieurs combinaisons de données."
+},
+{
+q: "Quelle syntaxe alternative proche du langage naturel est supportée ?",
+options: [
+"A. YAML",
+"B. Markdown",
+"C. Gherkin",
+"D. XML"
+],
+answer: 2,
+explanation: "Robot Framework supporte une syntaxe de type Gherkin."
+},
+{
+q: "Quel est l’objectif des mots-clés de niveau supérieur ?",
+options: [
+"A. Compiler le code",
+"B. Simplifier et réutiliser les actions complexes",
+"C. Gérer la mémoire",
+"D. Créer des rapports"
+],
+answer: 1,
+explanation: "Les mots-clés de haut niveau encapsulent plusieurs actions."
+},
+{
+q: "Comment sont définis les arguments d’un mot-clé ?",
+options: [
+"A. Dans un fichier XML",
+"B. Avec la section [Arguments]",
+"C. En ligne de commande",
+"D. Par annotations Python"
+],
+answer: 1,
+explanation: "Les arguments sont déclarés via la section [Arguments]."
+},
+{
+q: "Quel exemple de bibliothèque est donné pour l’automatisation web ?",
+options: [
+"A. RequestsLibrary",
+"B. Selenium2Library",
+"C. AppiumLibrary",
+"D. WebDriverIO"
+],
+answer: 1,
+explanation: "Le document montre des exemples avec Selenium2Library."
+},
+{
+q: "Que permettent les variables dans Robot Framework ?",
+options: [
+"A. Complexifier les tests",
+"B. Stocker des valeurs réutilisables",
+"C. Compiler les tests",
+"D. Générer des logs"
+],
+answer: 1,
+explanation: "Les variables simplifient la maintenance et la réutilisation."
+},
+{
+q: "Comment peut-on surcharger une variable ?",
+options: [
+"A. Via l’IDE",
+"B. En modifiant la bibliothèque",
+"C. Depuis la ligne de commande",
+"D. Par un script Python"
+],
+answer: 2,
+explanation: "Les variables peuvent être redéfinies en ligne de commande."
+},
+{
+q: "À quoi servent les tags ?",
+options: [
+"A. Ajouter des images",
+"B. Catégoriser les tests",
+"C. Mesurer les performances",
+"D. Stocker des données"
+],
+answer: 1,
+explanation: "Les tags servent à organiser et filtrer les tests."
+},
+{
+q: "Que permettent les tags critiques ?",
+options: [
+"A. Désactiver les tests",
+"B. Identifier les tests importants",
+"C. Générer des graphiques",
+"D. Gérer les variables"
+],
+answer: 1,
+explanation: "Ils permettent d’identifier les tests considérés comme critiques."
+},
+{
+q: "Quel type de rapport Robot Framework génère-t-il ?",
+options: [
+"A. Texte brut uniquement",
+"B. Rapports clairs et détaillés",
+"C. Fichiers PDF",
+"D. Rapports JSON uniquement"
+],
+answer: 1,
+explanation: "Robot Framework produit des rapports clairs avec statistiques."
+},
+{
+q: "Quel format de sortie machine est disponible ?",
+options: [
+"A. CSV",
+"B. XML",
+"C. YAML",
+"D. INI"
+],
+answer: 1,
+explanation: "Les résultats peuvent être produits au format XML."
+},
+{
+q: "Quels outils CI sont cités pour l’intégration continue ?",
+options: [
+"A. GitLab CI uniquement",
+"B. Jenkins, Ant, Maven",
+"C. Azure DevOps seulement",
+"D. Travis CI"
+],
+answer: 1,
+explanation: "Le document mentionne Jenkins, Ant et Maven."
+},
+{
+q: "Comment sont organisées les suites de tests ?",
+options: [
+"A. Uniquement en bases de données",
+"B. En fichiers et répertoires",
+"C. En scripts compilés",
+"D. En conteneurs"
+],
+answer: 1,
+explanation: "Les suites sont créées à partir de fichiers et dossiers."
+},
+{
+q: "Quel outil officiel est cité comme éditeur ?",
+options: [
+"A. VS Code",
+"B. PyCharm",
+"C. RIDE",
+"D. Eclipse"
+],
+answer: 2,
+explanation: "RIDE est l’éditeur dédié mentionné."
+},
+{
+q: "Quel type de bibliothèques sont incluses par défaut ?",
+options: [
+"A. Bibliothèques standards",
+"B. Bibliothèques web",
+"C. Bibliothèques cloud",
+"D. Bibliothèques mobiles"
+],
+answer: 0,
+explanation: "Certaines bibliothèques standard sont incluses nativement."
+},
+{
+q: "Les bibliothèques externes doivent être :",
+options: [
+"A. Incluses par défaut",
+"B. Installées séparément",
+"C. Développées en interne",
+"D. Importées en XML"
+],
+answer: 1,
+explanation: "Les bibliothèques externes doivent être installées séparément."
+},
+{
+q: "Quel est l’objectif de l’écosystème Robot Framework ?",
+options: [
+"A. Limiter les fonctionnalités",
+"B. Centraliser la documentation et extensions",
+"C. Remplacer Python",
+"D. Supprimer Selenium"
+],
+answer: 1,
+explanation: "L’écosystème regroupe documentation, bibliothèques et projets."
+},
+{
+q: "Quel type d’interface permet l’extension dans d’autres langages ?",
+options: [
+"A. REST",
+"B. SOAP",
+"C. Remote interface",
+"D. GUI"
+],
+answer: 2,
+explanation: "Les autres langages sont supportés via une interface distante."
+},
+{
+q: "Robot Framework est adapté à quel type de tests ?",
+options: [
+"A. Uniquement tests unitaires",
+"B. Tests manuels",
+"C. Tests automatisés et ATDD",
+"D. Tests de performance uniquement"
+],
+answer: 2,
+explanation: "Il est adapté à l’automatisation classique et à l’ATDD."
+},
+{
+q: "Quel sponsor principal est mentionné ?",
+options: [
+"A. Google",
+"B. Microsoft",
+"C. Nokia Networks",
+"D. IBM"
+],
+answer: 2,
+explanation: "Le framework est sponsorisé par Nokia Networks."
+},
+{
+q: "Quel est l’un des avantages clés de Robot Framework ?",
+options: [
+"A. Syntaxe complexe",
+"B. Communauté inactive",
+"C. Richesse de l’écosystème",
+"D. Fermé et propriétaire"
+],
+answer: 2,
+explanation: "Le document insiste sur l’écosystème riche et la communauté active."
+},
+{
+q: "À qui s’adresse principalement Robot Framework ?",
+options: [
+"A. Uniquement aux développeurs seniors",
+"B. Aux équipes de test et d’automatisation",
+"C. Aux graphistes",
+"D. Aux utilisateurs finaux"
+],
+answer: 1,
+explanation: "Robot Framework est destiné aux équipes de test et d’automatisation."
+}
+];
+
+let index = 0;
+let score = 0;
+
+const qEl = document.getElementById("question");
+const optEl = document.getElementById("options");
+const feedback = document.getElementById("feedback");
+const validateBtn = document.getElementById("validateBtn");
+const nextBtn = document.getElementById("nextBtn");
+
+function loadQuestion() {
+const q = questions[index];
+qEl.textContent = `Question ${index+1} : ${q.q}`;
+optEl.innerHTML = "";
+feedback.textContent = "";
+nextBtn.style.display = "none";
+
+q.options.forEach((opt, i) => {
+const label = document.createElement("label");
+label.innerHTML = `<input type="radio" name="option" value="${i}"> ${opt}`;
+optEl.appendChild(label);
+});
+}
+
+validateBtn.onclick = () => {
+const selected = document.querySelector('input[name="option"]:checked');
+if (!selected) return;
+
+const answer = parseInt(selected.value);
+const q = questions[index];
+
+if (answer === q.answer) {
+feedback.innerHTML = "✅ Bonne réponse !<br>" + q.explanation;
+score++;
+} else {
+feedback.innerHTML = "❌ Mauvaise réponse.<br>" + q.explanation;
+}
+nextBtn.style.display = "inline-block";
+};
+
+nextBtn.onclick = () => {
+index++;
+if (index < questions.length) {
+loadQuestion();
+} else {
+document.getElementById("qcm").innerHTML = `<h2>QCM terminé</h2><p>Votre score : ${score} / ${questions.length}</p>`;
+}
+};
+
+loadQuestion();
+</script>
+</body>
+</html>

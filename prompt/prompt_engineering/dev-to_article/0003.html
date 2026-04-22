@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>QCM – Prompt Engineering</title>
+<style>
+body { font-family: Arial, sans-serif; max-width: 900px; margin: 40px auto; }
+.progress { margin-bottom: 20px; }
+.progress-text { font-weight: bold; margin-bottom: 6px; }
+.progress-bar { height: 12px; background: #ddd; border-radius: 6px; overflow: hidden; }
+.progress-bar-fill { height: 100%; width: 0%; background: #4caf50; }
+.question { font-size: 1.1em; margin-bottom: 15px; }
+.options label { display: block; margin-bottom: 8px; cursor: pointer; }
+button { margin-top: 15px; padding: 8px 14px; }
+.feedback { margin-top: 15px; font-weight: bold; }
+</style>
+</head>
+<body>
+
+<div class="progress">
+  <div id="progressText" class="progress-text"></div>
+  <div class="progress-bar">
+    <div id="progressBar" class="progress-bar-fill"></div>
+  </div>
+</div>
+
+<div id="quiz"></div>
+<button id="validateBtn">Valider</button>
+<button id="nextBtn" style="display:none;">Question suivante</button>
+
+<script>
+const questions = [
+  { q:"À quoi est comparé le prompt engineering dans l’introduction ?", o:["À l’entraînement d’un modèle","À la grammaire et au vocabulaire d’une langue","Au développement logiciel","À la science des données"], a:1, e:"Le texte compare le prompt engineering à l’apprentissage de la grammaire et du vocabulaire de la communication avec l’IA." },
+  { q:"Sur quoi se concentre principalement le prompt engineering ?", o:["Les conversations longues","Les instructions individuelles","Les pipelines d’IA","Le stockage de données"], a:1, e:"Le prompt engineering se concentre sur des instructions individuelles et ciblées." },
+  { q:"Qu’est-ce que le context engineering gère davantage ?", o:["Les réponses courtes","Les modèles","Les workflows et conversations longues","Les prompts simples"], a:2, e:"Le context engineering orchestre des conversations longues et des interactions complexes." },
+  { q:"Le prompt engineering est décrit comme une discipline…", o:["Ancienne","Réservée aux développeurs","Relativement nouvelle","Purement linguistique"], a:2, e:"Le texte précise que le prompt engineering est une discipline relativement nouvelle." },
+  { q:"Quel élément n’est PAS cité dans la définition technique ?", o:["Psychologie","Linguistique","Mathématiques","Computer science"], a:2, e:"Les mathématiques ne sont pas mentionnées explicitement dans la définition." },
+  { q:"Pourquoi tout le monde peut apprendre le prompt engineering ?", o:["Il est automatisé","Il ne nécessite pas de programmation","Il est réservé aux experts","Il remplace l’IA"], a:1, e:"Le texte indique qu’aucune connaissance en programmation n’est requise." },
+  { q:"Quel est le but principal d’un prompt bien conçu ?", o:["Accélérer l’IA","Réduire le texte","Obtenir le résultat souhaité","Changer le modèle"], a:2, e:"Un prompt efficace vise à obtenir précisément le résultat désiré." },
+  { q:"Lequel fait partie des composants de tout prompt ?", o:["Budget","Intent","Design","Performance"], a:1, e:"L’intention (Intent) est l’un des composants fondamentaux listés." },
+  { q:"Que représente le composant « Context » ?", o:["Le format de sortie","Les contraintes techniques","Les informations de fond","Les exemples fournis"], a:2, e:"Le contexte fournit les informations de fond nécessaires." },
+  { q:"À quoi sert le composant « Format » ?", o:["Définir la longueur","Définir la structure attendue","Limiter le sujet","Tester l’IA"], a:1, e:"Le format précise la structure souhaitée de la réponse." },
+  { q:"Dans l’exemple chien, quelle est la cible ?", o:["Des vétérinaires","Des enfants","Des parents avec enfants","Des éducateurs canins"], a:2, e:"L’exemple est destiné à des parents avec des enfants." },
+  { q:"Quel élément fixe les limites du contenu ?", o:["Context","Constraints","Examples","Testing"], a:1, e:"Les contraintes définissent les limites et exigences." },
+  { q:"Que permet le framework TCRTE ?", o:["D’entraîner un modèle","De structurer des prompts efficaces","D’évaluer l’IA","De générer du code"], a:1, e:"Le TCRTE structure la conception de prompts." },
+  { q:"Que signifie le T dans TCRTE ?", o:["Testing","Task","Tone","Template"], a:1, e:"Le T correspond à Task." },
+  { q:"Que précise principalement la composante Task ?", o:["Pourquoi la tâche est faite","Ce que l’IA doit faire","Le style d’écriture","La méthode d’évaluation"], a:1, e:"Task définit clairement ce que l’IA doit accomplir." },
+  { q:"À quoi sert la composante Context ?", o:["Définir le public et la situation","Tester la sortie","Optimiser la longueur","Imiter un style"], a:0, e:"Le contexte fournit le pourquoi, le qui et l’environnement." },
+  { q:"Que fournissent les References ?", o:["Des règles strictes","Des exemples ou styles","Des métriques","Des données temps réel"], a:1, e:"Les références donnent des exemples ou des guides de style." },
+  { q:"À quoi correspond la phase Testing ?", o:["À la génération","À l’itération finale","À la validation des critères","À la créativité"], a:2, e:"Testing sert à vérifier si le résultat répond aux critères." },
+  { q:"Que vise la phase Enhancement ?", o:["La première version","L’amélioration itérative","La suppression du contexte","La réduction du texte"], a:1, e:"Enhancement concerne l’itération et l’amélioration." },
+  { q:"Quel est l’objectif du chain-of-thought prompting ?", o:["Raccourcir les réponses","Masquer le raisonnement","Améliorer la précision","Changer le ton"], a:2, e:"Il améliore la précision en explicitant le raisonnement." },
+  { q:"Quel type de tâches bénéficie le plus du chain-of-thought ?", o:["Tâches simples","Tâches créatives","Tâches complexes","Tâches répétitives"], a:2, e:"Il est surtout utile pour les tâches complexes." },
+  { q:"Sur quoi repose principalement le few-shot learning ?", o:["Des règles","Des exemples","Des contraintes","Des personas"], a:1, e:"Le few-shot learning fournit des exemples d’entrée-sortie." },
+  { q:"Quelle technique découpe une tâche en étapes ?", o:["Recursive prompting","Multi-step prompting","Persona-based","Constraint-based"], a:1, e:"Le multi-step prompting divise une tâche en étapes." },
+  { q:"Quelle technique assigne un rôle spécifique à l’IA ?", o:["Few-shot","Recursive","Persona-based prompting","Chain-of-thought"], a:2, e:"La persona-based prompting définit un rôle ou une expertise." },
+  { q:"Que fait le recursive prompting ?", o:["Change le modèle","Utilise la sortie comme entrée","Réduit les tokens","Ajoute des contraintes"], a:1, e:"La sortie est réutilisée comme entrée pour améliorer le résultat." },
+  { q:"Quel est le principe de la constraint-based creativity ?", o:["Supprimer les règles","Utiliser des limites pour créer","Imiter un style","Accélérer la réponse"], a:1, e:"Les contraintes stimulent la créativité." },
+  { q:"Quel piège est lié aux instructions trop vagues ?", o:["Information overload","Vague instructions","No audience","No testing"], a:1, e:"Les instructions vagues sont un piège courant." },
+  { q:"Que représente le A dans la méthode CLEAR ?", o:["Accuracy","Audience","Automation","Alignment"], a:1, e:"A correspond à Audience." },
+  { q:"Pourquoi définir des critères de succès ?", o:["Pour tester le modèle","Pour mesurer la qualité","Pour réduire le texte","Pour changer l’IA"], a:1, e:"Les critères permettent de mesurer le succès du résultat." }
+];
+
+let current = 0;
+let score = 0;
+let validated = false;
+
+const quizDiv = document.getElementById("quiz");
+const validateBtn = document.getElementById("validateBtn");
+const nextBtn = document.getElementById("nextBtn");
+
+function renderQuestion() {
+  const q = questions[current];
+  document.getElementById("progressText").textContent = `Question ${current + 1} / ${questions.length}`;
+  document.getElementById("progressBar").style.width = ((current + 1) / questions.length * 100) + "%";
+  quizDiv.innerHTML = `
+    <div class="question">${q.q}</div>
+    <div class="options">
+      ${q.o.map((opt, i) => `
+        <label>
+          <input type="radio" name="option" value="${i}"> ${String.fromCharCode(65+i)}. ${opt}
+        </label>`).join("")}
+    </div>
+    <div id="feedback" class="feedback"></div>
+  `;
+  validated = false;
+  validateBtn.style.display = "inline";
+  nextBtn.style.display = "none";
+}
+
+validateBtn.onclick = () => {
+  if (validated) return;
+  const selected = document.querySelector('input[name="option"]:checked');
+  if (!selected) return;
+  const answer = parseInt(selected.value);
+  document.querySelectorAll('input[name="option"]').forEach(r => r.disabled = true);
+  const feedback = document.getElementById("feedback");
+  if (answer === questions[current].a) {
+    score++;
+    feedback.textContent = "Bonne réponse ! " + questions[current].e;
+  } else {
+    feedback.textContent = "Mauvaise réponse. " + questions[current].e;
+  }
+  validated = true;
+  validateBtn.style.display = "none";
+  nextBtn.style.display = "inline";
+};
+
+nextBtn.onclick = () => {
+  current++;
+  if (current < questions.length) {
+    renderQuestion();
+  } else {
+    quizDiv.innerHTML = `<h2>QCM terminé</h2><p>Votre score : ${score} / ${questions.length}</p>`;
+    document.querySelector(".progress").style.display = "none";
+    validateBtn.style.display = "none";
+    nextBtn.style.display = "none";
+  }
+};
+
+renderQuestion();
+</script>
+</body>
+</html>
