@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QCM n8n — Vol.2</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0d0f1a;
+    --surface: #12141f;
+    --card: #181a28;
+    --border: #252838;
+    --accent: #6c63ff;
+    --accent2: #00d4aa;
+    --green: #2ecc71;
+    --red: #e74c3c;
+    --text: #e8e8f5;
+    --muted: #5a5d78;
+    --radius: 12px;
+  }
+
+  body {
+    font-family: 'Syne', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 20px;
+    background-image:
+      radial-gradient(ellipse at 15% 15%, rgba(108,99,255,0.1) 0%, transparent 50%),
+      radial-gradient(ellipse at 85% 85%, rgba(0,212,170,0.07) 0%, transparent 50%);
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 36px;
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(108,99,255,0.15);
+    border: 1px solid rgba(108,99,255,0.3);
+    color: var(--accent);
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 2px;
+    padding: 6px 14px;
+    border-radius: 99px;
+    margin-bottom: 16px;
+    text-transform: uppercase;
+  }
+
+  .badge::before { content: '◆'; font-size: 8px; }
+
+  header h1 {
+    font-size: clamp(2rem, 5vw, 3rem);
+    font-weight: 800;
+    line-height: 1.1;
+    letter-spacing: -1px;
+  }
+
+  header h1 span { color: var(--accent2); }
+
+  header p {
+    margin-top: 10px;
+    color: var(--muted);
+    font-size: 13px;
+    font-family: 'Space Mono', monospace;
+  }
+
+  .quiz-wrapper { width: 100%; max-width: 740px; }
+
+  /* Progress */
+  .prog-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  .prog-bg {
+    flex: 1;
+    height: 5px;
+    background: var(--border);
+    border-radius: 99px;
+    overflow: hidden;
+  }
+
+  .prog-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    border-radius: 99px;
+    transition: width 0.5s cubic-bezier(.4,0,.2,1);
+    width: 0%;
+  }
+
+  .prog-txt {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  /* Card */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 38px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .card::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+  }
+
+  .q-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+
+  .q-num {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: var(--accent);
+    text-transform: uppercase;
+  }
+
+  .q-cat {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    background: rgba(0,212,170,0.1);
+    border: 1px solid rgba(0,212,170,0.2);
+    color: var(--accent2);
+    padding: 2px 8px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .q-text {
+    font-size: 1.2rem;
+    font-weight: 700;
+    line-height: 1.55;
+    margin-bottom: 26px;
+    letter-spacing: -0.2px;
+  }
+
+  .options {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 22px;
+  }
+
+  .opt {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    padding: 13px 16px;
+    cursor: pointer;
+    transition: all 0.18s ease;
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    width: 100%;
+    text-align: left;
+  }
+
+  .opt:hover:not(:disabled) {
+    border-color: var(--accent);
+    background: rgba(108,99,255,0.07);
+    transform: translateX(4px);
+  }
+
+  .opt.selected { border-color: rgba(108,99,255,0.6); background: rgba(108,99,255,0.08); }
+  .opt.correct  { border-color: var(--green); background: rgba(46,204,113,0.09); }
+  .opt.wrong    { border-color: var(--red);   background: rgba(231,76,60,0.08); }
+  .opt:disabled { cursor: default; }
+
+  .ltr {
+    width: 30px; height: 30px;
+    border-radius: 7px;
+    background: var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Space Mono', monospace;
+    font-size: 12px; font-weight: 700;
+    flex-shrink: 0;
+    transition: background 0.2s, color 0.2s;
+  }
+
+  .opt.selected .ltr { background: var(--accent); color: #fff; }
+  .opt.correct  .ltr { background: var(--green);  color: #000; }
+  .opt.wrong    .ltr { background: var(--red);    color: #fff; }
+
+  .expl {
+    display: none;
+    background: rgba(0,212,170,0.06);
+    border-left: 3px solid var(--accent2);
+    border-radius: 0 8px 8px 0;
+    padding: 11px 15px;
+    font-size: 13px;
+    font-family: 'Space Mono', monospace;
+    color: var(--accent2);
+    margin-bottom: 20px;
+    animation: pop 0.3s ease;
+  }
+  .expl.show { display: block; }
+
+  @keyframes pop {
+    from { opacity: 0; transform: translateY(-5px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+  }
+
+  .btn {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    padding: 11px 22px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.18s ease;
+    letter-spacing: 0.4px;
+  }
+
+  .btn-val {
+    background: var(--accent);
+    color: #fff;
+  }
+  .btn-val:hover:not(:disabled) {
+    background: #857aff;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(108,99,255,0.4);
+  }
+  .btn-val:disabled {
+    background: var(--border);
+    color: var(--muted);
+    cursor: not-allowed;
+  }
+
+  .btn-nxt {
+    background: var(--accent2);
+    color: #000;
+    display: none;
+  }
+  .btn-nxt:hover { background: #00f0c0; transform: translateY(-1px); box-shadow: 0 6px 18px rgba(0,212,170,0.35); }
+  .btn-nxt.on { display: block; }
+
+  /* Results */
+  .results { display: none; text-align: center; padding: 10px 0; animation: pop 0.4s ease; }
+  .results.show { display: block; }
+
+  .ring-wrap { width: 170px; height: 170px; margin: 0 auto 26px; position: relative; }
+  .ring-wrap svg { transform: rotate(-90deg); }
+  circle { fill: none; stroke-width: 10; stroke-linecap: round; }
+  .rc-bg { stroke: var(--border); }
+  .rc-fg { stroke: var(--accent); stroke-dasharray: 440; stroke-dashoffset: 440; transition: stroke-dashoffset 1.1s cubic-bezier(.4,0,.2,1) 0.2s; }
+
+  .ring-center {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+  }
+
+  .r-score { font-size: 2.6rem; font-weight: 800; color: var(--accent); line-height: 1; }
+  .r-denom { font-family: 'Space Mono', monospace; font-size: 12px; color: var(--muted); margin-top: 3px; }
+
+  .r-pct { font-size: 1.15rem; font-weight: 700; margin-bottom: 6px; }
+  .r-msg { color: var(--muted); font-size: 13px; font-family: 'Space Mono', monospace; margin-bottom: 28px; }
+
+  .btn-restart { background: var(--accent); color: #fff; padding: 13px 34px; font-size: 15px; }
+  .btn-restart:hover { background: #857aff; transform: translateY(-1px); box-shadow: 0 8px 24px rgba(108,99,255,0.4); }
+
+  @media (max-width: 500px) {
+    .card { padding: 22px 16px; }
+    .q-text { font-size: 1.05rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="badge">Vol. 2 — Niveau avancé</div>
+  <h1>QCM <span>n8n</span></h1>
+  <p>25 questions · Workflows · Agents IA · Intégrations</p>
+</header>
+
+<div class="quiz-wrapper">
+  <div class="prog-row">
+    <div class="prog-bg"><div class="prog-fill" id="pFill"></div></div>
+    <span class="prog-txt" id="pLabel">0 / 25</span>
+  </div>
+
+  <div class="card" id="card">
+    <div id="qContent">
+      <div class="q-meta">
+        <span class="q-num" id="qNum">Question 1 / 25</span>
+        <span class="q-cat" id="qCat"></span>
+      </div>
+      <div class="q-text" id="qText"></div>
+      <div class="options" id="opts"></div>
+      <div class="expl" id="expl"></div>
+      <div class="actions">
+        <button class="btn btn-val" id="btnVal" disabled>Valider</button>
+        <button class="btn btn-nxt" id="btnNxt">Suivant →</button>
+      </div>
+    </div>
+
+    <div class="results" id="results">
+      <div class="ring-wrap">
+        <svg width="170" height="170" viewBox="0 0 140 140">
+          <circle class="rc-bg" cx="70" cy="70" r="70"/>
+          <circle class="rc-fg" id="rcFg" cx="70" cy="70" r="70"/>
+        </svg>
+        <div class="ring-center">
+          <div class="r-score" id="rScore">0</div>
+          <div class="r-denom">/ 25</div>
+        </div>
+      </div>
+      <div class="r-pct" id="rPct"></div>
+      <div class="r-msg" id="rMsg"></div>
+      <button class="btn btn-restart" onclick="restart()">↺ Recommencer</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const LETTERS = ['a','b','c','d'];
+
+const questions = [
+  {
+    cat: "Triggers",
+    q: "Quel trigger permet de démarrer un workflow quand un email est reçu dans Gmail ?",
+    opts: ["HTTP Request node", "Gmail Trigger", "Schedule Trigger", "Webhook node"],
+    c: 1,
+    expl: "Gmail Trigger écoute les nouveaux emails entrants."
+  },
+  {
+    cat: "Expressions",
+    q: "Comment accéder à la valeur d'un champ 'email' du node précédent ?",
+    opts: ["$input.first().json.email", "{{ $json.email }}", "get('email')", "input.email"],
+    c: 1,
+    expl: "{{ $json.email }} est la syntaxe expression standard."
+  },
+  {
+    cat: "Agents IA",
+    q: "Quel node est le point de départ pour créer un agent IA dans n8n ?",
+    opts: ["Code node", "AI Agent node", "LLM Chain node", "OpenAI node"],
+    c: 1,
+    expl: "Le node AI Agent orchestre le LLM et les outils."
+  },
+  {
+    cat: "Données",
+    q: "Que fait le node 'Set' dans n8n ?",
+    opts: ["Exécute une requête SQL", "Définit ou modifie des champs dans l'item JSON", "Envoie des données à une API", "Filtre les items selon une condition"],
+    c: 1,
+    expl: "Set ajoute ou écrase des propriétés dans le JSON."
+  },
+  {
+    cat: "Erreurs",
+    q: "Quel node permet de gérer les erreurs d'un workflow dans n8n ?",
+    opts: ["Try/Catch node", "Error Trigger node", "Stop and Error node", "IF node"],
+    c: 1,
+    expl: "Error Trigger intercepte les erreurs d'autres workflows."
+  },
+  {
+    cat: "Intégrations",
+    q: "Comment n8n se connecte-t-il à une base de données PostgreSQL ?",
+    opts: ["Via un plugin Python", "Via le node Postgres avec un credential DB", "Via un fichier .env uniquement", "Via SSH tunnel obligatoire"],
+    c: 1,
+    expl: "Le node Postgres utilise un credential de connexion DB."
+  },
+  {
+    cat: "Boucles",
+    q: "Quel node permet de traiter des items par lots (batches) ?",
+    opts: ["Loop Over Items", "Split In Batches", "Merge node", "Execute Once"],
+    c: 1,
+    expl: "Split In Batches découpe le flux en groupes d'items."
+  },
+  {
+    cat: "Agents IA",
+    q: "Qu'est-ce que la 'mémoire' dans un agent IA n8n ?",
+    opts: ["Un fichier JSON stocké sur disque", "Un contexte conservé entre les tours de conversation", "Une base vectorielle externe obligatoire", "Un credential spécial"],
+    c: 1,
+    expl: "La mémoire conserve l'historique des échanges du LLM."
+  },
+  {
+    cat: "Workflow",
+    q: "Comment partager un workflow n8n avec un collègue ?",
+    opts: ["Copier-coller le canvas", "Exporter en JSON et importer", "Envoyer le fichier .n8n par email", "Utiliser uniquement n8n Cloud"],
+    c: 1,
+    expl: "Export/import JSON est la méthode standard de partage."
+  },
+  {
+    cat: "HTTP",
+    q: "Quel format de données le node HTTP Request envoie-t-il par défaut en POST ?",
+    opts: ["XML", "CSV", "JSON", "Form-data"],
+    c: 2,
+    expl: "Par défaut, HTTP Request envoie du JSON en POST."
+  },
+  {
+    cat: "Triggers",
+    q: "Quelle syntaxe cron déclenche un workflow toutes les heures ?",
+    opts: ["0 * * * *", "* 0 * * *", "0 0 * * *", "*/60 * * * *"],
+    c: 0,
+    expl: "0 * * * * = chaque heure, à la minute 0."
+  },
+  {
+    cat: "Agents IA",
+    q: "Quel modèle de langage est directement supporté comme LLM dans n8n ?",
+    opts: ["BERT", "GPT via OpenAI node", "T5 local uniquement", "DALL-E"],
+    c: 1,
+    expl: "n8n intègre OpenAI, Anthropic, Google et autres LLMs."
+  },
+  {
+    cat: "Données",
+    q: "Que fait le node 'Filter' dans n8n ?",
+    opts: ["Trie les items par ordre alphabétique", "Supprime les items ne remplissant pas une condition", "Fusionne deux flux de données", "Déduplique les items identiques"],
+    c: 1,
+    expl: "Filter garde uniquement les items qui passent la condition."
+  },
+  {
+    cat: "Sécurité",
+    q: "Où sont stockés les credentials (clés API) dans n8n ?",
+    opts: ["Dans le code du workflow en clair", "Chiffrés dans la base de données n8n", "Dans un fichier .env partagé", "Dans le navigateur de l'utilisateur"],
+    c: 1,
+    expl: "Les credentials sont chiffrés dans la DB interne n8n."
+  },
+  {
+    cat: "Workflow",
+    q: "Qu'est-ce qu'un 'sub-workflow' dans n8n ?",
+    opts: ["Un workflow déclenché par un autre via Execute Workflow", "Un workflow en mode debug", "Une copie de sauvegarde automatique", "Un workflow désactivé"],
+    c: 0,
+    expl: "Execute Workflow appelle un autre workflow comme sous-routine."
+  },
+  {
+    cat: "Intégrations",
+    q: "Quel node n8n permet d'interagir avec Google Sheets ?",
+    opts: ["Spreadsheet node", "Google Sheets node", "Excel node", "Table node"],
+    c: 1,
+    expl: "Google Sheets node lit, écrit, met à jour les cellules."
+  },
+  {
+    cat: "Expressions",
+    q: "Comment récupérer le nombre total d'items dans le flux actuel ?",
+    opts: ["$items.length", "{{ $input.all().length }}", "count($json)", "$flow.items"],
+    c: 1,
+    expl: "$input.all() retourne tous les items du flux entrant."
+  },
+  {
+    cat: "Agents IA",
+    q: "À quoi sert un 'Vector Store' dans un agent IA n8n ?",
+    opts: ["Stocker des images compressées", "Rechercher des documents par similarité sémantique", "Gérer l'authentification OAuth", "Exécuter du code Python"],
+    c: 1,
+    expl: "Le Vector Store permet la recherche sémantique (RAG)."
+  },
+  {
+    cat: "HTTP",
+    q: "Que signifie un code de réponse HTTP 429 dans n8n ?",
+    opts: ["Ressource non trouvée", "Trop de requêtes — rate limit atteint", "Erreur serveur interne", "Authentification refusée"],
+    c: 1,
+    expl: "429 = Too Many Requests, limite d'API dépassée."
+  },
+  {
+    cat: "Workflow",
+    q: "Quel est l'avantage principal de l'auto-hébergement n8n ?",
+    opts: ["Plus de nodes disponibles", "Contrôle total des données et coût réduit", "Support prioritaire inclus", "Interface plus rapide"],
+    c: 1,
+    expl: "Auto-hébergement = données privées, pas de coût d'abonnement."
+  },
+  {
+    cat: "Données",
+    q: "Que fait le node 'Aggregate' dans n8n ?",
+    opts: ["Divise un item en plusieurs", "Regroupe plusieurs items en un seul", "Filtre les doublons", "Convertit JSON en CSV"],
+    c: 1,
+    expl: "Aggregate combine tous les items en un objet unique."
+  },
+  {
+    cat: "Agents IA",
+    q: "Quel protocole standard n8n supporte pour les outils d'agents IA externes ?",
+    opts: ["REST uniquement", "GraphQL", "MCP (Model Context Protocol)", "SOAP"],
+    c: 2,
+    expl: "n8n supporte MCP pour connecter des outils externes aux agents."
+  },
+  {
+    cat: "Intégrations",
+    q: "Comment envoyer un message Slack depuis n8n ?",
+    opts: ["Via un node Email avec adresse Slack", "Via le node Slack avec un credential Bot Token", "Via un Webhook sortant uniquement", "Via le node HTTP Request vers api.slack.com manuellement"],
+    c: 1,
+    expl: "Le node Slack utilise un Bot Token OAuth pour envoyer."
+  },
+  {
+    cat: "Workflow",
+    q: "Que se passe-t-il si on désactive un workflow actif dans n8n ?",
+    opts: ["Il est supprimé définitivement", "Il cesse d'écouter ses triggers mais reste sauvegardé", "Il continue en arrière-plan", "Il passe en mode debug automatiquement"],
+    c: 1,
+    expl: "Désactiver stoppe les triggers, le workflow reste intact."
+  },
+  {
+    cat: "Débogage",
+    q: "Comment inspecter les données entre deux nodes dans n8n ?",
+    opts: ["Ajouter un node Console.log", "Cliquer sur le lien entre nodes pour voir les données", "Activer le mode SSH", "Exporter en CSV à chaque étape"],
+    c: 1,
+    expl: "Cliquer sur le connecteur affiche les items JSON en transit."
+  }
+];
+
+function buildQ(q, idx) {
+  const targetPos = idx % 4;
+  const correctText = q.opts[q.c];
+  const distractors = q.opts.filter((_, i) => i !== q.c);
+  const slots = [null,null,null,null];
+  slots[targetPos] = correctText;
+  let di = 0;
+  for (let i = 0; i < 4; i++) { if (!slots[i]) slots[i] = distractors[di++]; }
+  return { cat: q.cat, text: q.q, opts: slots, ci: targetPos, expl: q.expl };
+}
+
+let built = [], cur = 0, score = 0, answered = false;
+
+function init() {
+  built = questions.map((q,i) => buildQ(q,i));
+  cur = 0; score = 0;
+  document.getElementById('qContent').style.display = 'block';
+  document.getElementById('results').classList.remove('show');
+  document.getElementById('rcFg').style.strokeDashoffset = 440;
+  document.getElementById('rcFg').style.stroke = 'var(--accent)';
+  render();
+}
+
+function render() {
+  answered = false;
+  const q = built[cur];
+  const total = questions.length;
+
+  document.getElementById('qNum').textContent = `Question ${cur+1} / ${total}`;
+  document.getElementById('qCat').textContent = q.cat;
+  document.getElementById('qText').textContent = q.text;
+
+  const container = document.getElementById('opts');
+  container.innerHTML = '';
+  q.opts.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'opt';
+    btn.innerHTML = `<span class="ltr">${LETTERS[i]}</span><span>${opt}</span>`;
+    btn.addEventListener('click', () => pick(i));
+    container.appendChild(btn);
+  });
+
+  document.getElementById('expl').className = 'expl';
+  document.getElementById('expl').textContent = '';
+  document.getElementById('btnVal').disabled = true;
+  delete document.getElementById('btnVal').dataset.sel;
+  document.getElementById('btnNxt').className = 'btn btn-nxt';
+
+  updateProg();
+}
+
+function pick(idx) {
+  if (answered) return;
+  document.querySelectorAll('.opt').forEach((b,i) => b.classList.toggle('selected', i===idx));
+  document.getElementById('btnVal').dataset.sel = idx;
+  document.getElementById('btnVal').disabled = false;
+}
+
+document.getElementById('btnVal').addEventListener('click', () => {
+  if (answered) return;
+  answered = true;
+  const q = built[cur];
+  const sel = parseInt(document.getElementById('btnVal').dataset.sel);
+  document.querySelectorAll('.opt').forEach((btn, i) => {
+    btn.disabled = true;
+    if (i === q.ci) btn.classList.add('correct');
+    else if (i === sel && sel !== q.ci) btn.classList.add('wrong');
+  });
+  if (sel === q.ci) score++;
+  const expl = document.getElementById('expl');
+  expl.textContent = '→ ' + q.expl;
+  expl.classList.add('show');
+  document.getElementById('btnVal').disabled = true;
+  document.getElementById('btnNxt').className = 'btn btn-nxt on';
+});
+
+document.getElementById('btnNxt').addEventListener('click', () => {
+  cur++;
+  if (cur >= questions.length) showResults();
+  else render();
+});
+
+function updateProg() {
+  const pct = (cur / questions.length) * 100;
+  document.getElementById('pFill').style.width = pct + '%';
+  document.getElementById('pLabel').textContent = `${cur} / ${questions.length}`;
+}
+
+function showResults() {
+  document.getElementById('qContent').style.display = 'none';
+  document.getElementById('pFill').style.width = '100%';
+  document.getElementById('pLabel').textContent = `${questions.length} / ${questions.length}`;
+  document.getElementById('results').classList.add('show');
+
+  const pct = Math.round((score / questions.length) * 100);
+  document.getElementById('rScore').textContent = score;
+  document.getElementById('rPct').textContent = pct + '%';
+
+  let msg = '';
+  if (pct >= 88) msg = '// Expert confirmé — Entretien ready 🚀';
+  else if (pct >= 70) msg = '// Très solide — Peaufine les détails';
+  else if (pct >= 52) msg = '// En bonne voie — Pratique encore';
+  else msg = '// Reprends les bases — Relis la doc n8n';
+  document.getElementById('rMsg').textContent = msg;
+
+  const circ = 2 * Math.PI * 70;
+  const offset = circ - (pct / 100) * circ;
+  setTimeout(() => { document.getElementById('rcFg').style.strokeDashoffset = offset; }, 100);
+  if (pct >= 70) document.getElementById('rcFg').style.stroke = 'var(--green)';
+  else if (pct >= 50) document.getElementById('rcFg').style.stroke = 'var(--accent2)';
+}
+
+function restart() { init(); }
+
+init();
+</script>
+</body>
+</html>

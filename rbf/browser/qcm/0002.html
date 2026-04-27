@@ -1,0 +1,1463 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>QCM · Robot Framework Browser</title>
+<style>
+:root {
+  --bg: #f5f1ea;
+  --bg-paper: #fbf8f3;
+  --bg-elevated: #ffffff;
+  --ink: #1a1814;
+  --ink-soft: #4a443c;
+  --ink-muted: #8b8278;
+  --rule: #d9d0c2;
+  --rule-soft: #e8e1d4;
+  --accent: #c8472b;
+  --accent-soft: #f0d7cf;
+  --correct: #2d6a3e;
+  --correct-soft: #d4e6d9;
+  --incorrect: #b03028;
+  --incorrect-soft: #f0d4d1;
+  --code-bg: #2a2520;
+  --code-ink: #e8dfd0;
+  --code-accent: #e89b5a;
+  --shadow-sm: 0 1px 2px rgba(26,24,20,0.06), 0 2px 4px rgba(26,24,20,0.04);
+  --shadow-md: 0 4px 12px rgba(26,24,20,0.08), 0 2px 4px rgba(26,24,20,0.05);
+  --shadow-lg: 0 12px 32px rgba(26,24,20,0.10), 0 4px 8px rgba(26,24,20,0.06);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, 'Times New Roman', serif;
+  font-size: 17px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  background-image:
+    radial-gradient(circle at 10% 0%, rgba(200,71,43,0.04) 0%, transparent 40%),
+    radial-gradient(circle at 90% 100%, rgba(45,106,62,0.04) 0%, transparent 40%);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+code, pre, .mono {
+  font-family: 'JetBrains Mono', 'Fira Code', 'SF Mono', Menlo, Consolas, monospace;
+  font-feature-settings: 'liga' 1, 'calt' 1;
+}
+
+.app {
+  width: 100%;
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 32px 24px 48px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.masthead {
+  border-bottom: 1px solid var(--rule);
+  padding-bottom: 18px;
+  margin-bottom: 28px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.brand { display: flex; flex-direction: column; gap: 2px; }
+
+.brand-mark {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+  font-weight: 500;
+}
+
+.brand-title {
+  font-size: 26px;
+  font-weight: 600;
+  font-style: italic;
+  letter-spacing: -0.01em;
+  line-height: 1.1;
+}
+
+.brand-title em { font-style: normal; color: var(--accent); }
+
+.meta-line {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--ink-muted);
+  letter-spacing: 0.05em;
+  text-align: right;
+}
+
+.meta-line .best { color: var(--ink-soft); font-weight: 600; }
+
+.progress-bar {
+  position: relative;
+  height: 3px;
+  background: var(--rule-soft);
+  margin-bottom: 24px;
+  overflow: hidden;
+}
+.progress-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: var(--ink);
+  width: 0%;
+  transition: width 0.4s cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+.progress-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 24px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--ink-muted);
+  letter-spacing: 0.08em;
+}
+.progress-counter { color: var(--ink); font-weight: 600; }
+.progress-score .score-num { color: var(--ink); font-weight: 600; }
+
+.card {
+  background: var(--bg-paper);
+  border: 1px solid var(--rule);
+  padding: 32px 30px;
+  box-shadow: var(--shadow-md);
+  position: relative;
+  animation: fadeUp 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 32px; height: 1px;
+  background: var(--accent);
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.q-tag {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 14px;
+  font-weight: 600;
+}
+
+.q-text {
+  font-size: 21px;
+  line-height: 1.45;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  margin-bottom: 28px;
+  color: var(--ink);
+}
+
+.q-text code, .opt-text code, .missed-q code, .missed-answer code {
+  background: var(--code-bg);
+  color: var(--code-ink);
+  padding: 2px 7px;
+  border-radius: 3px;
+  font-size: 0.85em;
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+.options { display: flex; flex-direction: column; gap: 10px; }
+
+.opt {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 14px 16px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--rule);
+  cursor: pointer;
+  transition: all 0.18s ease;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  width: 100%;
+  position: relative;
+}
+
+.opt:hover:not(:disabled):not(.locked) {
+  border-color: var(--ink);
+  transform: translateX(2px);
+}
+
+.opt:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.opt-letter {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  font-weight: 700;
+  width: 26px; height: 26px;
+  border: 1px solid var(--rule);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.18s ease;
+  background: var(--bg-paper);
+}
+
+.opt-text {
+  font-size: 15.5px;
+  line-height: 1.5;
+  padding-top: 2px;
+  flex: 1;
+}
+
+.opt.selected {
+  border-color: var(--ink);
+  background: var(--bg-paper);
+}
+.opt.selected .opt-letter {
+  background: var(--ink);
+  color: var(--bg-paper);
+  border-color: var(--ink);
+}
+
+.opt.correct {
+  border-color: var(--correct);
+  background: var(--correct-soft);
+}
+.opt.correct .opt-letter {
+  background: var(--correct);
+  color: #fff;
+  border-color: var(--correct);
+}
+
+.opt.incorrect {
+  border-color: var(--incorrect);
+  background: var(--incorrect-soft);
+}
+.opt.incorrect .opt-letter {
+  background: var(--incorrect);
+  color: #fff;
+  border-color: var(--incorrect);
+}
+
+.opt.locked { cursor: default; }
+.opt.dimmed { opacity: 0.55; }
+
+.opt-mark {
+  margin-left: auto;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  align-self: center;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  flex-shrink: 0;
+}
+.opt.correct .opt-mark { opacity: 1; color: var(--correct); }
+.opt.incorrect .opt-mark { opacity: 1; color: var(--incorrect); }
+
+.explanation {
+  margin-top: 22px;
+  padding: 16px 18px;
+  border-left: 2px solid var(--accent);
+  background: rgba(200,71,43,0.04);
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--ink-soft);
+  font-style: italic;
+  display: none;
+  animation: fadeIn 0.35s ease;
+}
+.explanation.visible { display: block; }
+.explanation::before {
+  content: 'Note';
+  display: block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--accent);
+  font-style: normal;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+.action-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 26px;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.hint {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--ink-muted);
+  letter-spacing: 0.04em;
+}
+.hint kbd {
+  display: inline-block;
+  padding: 2px 6px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--rule);
+  border-bottom-width: 2px;
+  border-radius: 3px;
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--ink);
+  margin: 0 1px;
+}
+
+.btn {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-weight: 600;
+  padding: 11px 22px;
+  border: 1px solid var(--ink);
+  background: var(--ink);
+  color: var(--bg-paper);
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+.btn:hover:not(:disabled) {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+.btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.welcome {
+  background: var(--bg-paper);
+  border: 1px solid var(--rule);
+  padding: 40px 32px;
+  box-shadow: var(--shadow-md);
+  position: relative;
+  animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.welcome::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 48px; height: 1px;
+  background: var(--accent);
+}
+.welcome-eyebrow {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 14px;
+  font-weight: 600;
+}
+.welcome h1 {
+  font-size: 32px;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  line-height: 1.15;
+  margin-bottom: 8px;
+}
+.welcome h1 em {
+  font-style: italic;
+  color: var(--accent);
+  font-weight: 500;
+}
+.welcome p {
+  color: var(--ink-soft);
+  font-size: 16px;
+  line-height: 1.6;
+  margin-bottom: 22px;
+  max-width: 56ch;
+}
+
+.themes-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 28px;
+}
+.theme-chip {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  padding: 6px 12px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--rule);
+  color: var(--ink-soft);
+  text-transform: lowercase;
+}
+
+.welcome-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  padding-top: 20px;
+  border-top: 1px solid var(--rule-soft);
+}
+
+.btn-secondary {
+  background: transparent;
+  color: var(--ink);
+  border-color: var(--rule);
+}
+.btn-secondary:hover:not(:disabled) {
+  background: var(--bg-elevated);
+  border-color: var(--ink);
+  color: var(--ink);
+}
+
+.spec-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  margin-bottom: 28px;
+  padding: 18px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--rule);
+}
+.spec-item { display: flex; flex-direction: column; gap: 4px; }
+.spec-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+  font-weight: 500;
+}
+.spec-value {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--ink);
+  font-style: italic;
+}
+
+.final {
+  background: var(--bg-paper);
+  border: 1px solid var(--rule);
+  padding: 36px 32px;
+  box-shadow: var(--shadow-md);
+  animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+}
+.final::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 64px; height: 1px;
+  background: var(--accent);
+}
+
+.final-header {
+  text-align: center;
+  border-bottom: 1px solid var(--rule);
+  padding-bottom: 30px;
+  margin-bottom: 30px;
+}
+
+.final-eyebrow {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 10px;
+  font-weight: 600;
+}
+
+.final-score-display {
+  font-family: 'Iowan Old Style', Palatino, Georgia, serif;
+  font-size: 88px;
+  font-weight: 600;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  color: var(--ink);
+  margin-bottom: 4px;
+}
+.final-score-display .denom {
+  color: var(--ink-muted);
+  font-size: 0.5em;
+  font-weight: 400;
+  font-style: italic;
+}
+
+.final-percent {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  letter-spacing: 0.1em;
+  color: var(--ink-soft);
+}
+.final-percent .pct-num { color: var(--accent); font-weight: 700; font-size: 16px; }
+
+.final-verdict {
+  font-size: 17px;
+  font-style: italic;
+  color: var(--ink-soft);
+  margin-top: 10px;
+}
+
+.missed-section h2 {
+  font-size: 13px;
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+  font-weight: 600;
+  margin-bottom: 18px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--rule-soft);
+}
+.missed-section h2 .count { color: var(--accent); font-weight: 700; }
+
+.missed-empty {
+  text-align: center;
+  padding: 30px 20px;
+  color: var(--correct);
+  font-style: italic;
+  font-size: 17px;
+  background: var(--correct-soft);
+  border: 1px solid var(--correct);
+}
+
+.missed-section { counter-reset: missed; }
+
+.missed-item {
+  padding: 18px 0;
+  border-bottom: 1px dashed var(--rule);
+}
+.missed-item:last-child { border-bottom: none; }
+
+.missed-q {
+  font-size: 16px;
+  line-height: 1.5;
+  margin-bottom: 12px;
+  font-weight: 500;
+}
+.missed-q::before {
+  content: counter(missed) '.';
+  counter-increment: missed;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  color: var(--accent);
+  font-weight: 700;
+  margin-right: 8px;
+}
+
+.missed-answers {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 8px;
+  font-size: 14.5px;
+  line-height: 1.5;
+}
+.missed-answer {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+.missed-answer-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-weight: 700;
+  flex-shrink: 0;
+  padding-top: 3px;
+  width: 70px;
+}
+.missed-answer.your { color: var(--incorrect); }
+.missed-answer.your .missed-answer-label { color: var(--incorrect); }
+.missed-answer.right { color: var(--correct); }
+.missed-answer.right .missed-answer-label { color: var(--correct); }
+
+.missed-explanation {
+  margin-top: 8px;
+  padding-left: 12px;
+  border-left: 2px solid var(--rule);
+  font-style: italic;
+  color: var(--ink-muted);
+  font-size: 14px;
+}
+
+.app-footer {
+  margin-top: 28px;
+  text-align: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+.app-footer .dot { color: var(--accent); margin: 0 6px; }
+
+@media (max-width: 640px) {
+  body { font-size: 16px; }
+  .app { padding: 20px 16px 32px; }
+  .masthead { gap: 10px; padding-bottom: 14px; margin-bottom: 20px; }
+  .brand-title { font-size: 22px; }
+  .meta-line { text-align: left; }
+  .card { padding: 24px 20px; }
+  .welcome { padding: 30px 22px; }
+  .welcome h1 { font-size: 26px; }
+  .q-text { font-size: 18px; margin-bottom: 22px; }
+  .opt { padding: 12px 13px; gap: 11px; }
+  .opt-text { font-size: 14.5px; }
+  .opt-letter { width: 24px; height: 24px; font-size: 12px; }
+  .final-score-display { font-size: 64px; }
+  .final { padding: 28px 22px; }
+  .spec-grid { grid-template-columns: 1fr; gap: 14px; padding: 16px; }
+  .action-row { flex-direction: column-reverse; align-items: stretch; }
+  .btn { width: 100%; padding: 13px 22px; }
+  .hint { text-align: center; font-size: 10px; }
+  .opt-mark { display: none; }
+  .missed-answer-label { width: 56px; font-size: 9px; }
+}
+
+@media (max-width: 380px) {
+  .q-text { font-size: 16.5px; }
+  .opt-text { font-size: 14px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+</style>
+</head>
+<body>
+
+<main class="app" id="app">
+  <header class="masthead">
+    <div class="brand">
+      <span class="brand-mark">QCM · Robot Framework</span>
+      <span class="brand-title">Browser <em>Library</em></span>
+    </div>
+    <div class="meta-line" id="metaLine"></div>
+  </header>
+
+  <div id="screen"></div>
+
+  <footer class="app-footer">
+    Sélecteurs <span class="dot">·</span> Assertions <span class="dot">·</span> Réseau
+  </footer>
+</main>
+
+<script>
+/* ====================================================================
+   CONFIG
+   ==================================================================== */
+const CONFIG = {
+  TOTAL_QUESTIONS: 20,
+  LANGUAGE: "fr",
+  THEME: "light",
+  DIFFICULTY: "advanced"
+};
+
+/* ====================================================================
+   I18N
+   ==================================================================== */
+const i18n = {
+  fr: {
+    welcome_eyebrow: "Niveau avancé · Sans pitié",
+    welcome_title_part1: "Évaluation",
+    welcome_title_em: "experte",
+    welcome_intro: "Vingt questions exigeantes sur Robot Framework Browser. Pièges d'API, comportements précis des keywords, subtilités d'implémentation. Une seule bonne réponse par question.",
+    spec_questions: "Questions",
+    spec_difficulty: "Difficulté",
+    spec_themes: "Thèmes",
+    spec_lang: "Langue",
+    diff_advanced: "Avancée",
+    btn_start: "Commencer",
+    btn_resume: "Reprendre la session",
+    btn_new: "Nouvelle session",
+    btn_validate: "Valider",
+    btn_next: "Suivant",
+    btn_finish: "Terminer",
+    question_label: "Question",
+    of: "/",
+    score_label: "Score",
+    hint_select: "Sélectionnez avec",
+    hint_validate: "puis validez avec",
+    hint_continue: "Appuyez sur",
+    hint_or: "ou",
+    hint_to_continue: "pour continuer",
+    correct_mark: "Correct",
+    incorrect_mark: "Faux",
+    final_eyebrow: "Session terminée",
+    final_verdict_great: "Maîtrise solide. Vous connaissez bien la library.",
+    final_verdict_good: "Bonne base. Quelques zones à consolider.",
+    final_verdict_mid: "Niveau correct, mais les détails comptent.",
+    final_verdict_low: "Du travail en perspective. Relisez la doc.",
+    missed_title: "Questions ratées",
+    missed_empty: "Sans-faute. Performance remarquable.",
+    your_answer: "Votre rép.",
+    right_answer: "Bonne rép.",
+    best_score: "Meilleur",
+    storage_warning: "stockage local indisponible"
+  }
+};
+const T = i18n[CONFIG.LANGUAGE];
+
+/* ====================================================================
+   QUESTIONS — 20 questions avancées
+   Thèmes : sélecteurs, assertions (incl. visible/invisible & alertes), réseau
+   Chaque explication ≤ 15 mots
+   ==================================================================== */
+const QUESTIONS = [
+  // ===== SÉLECTEURS (6) =====
+  {
+    q: "Quel sélecteur cible un élément dont le <em>texte exact</em> est « Submit » (sans correspondance partielle) ?",
+    choices: [
+      { t: "<code>text=Submit</code>", c: false },
+      { t: "<code>text=\"Submit\"</code>", c: true },
+      { t: "<code>css=text(Submit)</code>", c: false },
+      { t: "<code>xpath=//text()=Submit</code>", c: false }
+    ],
+    e: "Les guillemets autour du texte forcent une correspondance exacte sensible à la casse."
+  },
+  {
+    q: "Que cible le sélecteur en chaîne <code>nav >> internal:has-text=\"Login\" >> button</code> ?",
+    choices: [
+      { t: "Un bouton dans le nav contenant un descendant avec « Login »", c: true },
+      { t: "Un nav nommé « Login » avec un bouton enfant direct", c: false },
+      { t: "Tous les boutons de la page liés au texte « Login »", c: false },
+      { t: "Le sélecteur est invalide, <code>internal:has-text</code> n'existe pas", c: false }
+    ],
+    e: "Les `>>` chaînent un pipeline ; chaque étape filtre les résultats précédents."
+  },
+  {
+    q: "Quelle différence entre <code>css=button >> nth=0</code> et <code>css=button:first-of-type</code> ?",
+    choices: [
+      { t: "Aucune, les deux sont strictement équivalents", c: false },
+      { t: "<code>nth=0</code> prend le premier match global, <code>:first-of-type</code> est relatif au parent DOM", c: true },
+      { t: "<code>nth=0</code> est invalide en CSS pur", c: false },
+      { t: "<code>:first-of-type</code> ne fonctionne pas dans Browser library", c: false }
+    ],
+    e: "`nth=` opère sur le résultat global, `:first-of-type` est relatif au parent."
+  },
+  {
+    q: "Le sélecteur <code>\"Connexion\"</code> seul (juste une chaîne entre guillemets) est-il valide ?",
+    choices: [
+      { t: "Non, il faut obligatoirement préfixer par <code>text=</code>", c: false },
+      { t: "Oui, c'est un raccourci équivalent à <code>text=\"Connexion\"</code>", c: true },
+      { t: "Oui mais uniquement avec <code>Click</code>, pas avec <code>Get Element</code>", c: false },
+      { t: "Non, ce sélecteur n'existe pas dans Browser library", c: false }
+    ],
+    e: "Une chaîne entre guillemets seule est interprétée comme sélecteur texte exact."
+  },
+  {
+    q: "Comment cibler un <code>input</code> via son <em>label associé</em> contenant « Email » ?",
+    choices: [
+      { t: "<code>input:has-label(Email)</code>", c: false },
+      { t: "<code>label=Email</code> ou <code>input >> internal:label=\"Email\"</code>", c: true },
+      { t: "<code>input >> text=Email</code>", c: false },
+      { t: "<code>for=Email</code>", c: false }
+    ],
+    e: "Le moteur résout le label associé via attribut for/id ou imbrication."
+  },
+  {
+    q: "Que retourne <code>Get Element Count</code> avec un sélecteur qui ne match aucun élément ?",
+    choices: [
+      { t: "Une erreur <code>ElementNotFound</code>", c: false },
+      { t: "<code>None</code>", c: false },
+      { t: "<code>0</code> (entier zéro)", c: true },
+      { t: "Une chaîne vide <code>\"\"</code>", c: false }
+    ],
+    e: "Le keyword retourne toujours un entier, jamais d'exception sur match vide."
+  },
+
+  // ===== ASSERTIONS GÉNÉRALES (4) =====
+  {
+    q: "Quelle assertion utilise <code>Get Text</code> pour vérifier qu'un élément <em>contient</em> « Bienvenue » ?",
+    choices: [
+      { t: "<code>Get Text  selector  ==  Bienvenue</code>", c: false },
+      { t: "<code>Get Text  selector  contains  Bienvenue</code>", c: true },
+      { t: "<code>Get Text  selector  matches  Bienvenue</code>", c: false },
+      { t: "<code>Get Text  selector  includes  Bienvenue</code>", c: false }
+    ],
+    e: "L'opérateur `contains` vérifie l'inclusion d'une sous-chaîne dans le texte."
+  },
+  {
+    q: "Pourquoi <code>Get Element States</code> est-il préféré à plusieurs <code>Get Element State</code> successifs ?",
+    choices: [
+      { t: "Il est plus rapide à taper", c: false },
+      { t: "Il retourne tous les états en une évaluation atomique du DOM", c: true },
+      { t: "Il accepte les sélecteurs XPath, contrairement au singulier", c: false },
+      { t: "Il déclenche un retry automatique, pas le singulier", c: false }
+    ],
+    e: "Une évaluation DOM atomique évite les races entre vérifications successives."
+  },
+  {
+    q: "Pour vérifier qu'une URL <em>finit</em> par <code>/dashboard</code>, quelle syntaxe est correcte ?",
+    choices: [
+      { t: "<code>Get Url  endswith  /dashboard</code>", c: false },
+      { t: "<code>Get Url  matches  .*/dashboard$</code>", c: true },
+      { t: "<code>Get Url  ends  /dashboard</code>", c: false },
+      { t: "<code>Url Should End With  /dashboard</code>", c: false }
+    ],
+    e: "L'opérateur `matches` accepte une regex ; `endswith` n'existe pas ici."
+  },
+  {
+    q: "Que fait <code>Get Title  ==  None</code> dans Browser library ?",
+    choices: [
+      { t: "Vérifie que le titre est absent (<code>&lt;title&gt;</code> manquant)", c: false },
+      { t: "Compare le titre à la chaîne littérale « None »", c: true },
+      { t: "Lève une erreur de syntaxe", c: false },
+      { t: "Vérifie que le titre est une chaîne vide", c: false }
+    ],
+    e: "L'argument est traité comme une chaîne ; `None` n'est pas spécial."
+  },
+
+  // ===== ASSERTIONS VISIBILITÉ (5) =====
+  {
+    q: "Quelle est la différence cruciale entre <code>visible</code> et <code>attached</code> dans <code>Wait For Elements State</code> ?",
+    choices: [
+      { t: "Aucune, ce sont des synonymes", c: false },
+      { t: "<code>attached</code> = présent dans le DOM ; <code>visible</code> = présent <em>et</em> rendu (taille &gt; 0, non <code>hidden</code>)", c: true },
+      { t: "<code>visible</code> n'attend pas, <code>attached</code> oui", c: false },
+      { t: "<code>attached</code> ignore le CSS, <code>visible</code> non", c: false }
+    ],
+    e: "Un élément peut être attaché au DOM sans être visuellement rendu."
+  },
+  {
+    q: "Un <code>div</code> avec <code>opacity: 0</code> est-il considéré <em>visible</em> par Playwright/Browser ?",
+    choices: [
+      { t: "Non, opacité 0 = non visible", c: false },
+      { t: "Oui, car il occupe toujours un espace de rendu non nul", c: true },
+      { t: "Cela dépend de la version de Playwright", c: false },
+      { t: "Oui mais uniquement si <code>pointer-events</code> est <code>auto</code>", c: false }
+    ],
+    e: "Playwright considère visible tout élément avec une bounding box non vide."
+  },
+  {
+    q: "Quel keyword échoue (après timeout) si l'élément est <em>déjà visible</em> au moment de l'appel et le reste ?",
+    choices: [
+      { t: "<code>Wait For Elements State    sel    visible</code>", c: false },
+      { t: "<code>Wait For Elements State    sel    hidden</code>", c: true },
+      { t: "<code>Wait For Elements State    sel    attached</code>", c: false },
+      { t: "<code>Get Element State    sel    visible    ==    True</code>", c: false }
+    ],
+    e: "Attendre `hidden` échoue si l'élément reste visible toute la durée."
+  },
+  {
+    q: "Comment vérifier qu'un élément est <em>présent dans le DOM</em> mais <em>non visible</em> ?",
+    choices: [
+      { t: "<code>Get Element States  sel  contains  attached  hidden</code>", c: true },
+      { t: "<code>Get Element State  sel  ==  invisible</code>", c: false },
+      { t: "<code>Wait For Elements State  sel  detached</code>", c: false },
+      { t: "<code>Get Element  sel  ==  None</code>", c: false }
+    ],
+    e: "`Get Element States` retourne un set ; on vérifie les deux flags."
+  },
+  {
+    q: "Avec <code>Click  selector</code>, que se passe-t-il si l'élément matché est rendu mais <em>couvert</em> par un autre (z-index) ?",
+    choices: [
+      { t: "Le clic réussit silencieusement, événement dispatché", c: false },
+      { t: "Le clic échoue car l'élément n'est pas <em>actionable</em> (intercepté)", c: true },
+      { t: "Browser library scrolle puis clique, toujours avec succès", c: false },
+      { t: "Le clic est délégué à l'élément du dessus automatiquement", c: false }
+    ],
+    e: "L'actionability vérifie qu'aucun élément n'intercepte les événements pointer."
+  },
+
+  // ===== ALERTES / DIALOGS (4) =====
+  {
+    q: "Comment gérer un <code>alert()</code> JavaScript <em>avant</em> qu'il ne s'affiche ?",
+    choices: [
+      { t: "<code>Accept Alert</code> juste après le clic déclencheur", c: false },
+      { t: "<code>Handle Future Dialogs    action=accept</code> avant le clic déclencheur", c: true },
+      { t: "<code>Wait For Alert</code> puis <code>Dismiss</code>", c: false },
+      { t: "Browser library bloque automatiquement tous les <code>alert()</code>", c: false }
+    ],
+    e: "`Handle Future Dialogs` enregistre un handler avant l'apparition du dialog."
+  },
+  {
+    q: "Différence entre <code>Handle Future Dialogs</code> et <code>Promise To  Wait For Alert</code> ?",
+    choices: [
+      { t: "Aucune, simples alias de la même API", c: false },
+      { t: "<code>Handle Future Dialogs</code> traite en feu-et-oubli ; <code>Wait For Alert</code> renvoie le message du dialog", c: true },
+      { t: "<code>Wait For Alert</code> ne marche que pour les <code>confirm()</code>", c: false },
+      { t: "<code>Handle Future Dialogs</code> n'existe que sur Firefox", c: false }
+    ],
+    e: "`Wait For Alert` capture et retourne le texte ; l'autre traite sans renvoyer."
+  },
+  {
+    q: "Comment répondre « OK » au texte saisi dans un <code>prompt()</code> JavaScript ?",
+    choices: [
+      { t: "<code>Handle Future Dialogs    action=accept    prompt_input=OK</code>", c: true },
+      { t: "<code>Accept Alert    text=OK</code>", c: false },
+      { t: "<code>Set Dialog Response    OK</code>", c: false },
+      { t: "Impossible, Browser ignore les prompts", c: false }
+    ],
+    e: "Le paramètre `prompt_input` fournit la réponse texte au dialog `prompt()`."
+  },
+  {
+    q: "Si aucun handler n'est enregistré, que fait Browser library face à un <code>confirm()</code> natif ?",
+    choices: [
+      { t: "L'accepte par défaut", c: false },
+      { t: "Le rejette (dismiss) automatiquement", c: true },
+      { t: "Bloque l'exécution jusqu'au timeout du test", c: false },
+      { t: "Lève immédiatement une exception <code>UnhandledDialog</code>", c: false }
+    ],
+    e: "Sans handler, Playwright dismisse les dialogs par défaut pour ne pas bloquer."
+  },
+
+  // ===== RÉSEAU (4) =====
+  {
+    q: "Quel keyword permet d'<em>intercepter et modifier</em> une réponse réseau avant qu'elle n'atteigne la page ?",
+    choices: [
+      { t: "<code>Wait For Response</code>", c: false },
+      { t: "<code>Http</code>", c: false },
+      { t: "<code>Add Cookie</code> puis <code>Reload</code>", c: false },
+      { t: "Le routing/mocking via <code>New Context</code> ou les keywords de mock de Browser", c: true }
+    ],
+    e: "Le mocking d'API passe par le routing Playwright exposé par Browser library."
+  },
+  {
+    q: "Que retourne <code>Wait For Response    matcher=**/api/users</code> ?",
+    choices: [
+      { t: "Le statut HTTP uniquement", c: false },
+      { t: "Un objet contenant URL, statut, headers et corps de la réponse", c: true },
+      { t: "Le texte du body brut, rien d'autre", c: false },
+      { t: "<code>True</code> ou <code>False</code> selon la réussite", c: false }
+    ],
+    e: "Le keyword renvoie un dictionnaire complet décrivant la réponse interceptée."
+  },
+  {
+    q: "Comment matcher <em>uniquement</em> les requêtes POST vers <code>/api/login</code> avec <code>Wait For Request</code> ?",
+    choices: [
+      { t: "<code>matcher=POST /api/login</code>", c: false },
+      { t: "<code>matcher=**/api/login</code> et filtrer ensuite par <code>method</code>", c: true },
+      { t: "<code>matcher=method:POST,url:/api/login</code>", c: false },
+      { t: "Impossible, on ne peut filtrer que par URL", c: false }
+    ],
+    e: "Le matcher cible l'URL ; la méthode HTTP se vérifie sur l'objet retourné."
+  },
+  {
+    q: "À quoi sert <code>Promise To  Wait For Response</code> <em>avant</em> de cliquer le bouton qui déclenche la requête ?",
+    choices: [
+      { t: "À pré-télécharger la réponse pour gagner en vitesse", c: false },
+      { t: "À armer l'écoute <em>avant</em> l'action, évitant la race entre clic et réponse", c: true },
+      { t: "À forcer un retry automatique en cas d'échec réseau", c: false },
+      { t: "À convertir le clic en requête XHR", c: false }
+    ],
+    e: "La promesse s'enregistre tôt pour ne pas manquer une réponse rapide."
+  }
+];
+
+/* ====================================================================
+   STORAGE — try/catch avec fallback mémoire
+   Note : localStorage n'est pas supporté dans certains environnements
+   sandboxés (ex : artifacts Claude.ai). Fallback en mémoire transparent.
+   ==================================================================== */
+const STORAGE_KEY = 'qcm-rfb-state-v1';
+const HISTORY_KEY = 'qcm-rfb-history-v1';
+
+let storageOk = true;
+let memoryStore = {};
+
+function lsGet(key) {
+  if (!storageOk) return memoryStore[key] ?? null;
+  try { return localStorage.getItem(key); }
+  catch (e) { storageOk = false; return memoryStore[key] ?? null; }
+}
+function lsSet(key, val) {
+  if (!storageOk) { memoryStore[key] = val; return; }
+  try { localStorage.setItem(key, val); }
+  catch (e) { storageOk = false; memoryStore[key] = val; }
+}
+function lsRemove(key) {
+  if (!storageOk) { delete memoryStore[key]; return; }
+  try { localStorage.removeItem(key); }
+  catch (e) { storageOk = false; delete memoryStore[key]; }
+}
+
+function saveState() {
+  if (!session) return;
+  lsSet(STORAGE_KEY, JSON.stringify(session));
+}
+function loadState() {
+  const raw = lsGet(STORAGE_KEY);
+  if (!raw) return null;
+  try { return JSON.parse(raw); } catch (e) { return null; }
+}
+function clearState() { lsRemove(STORAGE_KEY); }
+
+function loadHistory() {
+  const raw = lsGet(HISTORY_KEY);
+  if (!raw) return [];
+  try { return JSON.parse(raw) || []; } catch (e) { return []; }
+}
+function saveHistoryEntry(entry) {
+  const hist = loadHistory();
+  hist.push(entry);
+  lsSet(HISTORY_KEY, JSON.stringify(hist));
+}
+function getBestScore() {
+  const hist = loadHistory();
+  if (!hist.length) return null;
+  return hist.reduce((best, e) => e.percent > best.percent ? e : best);
+}
+
+/* ====================================================================
+   UTIL
+   ==================================================================== */
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+/* ====================================================================
+   SESSION STATE
+   ==================================================================== */
+let session = null;
+
+function startNewSession() {
+  const total = Math.min(CONFIG.TOTAL_QUESTIONS, QUESTIONS.length);
+  const order = shuffle([...Array(QUESTIONS.length).keys()]).slice(0, total);
+  const choiceMaps = order.map(qi => shuffle([...Array(QUESTIONS[qi].choices.length).keys()]));
+  session = {
+    order,
+    choiceMaps,
+    answers: new Array(total).fill(null),
+    correct: new Array(total).fill(null),
+    current: 0,
+    validated: false,
+    finished: false,
+    selectedLetter: null
+  };
+  saveState();
+  renderQuestion();
+}
+
+function resumeSession(s) {
+  session = s;
+  if (session.finished) renderFinal();
+  else renderQuestion();
+}
+
+/* ====================================================================
+   RENDERING
+   ==================================================================== */
+const screen = document.getElementById('screen');
+const metaLine = document.getElementById('metaLine');
+
+function updateMeta() {
+  const best = getBestScore();
+  let html;
+  if (best) {
+    html = `<span class="best">${T.best_score} ${best.score}/${best.total}</span> · ${best.percent}%`;
+  } else {
+    html = `${CONFIG.DIFFICULTY.toUpperCase()} · ${CONFIG.TOTAL_QUESTIONS} Q`;
+  }
+  if (!storageOk) html += ` · ⚠ ${T.storage_warning}`;
+  metaLine.innerHTML = html;
+}
+
+function renderWelcome() {
+  updateMeta();
+  const existing = loadState();
+  const hasInProgress = existing && !existing.finished && existing.order && existing.current < existing.order.length;
+
+  const themesChips = ['sélecteurs', 'assertions', 'visible / invisible', 'alertes (dialogs)', 'réseau']
+    .map(t => `<span class="theme-chip">${t}</span>`).join('');
+
+  const buttons = hasInProgress
+    ? `<button class="btn" id="resumeBtn">${T.btn_resume} (${existing.current + 1}/${existing.order.length})</button>
+       <button class="btn btn-secondary" id="newBtn">${T.btn_new}</button>`
+    : `<button class="btn" id="newBtn">${T.btn_start}</button>`;
+
+  screen.innerHTML = `
+    <section class="welcome">
+      <div class="welcome-eyebrow">${T.welcome_eyebrow}</div>
+      <h1>${T.welcome_title_part1} <em>${T.welcome_title_em}</em></h1>
+      <p>${T.welcome_intro}</p>
+
+      <div class="spec-grid">
+        <div class="spec-item">
+          <span class="spec-label">${T.spec_questions}</span>
+          <span class="spec-value">${CONFIG.TOTAL_QUESTIONS}</span>
+        </div>
+        <div class="spec-item">
+          <span class="spec-label">${T.spec_difficulty}</span>
+          <span class="spec-value">${T.diff_advanced}</span>
+        </div>
+        <div class="spec-item">
+          <span class="spec-label">${T.spec_themes}</span>
+          <span class="spec-value">3 axes</span>
+        </div>
+        <div class="spec-item">
+          <span class="spec-label">${T.spec_lang}</span>
+          <span class="spec-value">Français</span>
+        </div>
+      </div>
+
+      <div class="themes-grid">${themesChips}</div>
+
+      <div class="welcome-actions">${buttons}</div>
+    </section>
+  `;
+
+  if (hasInProgress) {
+    document.getElementById('resumeBtn').addEventListener('click', () => resumeSession(existing));
+    document.getElementById('newBtn').addEventListener('click', () => { clearState(); startNewSession(); });
+  } else {
+    document.getElementById('newBtn').addEventListener('click', () => { clearState(); startNewSession(); });
+  }
+}
+
+function renderQuestion() {
+  updateMeta();
+  const idx = session.current;
+  const total = session.order.length;
+  const qOrig = QUESTIONS[session.order[idx]];
+  const map = session.choiceMaps[idx];
+
+  const currentScore = session.correct.filter(c => c === true).length;
+
+  const optionsHtml = map.map((origChoiceIdx, displayIdx) => {
+    const letter = String.fromCharCode(65 + displayIdx);
+    const choice = qOrig.choices[origChoiceIdx];
+    return `
+      <button class="opt" data-letter="${letter}" data-correct="${choice.c ? '1' : '0'}"
+              role="radio" aria-checked="false" aria-label="Option ${letter}">
+        <span class="opt-letter">${letter}</span>
+        <span class="opt-text">${choice.t}</span>
+        <span class="opt-mark"></span>
+      </button>
+    `;
+  }).join('');
+
+  const progressPct = (idx / total) * 100;
+
+  screen.innerHTML = `
+    <div class="progress-bar"><div class="progress-fill" style="width:${progressPct}%"></div></div>
+    <div class="progress-row">
+      <span class="progress-counter">${T.question_label} ${String(idx + 1).padStart(2,'0')} ${T.of} ${String(total).padStart(2,'0')}</span>
+      <span class="progress-score">${T.score_label} <span class="score-num">${currentScore}</span>/${idx}</span>
+    </div>
+
+    <article class="card">
+      <div class="q-tag">Question ${idx + 1}</div>
+      <h2 class="q-text">${qOrig.q}</h2>
+      <div class="options" role="radiogroup" aria-label="Choix de réponse">
+        ${optionsHtml}
+      </div>
+      <div class="explanation" id="explanation"></div>
+      <div class="action-row">
+        <span class="hint" id="hint">
+          ${T.hint_select} <kbd>A</kbd> <kbd>B</kbd> <kbd>C</kbd> <kbd>D</kbd> ${T.hint_validate} <kbd>↵</kbd>
+        </span>
+        <button class="btn" id="actionBtn" disabled>${T.btn_validate}</button>
+      </div>
+    </article>
+  `;
+
+  const opts = screen.querySelectorAll('.opt');
+  opts.forEach(o => {
+    o.addEventListener('click', () => {
+      if (session.validated) return;
+      selectOption(o.dataset.letter);
+    });
+  });
+
+  // Si déjà répondue (reprise), restaurer l'état
+  if (session.answers[idx] !== null) {
+    session.selectedLetter = session.answers[idx];
+    session.validated = true;
+    applyValidationVisuals();
+  } else {
+    session.selectedLetter = null;
+    session.validated = false;
+  }
+
+  document.getElementById('actionBtn').addEventListener('click', onActionClick);
+}
+
+function selectOption(letter) {
+  session.selectedLetter = letter;
+  const opts = screen.querySelectorAll('.opt');
+  opts.forEach(o => {
+    const isSel = o.dataset.letter === letter;
+    o.classList.toggle('selected', isSel);
+    o.setAttribute('aria-checked', isSel ? 'true' : 'false');
+  });
+  document.getElementById('actionBtn').disabled = false;
+}
+
+function onActionClick() {
+  if (!session.validated) {
+    if (!session.selectedLetter) return;
+    validateCurrent();
+  } else {
+    nextQuestion();
+  }
+}
+
+function validateCurrent() {
+  const idx = session.current;
+  const opts = screen.querySelectorAll('.opt');
+  const chosen = session.selectedLetter;
+
+  let isCorrect = false;
+  opts.forEach(o => {
+    if (o.dataset.letter === chosen && o.dataset.correct === '1') isCorrect = true;
+  });
+
+  session.validated = true;
+  session.answers[idx] = chosen;
+  session.correct[idx] = isCorrect;
+
+  applyValidationVisuals();
+  saveState();
+}
+
+function applyValidationVisuals() {
+  const opts = screen.querySelectorAll('.opt');
+  const chosen = session.selectedLetter;
+  const idx = session.current;
+  const qOrig = QUESTIONS[session.order[idx]];
+
+  opts.forEach(o => {
+    o.classList.add('locked');
+    o.setAttribute('aria-disabled', 'true');
+    const isChosen = o.dataset.letter === chosen;
+    const isCorrect = o.dataset.correct === '1';
+
+    if (isCorrect) {
+      o.classList.add('correct');
+      o.querySelector('.opt-mark').textContent = T.correct_mark.toUpperCase();
+    } else if (isChosen && !isCorrect) {
+      o.classList.add('incorrect');
+      o.querySelector('.opt-mark').textContent = T.incorrect_mark.toUpperCase();
+    } else {
+      o.classList.add('dimmed');
+    }
+    o.classList.remove('selected');
+  });
+
+  const expl = document.getElementById('explanation');
+  expl.innerHTML = qOrig.e;
+  expl.classList.add('visible');
+
+  const total = session.order.length;
+  const isLast = idx === total - 1;
+  const btn = document.getElementById('actionBtn');
+  btn.textContent = isLast ? T.btn_finish : T.btn_next;
+  btn.disabled = false;
+
+  const hint = document.getElementById('hint');
+  hint.innerHTML = `${T.hint_continue} <kbd>↵</kbd> ${T.hint_or} <kbd>Espace</kbd> ${T.hint_to_continue}`;
+
+  // Mettre à jour le score affiché
+  const currentScore = session.correct.filter(c => c === true).length;
+  const progRow = screen.querySelector('.progress-row .progress-score');
+  if (progRow) {
+    progRow.innerHTML = `${T.score_label} <span class="score-num">${currentScore}</span>/${idx + 1}`;
+  }
+
+  // Animer la progress bar
+  const fill = screen.querySelector('.progress-fill');
+  if (fill) fill.style.width = `${((idx + 1) / total) * 100}%`;
+}
+
+function nextQuestion() {
+  const total = session.order.length;
+  if (session.current + 1 >= total) {
+    finishSession();
+    return;
+  }
+  session.current += 1;
+  session.validated = false;
+  session.selectedLetter = null;
+  saveState();
+  renderQuestion();
+}
+
+function finishSession() {
+  session.finished = true;
+  const score = session.correct.filter(c => c === true).length;
+  const total = session.order.length;
+  const percent = Math.round((score / total) * 100);
+  const entry = {
+    date: new Date().toISOString(),
+    score,
+    total,
+    percent
+  };
+  saveHistoryEntry(entry);
+  clearState();
+  session.finalEntry = entry;
+  renderFinal();
+}
+
+function renderFinal() {
+  updateMeta();
+  const score = session.correct.filter(c => c === true).length;
+  const total = session.order.length;
+  const percent = Math.round((score / total) * 100);
+
+  let verdict;
+  if (percent >= 85) verdict = T.final_verdict_great;
+  else if (percent >= 65) verdict = T.final_verdict_good;
+  else if (percent >= 45) verdict = T.final_verdict_mid;
+  else verdict = T.final_verdict_low;
+
+  const missed = [];
+  session.order.forEach((qi, i) => {
+    if (session.correct[i] === false) {
+      const qOrig = QUESTIONS[qi];
+      const map = session.choiceMaps[i];
+      const chosenLetter = session.answers[i];
+      const chosenIdx = chosenLetter ? chosenLetter.charCodeAt(0) - 65 : -1;
+      const chosenChoice = chosenIdx >= 0 ? qOrig.choices[map[chosenIdx]] : { t: '—' };
+      const correctChoice = qOrig.choices.find(c => c.c);
+      missed.push({
+        q: qOrig.q,
+        chosen: chosenChoice.t,
+        correct: correctChoice.t,
+        e: qOrig.e
+      });
+    }
+  });
+
+  const missedHtml = missed.length === 0
+    ? `<div class="missed-empty">${T.missed_empty}</div>`
+    : missed.map(m => `
+        <div class="missed-item">
+          <div class="missed-q">${m.q}</div>
+          <div class="missed-answers">
+            <div class="missed-answer your">
+              <span class="missed-answer-label">${T.your_answer}</span>
+              <span>${m.chosen}</span>
+            </div>
+            <div class="missed-answer right">
+              <span class="missed-answer-label">${T.right_answer}</span>
+              <span>${m.correct}</span>
+            </div>
+          </div>
+          <div class="missed-explanation">${m.e}</div>
+        </div>
+      `).join('');
+
+  screen.innerHTML = `
+    <section class="final">
+      <header class="final-header">
+        <div class="final-eyebrow">${T.final_eyebrow}</div>
+        <div class="final-score-display">${score}<span class="denom">/${total}</span></div>
+        <div class="final-percent"><span class="pct-num">${percent}%</span> de bonnes réponses</div>
+        <div class="final-verdict">${verdict}</div>
+      </header>
+
+      <div class="missed-section">
+        <h2>${T.missed_title} <span class="count">${missed.length}</span></h2>
+        ${missedHtml}
+      </div>
+    </section>
+  `;
+}
+
+/* ====================================================================
+   KEYBOARD CONTROLS
+   ==================================================================== */
+document.addEventListener('keydown', (ev) => {
+  if (!session || session.finished) return;
+
+  const key = ev.key;
+  const upper = key.toUpperCase();
+
+  // Sélection A/B/C/D (uniquement avant validation)
+  if (['A','B','C','D'].includes(upper) && !session.validated) {
+    const opt = screen.querySelector(`.opt[data-letter="${upper}"]`);
+    if (opt) {
+      ev.preventDefault();
+      selectOption(upper);
+    }
+    return;
+  }
+
+  // Entrée : valider OU passer
+  if (key === 'Enter') {
+    ev.preventDefault();
+    if (!session.validated) {
+      if (session.selectedLetter) validateCurrent();
+    } else {
+      nextQuestion();
+    }
+    return;
+  }
+
+  // Espace : passer (uniquement après validation)
+  if (key === ' ' || key === 'Spacebar') {
+    if (session.validated) {
+      ev.preventDefault();
+      nextQuestion();
+    }
+  }
+});
+
+/* ====================================================================
+   BOOT
+   ==================================================================== */
+function boot() {
+  // Test storage
+  try {
+    localStorage.setItem('__qcm_test__', '1');
+    localStorage.removeItem('__qcm_test__');
+    storageOk = true;
+  } catch (e) {
+    storageOk = false;
+  }
+  renderWelcome();
+}
+
+boot();
+</script>
+</body>
+</html>

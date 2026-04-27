@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+   
+  <meta charset="UTF-8" />
+    <title>QCM RobotFramework Browser</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+    
+    <style>
+    body {
+      background-color: #f8f9fa;
+    }
+
+    .choice.active {
+      border: 2px solid #0d6efd;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container mt-4" id="app"></div>
+
+
+  <script>
+    const questions = [
+      { q: "Quelle est la bonne assertion pour vérifier une URL?", o: { a: "Get Url", b: "Wait For Navigation", c: "Location Should Be", d: "Url Should Be" }, a: "d", e: "Assertion directe et explicite." },
+      { q: "Quelle assertion vérifie la visibilité d'un élément?", o: { a: "Element Should Be Visible", b: "Wait Until Visible", c: "Expect Visible", d: "Check Visibility" }, a: "a", e: "Assertion native Browser." },
+      { q: "Quelle assertion éviter pour limiter la flakiness?", o: { a: "Sleep", b: "Wait For Elements State", c: "Wait Until Keyword Succeeds", d: "Retry Assertion" }, a: "a", e: "Sleep est non déterministe." },
+      { q: "Assertion correcte pour du texte exact?", o: { a: "Text Should Contain", b: "Get Text", c: "Text Should Be", d: "Assert Text" }, a: "c", e: "Comparaison stricte." },
+      { q: "Quelle assertion valide un attribut?", o: { a: "Check Attribute", b: "Get Attribute", c: "Attribute Should Be", d: "Expect Attribute" }, a: "c", e: "Prévue pour assertions." },
+      { q: "Assertion recommandée pour l'état disabled?", o: { a: "Element Disabled", b: "Element Should Be Disabled", c: "Check Disabled", d: "Is Disabled" }, a: "b", e: "Clair et lisible." },
+      { q: "Assertion sur le titre de page?", o: { a: "Get Title", b: "Title Should Be", c: "Check Title", d: "Title Equals" }, a: "b", e: "Assertion dédiée." },
+      { q: "Quelle assertion pour compter des éléments?", o: { a: "Get Elements", b: "Length Should Be", c: "Elements Count Should Be", d: "Should Have Elements" }, a: "c", e: "Optimisée Browser." },
+      { q: "Assertion pour état attached?", o: { a: "Element Should Be Attached", b: "Attached", c: "Wait For Selector", d: "Check Node" }, a: "a", e: "Assertion explicite." },
+      { q: "Assertion pour valeur d'input?", o: { a: "Get Value", b: "Input Value Should Be", c: "Check Value", d: "Assert Input" }, a: "b", e: "Spécifique input." },
+      { q: "Assertion sur checkbox cochée?", o: { a: "Is Checked", b: "Checkbox Checked", c: "Checkbox Should Be Checked", d: "Check Checkbox" }, a: "c", e: "Assertion dédiée." },
+      { q: "Assertion sur état focus?", o: { a: "Has Focus", b: "Element Should Be Focused", c: "Check Focus", d: "Assert Focus" }, a: "b", e: "Claire et lisible." },
+      { q: "Assertion sur texte partiel?", o: { a: "Text Should Be", b: "Text Should Contain", c: "Get Text", d: "Expect Text" }, a: "b", e: "Tolère variations." },
+      { q: "Assertion pour erreur absente?", o: { a: "No Error", b: "Element Should Not Exist", c: "Error Missing", d: "Not Visible" }, a: "b", e: "Vérifie non présence." },
+      { q: "Assertion recommandée après clic?", o: { a: "Sleep", b: "Wait For Navigation", c: "Element Should Be Visible", d: "Check Page" }, a: "c", e: "Stabilité test." },
+      { q: "Bonne pratique assertions Browser?", o: { a: "Toujours Sleep", b: "Assertions explicites", c: "Assertions génériques", d: "Assertions JS" }, a: "b", e: "Lisibilité maximale." },
+      { q: "Assertion sur aria-label?", o: { a: "Get Aria", b: "Attribute Should Be", c: "Aria Should Exist", d: "Check Label" }, a: "b", e: "Réutilisable." },
+      { q: "Assertion multi-états?", o: { a: "Sleep", b: "Wait For Elements State", c: "Get State", d: "Check State" }, a: "b", e: "Anti-flaky." },
+      { q: "Assertion préférable à get+should?", o: { a: "Get Text", b: "Run Keyword", c: "Assertion directe", d: "Evaluate" }, a: "c", e: "Moins de bruit." },
+      { q: "Quelle assertion pour fin de test fiable?", o: { a: "Sleep", b: "Log", c: "Vérifier état final", d: "Close Browser" }, a: "c", e: "Garantit résultat." }
+    ];
+
+    let i = 0;
+    let answers = {};
+    let validated = false;
+    const app = document.getElementById('app');
+    function render() {
+      app.innerHTML = '';
+      if (i >= questions.length) {
+        const score = Object.keys(answers).filter(k => answers[k] === questions[k].a).length;
+        app.innerHTML = `<h2>Score: ${score}/20 (${Math.round(score / 20 * 100)}%)</h2><h4>Récap erreurs</h4><ul>` +
+          questions.map((q, idx) => answers[idx] !== q.a ? `<li>${q.q} → ${q.o[q.a]}</li>` : '').join('') + '</ul>';
+        return;
+      }
+      const q = questions[i];
+
+
+      const progress = `<div class="progress mb-3"><div class="progress-bar" style="width:${(i / 20) * 100}%"></div></div>`;
+
+
+      let html = progress + `<h5>${q.q}</h5>`;
+
+
+      for (const key in q.o) {
+        html += `<button class="btn btn-light d-block my-1 choice ${answers[i] === key ? 'active' : ''}" onclick="select('${key}')">${key.toUpperCase()}. ${q.o[key]}</button>`;
+      }
+
+      if (validated) {
+        html += `<p class="mt-2">${q.e}</p><button class="btn btn-primary" onclick="next()">Suivant</button>`;
+      }
+
+
+      app.innerHTML = html;
+    }
+
+    function select(k) {
+      answers[i] = k;
+      render();
+    }
+
+    function validate() {
+      validated = true;
+      render();
+    }
+
+    function next() {
+      validated = false;
+      i++;
+      render();
+    }
+
+    window.addEventListener('keydown', e => {
+      if (['a', 'b', 'c', 'd'].includes(e.key)) select(e.key);
+      if (e.key === 'Enter') validated ? next() : validate();
+    });
+
+    render();
+  </script>
+</body>

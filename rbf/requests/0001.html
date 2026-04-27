@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Robot Framework RequestsLibrary – Advanced QCM</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background: #ffffff;
+      color: #1a1a1a;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+    }
+
+    .card {
+      margin-top: 40px;
+      max-width: 680px;
+      width: 100%;
+      padding: 32px;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    }
+
+    .progress-text {
+      font-size: 14px;
+      margin-bottom: 8px;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 8px;
+      background: #e5e7eb;
+      border-radius: 4px;
+      overflow: hidden;
+      margin-bottom: 24px;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: #2563eb;
+      transition: width 0.3s ease;
+    }
+
+    h2 {
+      font-size: 22px;
+      margin-bottom: 24px;
+    }
+
+    .options {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+
+    .option {
+      padding: 14px 16px;
+      border: 2px solid #e5e7eb;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 15px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      transition: all 0.2s ease;
+    }
+
+    .option:hover {
+      border-color: #2563eb;
+    }
+
+    .option.selected {
+      border-color: #2563eb;
+      background: #eff6ff;
+    }
+
+    .option.correct {
+      border-color: #16a34a;
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .option.wrong {
+      border-color: #dc2626;
+      background: #fee2e2;
+      color: #7f1d1d;
+    }
+
+    .label {
+      font-weight: 600;
+      width: 24px;
+    }
+
+    .explanation {
+      margin-top: 16px;
+      font-size: 14px;
+      font-style: italic;
+    }
+
+    .results h2 {
+      margin-bottom: 16px;
+    }
+
+    .results ul {
+      padding-left: 20px;
+    }
+
+    .results li {
+      margin-bottom: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div class="card" id="app"></div>
+
+  <script>
+    const TOTAL_QUESTIONS = 30;
+
+    const questions = [
+      {
+        question: "Which keyword creates a reusable HTTP session in RequestsLibrary?",
+        options: { a: "Open Connection", b: "Create Session", c: "Start Client", d: "New Request Session" },
+        correct: "b",
+        explanation: "Create Session initializes a persistent HTTP session."
+      },
+      {
+        question: "How do you send query parameters with a GET request?",
+        options: { a: "params argument", b: "query argument", c: "data argument", d: "json argument" },
+        correct: "a",
+        explanation: "Query parameters are passed using the params argument."
+      },
+      {
+        question: "Which keyword sends a PATCH request?",
+        options: { a: "Update On Session", b: "Patch Request", c: "Patch On Session", d: "HTTP Patch" },
+        correct: "c",
+        explanation: "Patch On Session performs PATCH requests."
+      },
+      {
+        question: "Where are default headers defined when creating a session?",
+        options: { a: "headers argument", b: "default_headers", c: "session_headers", d: "auth_headers" },
+        correct: "a",
+        explanation: "Headers are defined using the headers argument."
+      },
+      {
+        question: "Which argument sets Basic Authentication credentials?",
+        options: { a: "auth_basic", b: "basic_auth", c: "auth", d: "credentials" },
+        correct: "b",
+        explanation: "basic_auth defines username and password."
+      },
+      {
+        question: "How do you validate an HTTP status code?",
+        options: { a: "Should Be Equal", b: "Status Should Be", c: "Response Status Should Be", d: "Verify Status" },
+        correct: "c",
+        explanation: "Response Status Should Be validates status codes."
+      },
+      {
+        question: "Which keyword deletes a session?",
+        options: { a: "Delete Session", b: "Remove Session", c: "Close Session", d: "End Session" },
+        correct: "a",
+        explanation: "Delete Session removes an existing session."
+      },
+      {
+        question: "What argument sends JSON payloads?",
+        options: { a: "body", b: "json", c: "data", d: "payload" },
+        correct: "b",
+        explanation: "json automatically serializes JSON payloads."
+      },
+      {
+        question: "How do you upload files?",
+        options: { a: "files argument", b: "upload_files", c: "multipart argument", d: "body_files" },
+        correct: "a",
+        explanation: "files argument uploads multipart content."
+      },
+      {
+        question: "Which keyword retrieves JSON from a response?",
+        options: { a: "Get JSON Data", b: "Parse JSON", c: "Evaluate Response", d: "Get Response Json" },
+        correct: "d",
+        explanation: "Get Response Json extracts JSON content."
+      },
+      {
+        question: "How are HTTP proxies defined?",
+        options: { a: "proxy argument", b: "http_proxy", c: "proxies argument", d: "network_proxy" },
+        correct: "c",
+        explanation: "proxies argument defines HTTP and HTTPS proxies."
+      },
+      {
+        question: "Which option disables SSL verification?",
+        options: { a: "ssl=False", b: "verify=False", c: "ignore_ssl=True", d: "cert=False" },
+        correct: "b",
+        explanation: "verify=False disables certificate verification."
+      },
+      {
+        question: "How do you send cookies in a request?",
+        options: { a: "cookie argument", b: "cookies argument", c: "session_cookies", d: "headers only" },
+        correct: "b",
+        explanation: "cookies argument sends cookies."
+      },
+      {
+        question: "Which keyword sends a PUT request?",
+        options: { a: "Update Request", b: "Put Request", c: "Put On Session", d: "HTTP Put" },
+        correct: "c",
+        explanation: "Put On Session executes PUT requests."
+      },
+      {
+        question: "How do you specify request timeout?",
+        options: { a: "timeout argument", b: "request_timeout", c: "wait", d: "max_time" },
+        correct: "a",
+        explanation: "timeout sets maximum waiting time."
+      },
+      {
+        question: "What keyword sends a DELETE request?",
+        options: { a: "Remove On Session", b: "Delete Request", c: "Delete On Session", d: "HTTP Delete" },
+        correct: "c",
+        explanation: "Delete On Session sends DELETE requests."
+      },
+      {
+        question: "How are API keys typically passed?",
+        options: { a: "As cookies", b: "As headers", c: "As URL path", d: "As body only" },
+        correct: "b",
+        explanation: "API keys are passed in headers."
+      },
+      {
+        question: "Which keyword posts form data?",
+        options: { a: "Post Form Data", b: "Post On Session with data", c: "Send Form", d: "Submit Form" },
+        correct: "b",
+        explanation: "data argument sends form fields."
+      },
+      {
+        question: "How do you retry failed requests?",
+        options: { a: "retries argument", b: "retry_count", c: "loop statements", d: "retry_status" },
+        correct: "c",
+        explanation: "Retries are handled manually via loops."
+      },
+      {
+        question: "How do you assert a response header?",
+        options: { a: "Response Header Should Be", b: "Header Should Exist", c: "Should Contain Header", d: "Assert Header" },
+        correct: "a",
+        explanation: "Response Header Should Be validates headers."
+      },
+      {
+        question: "How do you extract a value using JSONPath?",
+        options: { a: "Evaluate Json", b: "Get From Json", c: "Get Value By JsonPath", d: "Parse Path" },
+        correct: "c",
+        explanation: "JSONPath extracts values from JSON."
+      },
+      {
+        question: "How do you set OAuth tokens?",
+        options: { a: "oauth argument", b: "Authorization header", c: "token keyword", d: "auth_oauth" },
+        correct: "b",
+        explanation: "OAuth tokens are passed via Authorization header."
+      },
+      {
+        question: "Which argument sends custom certificates?",
+        options: { a: "ssl_cert", b: "cert argument", c: "certificate", d: "ca_bundle" },
+        correct: "b",
+        explanation: "cert defines client certificates."
+      },
+      {
+        question: "How do you perform GET with session?",
+        options: { a: "Get Request", b: "Get On Session", c: "Session Get", d: "HTTP Get" },
+        correct: "b",
+        explanation: "Get On Session sends GET requests."
+      },
+      {
+        question: "Which keyword handles response body assertion?",
+        options: { a: "Body Should Be", b: "Response Body Should Contain", c: "Verify Body", d: "Check Body" },
+        correct: "b",
+        explanation: "Response Body Should Contain asserts body content."
+      },
+      {
+        question: "How do you clear cookies?",
+        options: { a: "Clear Session Cookies", b: "Delete Cookies", c: "Reset Cookies", d: "New Session" },
+        correct: "a",
+        explanation: "Clear Session Cookies removes stored cookies."
+      },
+      {
+        question: "What argument sets request headers?",
+        options: { a: "headers", b: "http_headers", c: "request_headers", d: "header_map" },
+        correct: "a",
+        explanation: "headers defines request headers."
+      },
+      {
+        question: "How do you close persistent connections?",
+        options: { a: "End Requests", b: "Delete Session", c: "Close Requests", d: "Stop Client" },
+        correct: "b",
+        explanation: "Delete Session closes persistent connections."
+      },
+      {
+        question: "How do you validate JSON schema manually?",
+        options: { a: "Built-in keyword", b: "External library", c: "Validate JSON", d: "Schema Assert" },
+        correct: "b",
+        explanation: "Schema validation is external."
+      },
+      {
+        question: "What is the state flow per question?",
+        options: { a: "start → end", b: "idle → next", c: "idle → answered → next", d: "init → done" },
+        correct: "c",
+        explanation: "State machine follows idle → answered → next."
+      }
+    ];
+
+    let index = 0;
+    let score = 0;
+    let selected = null;
+    let state = "idle";
+    const wrongAnswers = [];
+
+    const app = document.getElementById("app");
+
+    function renderQuestion() {
+      const q = questions[index];
+      selected = null;
+      state = "idle";
+
+      app.innerHTML = `
+        <div class="progress-text">Question ${index + 1} / ${TOTAL_QUESTIONS}</div>
+        <div class="progress-bar">
+          <div class="progress-fill" style="width:${((index)/TOTAL_QUESTIONS)*100}%"></div>
+        </div>
+        <h2>${q.question}</h2>
+        <div class="options">
+          ${Object.entries(q.options).map(([key, val]) =>
+            `<div class="option" data-key="${key}">
+              <div class="label">${key.toUpperCase()}</div>
+              <div>${val}</div>
+            </div>`
+          ).join("")}
+        </div>
+      `;
+
+      document.querySelectorAll(".option").forEach(opt => {
+        opt.addEventListener("click", () => selectOption(opt));
+      });
+    }
+
+    function selectOption(el) {
+      if (state !== "idle") return;
+      document.querySelectorAll(".option").forEach(o => o.classList.remove("selected"));
+      el.classList.add("selected");
+      selected = el.dataset.key;
+    }
+
+    function validateAnswer() {
+      if (state !== "idle" || !selected) return;
+      state = "answered";
+      const q = questions[index];
+
+      document.querySelectorAll(".option").forEach(opt => {
+        const key = opt.dataset.key;
+        if (key === q.correct) opt.classList.add("correct");
+        if (key === selected && key !== q.correct) opt.classList.add("wrong");
+      });
+
+      if (selected === q.correct) {
+        score++;
+      } else {
+        wrongAnswers.push({
+          question: q.question,
+          wrong: q.options[selected],
+          correct: q.options[q.correct]
+        });
+      }
+
+      const exp = document.createElement("div");
+      exp.className = "explanation";
+      exp.textContent = q.explanation;
+      app.appendChild(exp);
+    }
+
+    function nextQuestion() {
+      if (state !== "answered") return;
+      index++;
+      if (index < TOTAL_QUESTIONS) {
+        renderQuestion();
+      } else {
+        showResults();
+      }
+    }
+
+    function showResults() {
+      app.innerHTML = `
+        <div class="results">
+          <h2>Final Score: ${score} / ${TOTAL_QUESTIONS}</h2>
+          <p>Percentage: ${Math.round((score / TOTAL_QUESTIONS) * 100)}%</p>
+          <h3>Incorrect Answers</h3>
+          <ul>
+            ${wrongAnswers.map(w =>
+              `<li>
+                <strong>${w.question}</strong><br />
+                Your answer: ${w.wrong}<br />
+                Correct answer: ${w.correct}
+              </li>`
+            ).join("")}
+          </ul>
+        </div>
+      `;
+    }
+
+    document.addEventListener("keydown", e => {
+      const key = e.key.toLowerCase();
+      if (["a","b","c","d"].includes(key)) {
+        const el = document.querySelector(`.option[data-key="${key}"]`);
+        if (el) selectOption(el);
+      }
+      if (e.key === "Enter") {
+        if (state === "idle") validateAnswer();
+        else if (state === "answered") nextQuestion();
+      }
+      if (e.key === " " && state === "answered") nextQuestion();
+    });
+
+    renderQuestion();
+  </script>
+</body>
+</html>
