@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QCM — RequestsLibrary (Robot Framework)</title>
+<style>
+  :root {
+    --bg: #ffffff;
+    --text: #1a1a1a;
+    --muted: #64748b;
+    --accent: #2563eb;
+    --accent-soft: #eff6ff;
+    --border: #e5e7eb;
+    --correct: #16a34a;
+    --correct-soft: #dcfce7;
+    --wrong: #dc2626;
+    --wrong-soft: #fee2e2;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 16px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  body {
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    padding: 48px 16px;
+  }
+  .card {
+    width: 100%;
+    max-width: 680px;
+    padding: 32px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 4px 24px rgba(0,0,0,0.04);
+  }
+  .progress-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    font-size: 14px;
+    color: var(--muted);
+    font-weight: 500;
+  }
+  .progress-bar {
+    width: 100%;
+    height: 6px;
+    background: var(--border);
+    border-radius: 999px;
+    overflow: hidden;
+    margin-bottom: 32px;
+  }
+  .progress-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 999px;
+    transition: width 0.3s ease;
+    width: 0%;
+  }
+  .question-text {
+    font-size: 20px;
+    font-weight: 700;
+    line-height: 1.4;
+    margin: 0 0 24px 0;
+    color: var(--text);
+  }
+  .options {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  .option {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    width: 100%;
+    padding: 14px 16px;
+    background: var(--bg);
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    text-align: left;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 15px;
+    line-height: 1.5;
+    color: var(--text);
+    transition: border-color 0.15s ease, background 0.15s ease;
+  }
+  .option:hover:not(:disabled) {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+  }
+  .option .letter {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border: 1.5px solid var(--border);
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--muted);
+    background: var(--bg);
+    transition: all 0.15s ease;
+  }
+  .option .opt-text {
+    flex: 1;
+    padding-top: 1px;
+  }
+  .option.selected {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+  }
+  .option.selected .letter {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+  }
+  .option.correct {
+    border-color: var(--correct);
+    background: var(--correct-soft);
+  }
+  .option.correct .letter {
+    background: var(--correct);
+    color: #fff;
+    border-color: var(--correct);
+  }
+  .option.wrong {
+    border-color: var(--wrong);
+    background: var(--wrong-soft);
+  }
+  .option.wrong .letter {
+    background: var(--wrong);
+    color: #fff;
+    border-color: var(--wrong);
+  }
+  .option:disabled {
+    cursor: default;
+  }
+  .feedback {
+    padding: 14px 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    line-height: 1.5;
+    margin-bottom: 20px;
+    border-left: 3px solid var(--accent);
+    background: var(--accent-soft);
+    color: var(--text);
+  }
+  .feedback.correct {
+    border-left-color: var(--correct);
+    background: var(--correct-soft);
+  }
+  .feedback.wrong {
+    border-left-color: var(--wrong);
+    background: var(--wrong-soft);
+  }
+  .feedback strong {
+    display: block;
+    margin-bottom: 4px;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+  }
+  .hint {
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .hint kbd {
+    display: inline-block;
+    padding: 2px 6px;
+    font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+    font-size: 12px;
+    background: #f3f4f6;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text);
+  }
+  .btn {
+    padding: 10px 20px;
+    border-radius: 8px;
+    border: none;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    background: var(--accent);
+    color: #fff;
+    transition: opacity 0.15s ease, transform 0.05s ease;
+  }
+  .btn:hover { opacity: 0.92; }
+  .btn:active { transform: translateY(1px); }
+  .btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  /* Results screen */
+  .results-title {
+    font-size: 24px;
+    font-weight: 700;
+    margin: 0 0 8px 0;
+  }
+  .score-block {
+    padding: 24px;
+    background: var(--accent-soft);
+    border-radius: 10px;
+    margin-bottom: 24px;
+    text-align: center;
+  }
+  .score-big {
+    font-size: 48px;
+    font-weight: 800;
+    color: var(--accent);
+    line-height: 1;
+    letter-spacing: -0.02em;
+  }
+  .score-percent {
+    font-size: 16px;
+    color: var(--muted);
+    margin-top: 8px;
+  }
+  .review-title {
+    font-size: 16px;
+    font-weight: 700;
+    margin: 24px 0 12px 0;
+  }
+  .review-item {
+    padding: 14px 16px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-bottom: 10px;
+    background: #fafafa;
+  }
+  .review-q {
+    font-weight: 600;
+    margin-bottom: 8px;
+    font-size: 14px;
+  }
+  .review-line {
+    font-size: 13px;
+    margin: 4px 0;
+    color: var(--muted);
+  }
+  .review-line .your { color: var(--wrong); font-weight: 600; }
+  .review-line .right { color: var(--correct); font-weight: 600; }
+  .all-correct {
+    padding: 24px;
+    text-align: center;
+    color: var(--correct);
+    font-weight: 600;
+    background: var(--correct-soft);
+    border-radius: 10px;
+  }
+  code {
+    font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+    font-size: 0.92em;
+    background: #f3f4f6;
+    padding: 1px 5px;
+    border-radius: 4px;
+  }
+</style>
+</head>
+<body>
+  <main class="card" id="app">
+    <!-- Quiz screen -->
+    <section id="quiz-screen">
+      <div class="progress-header">
+        <span id="progress-label">Question 1 / 20</span>
+        <span class="hint">Touches : <kbd>A</kbd> <kbd>B</kbd> <kbd>C</kbd> <kbd>D</kbd> <kbd>↵</kbd></span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+
+      <h2 class="question-text" id="question-text"></h2>
+      <div class="options" id="options"></div>
+      <div id="feedback-container"></div>
+
+      <div class="actions">
+        <span class="hint" id="action-hint">Sélectionnez une option, puis <kbd>Entrée</kbd> pour valider.</span>
+        <button class="btn" id="action-btn" disabled>Valider</button>
+      </div>
+    </section>
+
+    <!-- Results screen -->
+    <section id="results-screen" style="display:none;">
+      <h1 class="results-title">Résultats</h1>
+      <div class="score-block">
+        <div class="score-big" id="score-big"></div>
+        <div class="score-percent" id="score-percent"></div>
+      </div>
+      <div id="review-container"></div>
+      <div class="actions" style="margin-top: 24px;">
+        <span class="hint">Vous pouvez recommencer pour vous entraîner.</span>
+        <button class="btn" id="restart-btn">Recommencer</button>
+      </div>
+    </section>
+  </main>
+
+<script>
+  // ============================================================
+  // CONFIGURATION
+  // ============================================================
+  const TOTAL_QUESTIONS = 20;
+
+  // ============================================================
+  // BANQUE DE QUESTIONS — RequestsLibrary (Robot Framework)
+  // Sujets : GET, POST, PUT, DELETE + assertions sur réponses
+  // ============================================================
+  const QUESTION_BANK = [
+    {
+      question: "Quel keyword crée une session HTTP nommée <code>api</code> sur <code>https://example.com</code> ?",
+      options: {
+        a: "Create Session    api    https://example.com",
+        b: "Create Http Session    api    https://example.com",
+        c: "Session Create    api    url=https://example.com",
+        d: "New Session    api    https://example.com"
+      },
+      correct: "a",
+      explanation: "Create Session prend l'alias puis l'URL de base de la session."
+    },
+    {
+      question: "Pour effectuer un GET sur la session <code>api</code> à l'endpoint <code>/users</code>, quel keyword utiliser ?",
+      options: {
+        a: "Get Request    api    /users",
+        b: "GET    /users    session=api",
+        c: "GET On Session    api    /users",
+        d: "Send Get    api    /users"
+      },
+      correct: "c",
+      explanation: "GET On Session est le keyword moderne avec alias et endpoint."
+    },
+    {
+      question: "Comment passer des paramètres de query <code>?id=42</code> à un GET sur session ?",
+      options: {
+        a: "GET On Session    api    /users    query=id=42",
+        b: "GET On Session    api    /users    data=${{'id':42}}",
+        c: "GET On Session    api    /users    params=${{'id':42}}",
+        d: "GET On Session    api    /users    args=${{'id':42}}"
+      },
+      correct: "c",
+      explanation: "L'argument params reçoit un dict de query string."
+    },
+    {
+      question: "Quelle est la bonne syntaxe pour vérifier que le status code est 200 ?",
+      options: {
+        a: "Status Should Be    200    ${response}",
+        b: "Should Be Equal As Strings    ${response.status_code}    200",
+        c: "Should Be Equal As Numbers    ${response.code}    200",
+        d: "Response Status Should Be    ${response}    200"
+      },
+      correct: "a",
+      explanation: "Status Should Be attend le code, puis l'objet réponse."
+    },
+    {
+      question: "Pour POST avec un corps JSON <code>{\"name\":\"Bob\"}</code>, quelle option est correcte ?",
+      options: {
+        a: "POST On Session    api    /users    body=${{'name':'Bob'}}",
+        b: "POST On Session    api    /users    data=${{'name':'Bob'}}",
+        c: "POST On Session    api    /users    json=${{'name':'Bob'}}",
+        d: "POST On Session    api    /users    payload=${{'name':'Bob'}}"
+      },
+      correct: "c",
+      explanation: "L'argument json sérialise automatiquement le dict en JSON."
+    },
+    {
+      question: "Quelle différence entre les arguments <code>data</code> et <code>json</code> dans un POST ?",
+      options: {
+        a: "Aucune, ce sont des alias l'un de l'autre",
+        b: "data envoie du form-encoded ou raw, json sérialise et fixe Content-Type",
+        c: "json envoie en multipart, data en JSON",
+        d: "data ne fonctionne qu'avec GET, json qu'avec POST"
+      },
+      correct: "b",
+      explanation: "json sérialise et ajoute Content-Type application/json automatiquement."
+    },
+    {
+      question: "Comment ajouter un header <code>Authorization: Bearer xyz</code> à une session ?",
+      options: {
+        a: "Create Session    api    ${url}    auth=Bearer xyz",
+        b: "Create Session    api    ${url}    headers=${{'Authorization':'Bearer xyz'}}",
+        c: "Create Session    api    ${url}    token=xyz",
+        d: "Create Session    api    ${url}    bearer=xyz"
+      },
+      correct: "b",
+      explanation: "L'argument headers attend un dictionnaire de headers HTTP."
+    },
+    {
+      question: "Quel keyword permet un PUT sur la session <code>api</code> ?",
+      options: {
+        a: "Put On Session    api    /users/1    json=${data}",
+        b: "PUT On Session    api    /users/1    json=${data}",
+        c: "Put Request    api    /users/1    json=${data}",
+        d: "Update On Session    api    /users/1    json=${data}"
+      },
+      correct: "b",
+      explanation: "Le keyword s'écrit en majuscules : PUT On Session."
+    },
+    {
+      question: "Pour DELETE <code>/users/1</code> sur la session <code>api</code> :",
+      options: {
+        a: "Delete Request    api    /users/1",
+        b: "DELETE On Session    api    /users/1",
+        c: "Remove On Session    api    /users/1",
+        d: "DELETE Session    api    /users/1"
+      },
+      correct: "b",
+      explanation: "DELETE On Session est le keyword standard moderne."
+    },
+    {
+      question: "Comment accéder au corps JSON parsé de la réponse ?",
+      options: {
+        a: "${response.body}",
+        b: "${response.text}",
+        c: "${response.content}",
+        d: "${response.json()}"
+      },
+      correct: "d",
+      explanation: "La méthode json() retourne le corps désérialisé en dict/list."
+    },
+    {
+      question: "Comment vérifier qu'une clé <code>name</code> du JSON vaut <code>Alice</code> ?",
+      options: {
+        a: "Should Be Equal    ${response.json()}[name]    Alice",
+        b: "Should Be Equal As Strings    ${response.body.name}    Alice",
+        c: "Dictionary Should Contain Value    ${response.json()}    name=Alice",
+        d: "Json Value Should Be    ${response}    name    Alice"
+      },
+      correct: "a",
+      explanation: "On indexe le dict retourné par json() avec [clé]."
+    },
+    {
+      question: "Quelle est la signature pour désactiver la vérification SSL d'une session ?",
+      options: {
+        a: "Create Session    api    ${url}    disable_ssl=True",
+        b: "Create Session    api    ${url}    verify=False",
+        c: "Create Session    api    ${url}    ssl=False",
+        d: "Create Session    api    ${url}    no_verify=True"
+      },
+      correct: "b",
+      explanation: "L'argument verify=False désactive la vérification du certificat."
+    },
+    {
+      question: "Comment empêcher RequestsLibrary de lever une exception sur 4xx/5xx ?",
+      options: {
+        a: "Passer expected_status=any au keyword de requête",
+        b: "Passer raise_for_status=False à la session",
+        c: "Passer ignore_errors=True à la requête",
+        d: "Encapsuler l'appel dans un Run Keyword And Ignore Error obligatoirement"
+      },
+      correct: "a",
+      explanation: "expected_status=any accepte tout code sans lever d'erreur."
+    },
+    {
+      question: "Comment vérifier qu'un header de réponse <code>Content-Type</code> contient <code>json</code> ?",
+      options: {
+        a: "Should Contain    ${response.headers}[Content-Type]    json",
+        b: "Header Should Contain    ${response}    Content-Type    json",
+        c: "Should Contain    ${response.header.Content-Type}    json",
+        d: "Dictionary Should Contain Key    ${response}    Content-Type"
+      },
+      correct: "a",
+      explanation: "headers est un dict accessible via [Content-Type] puis Should Contain."
+    },
+    {
+      question: "Pour envoyer un POST avec authentification basique <code>(user, pwd)</code> :",
+      options: {
+        a: "Create Session    api    ${url}    basic_auth=user:pwd",
+        b: "Create Session    api    ${url}    auth=${{('user','pwd')}}",
+        c: "POST On Session    api    /    credentials=user,pwd",
+        d: "Create Session    api    ${url}    user=user    password=pwd"
+      },
+      correct: "b",
+      explanation: "L'argument auth attend un tuple Python (user, password)."
+    },
+    {
+      question: "Que retourne <code>${response.elapsed}</code> ?",
+      options: {
+        a: "Le temps écoulé depuis l'envoi de la requête en secondes (float)",
+        b: "Un timedelta représentant la durée de la requête",
+        c: "L'horodatage Unix de la réponse",
+        d: "La date de réponse au format ISO 8601"
+      },
+      correct: "b",
+      explanation: "elapsed est un timedelta entre envoi et réception finale."
+    },
+    {
+      question: "Comment valider qu'une liste JSON contient exactement 3 éléments ?",
+      options: {
+        a: "Length Should Be    ${response.json()}    3",
+        b: "List Length Should Be    ${response}    3",
+        c: "Should Be Equal    ${response.json().length}    3",
+        d: "Json Length    ${response}    3"
+      },
+      correct: "a",
+      explanation: "Length Should Be fonctionne sur toute liste, dict ou string."
+    },
+    {
+      question: "Quelle est la bonne façon d'utiliser l'argument <code>expected_status</code> pour exiger 201 ?",
+      options: {
+        a: "POST On Session    api    /u    json=${d}    expected_status=created",
+        b: "POST On Session    api    /u    json=${d}    expected_status=201",
+        c: "POST On Session    api    /u    json=${d}    status_expected=201",
+        d: "POST On Session    api    /u    json=${d}    assert_status=201"
+      },
+      correct: "b",
+      explanation: "expected_status accepte le code numérique attendu."
+    },
+    {
+      question: "Pour envoyer un PATCH (mise à jour partielle) sur une session :",
+      options: {
+        a: "PATCH On Session    api    /users/1    json=${d}",
+        b: "Patch Request    api    /users/1    data=${d}",
+        c: "UPDATE On Session    api    /users/1    json=${d}",
+        d: "PUT On Session    api    /users/1    partial=True"
+      },
+      correct: "a",
+      explanation: "PATCH On Session existe et fonctionne comme les autres verbes."
+    },
+    {
+      question: "Quelle assertion vérifie qu'une réponse JSON imbriquée <code>data.user.id</code> vaut 7 ?",
+      options: {
+        a: "Should Be Equal As Integers    ${response.json()}[data][user][id]    7",
+        b: "Json Path Should Equal    ${response}    data.user.id    7",
+        c: "Should Be Equal    ${response.body.data.user.id}    7",
+        d: "Dictionary Should Contain Item    ${response}    data.user.id    7"
+      },
+      correct: "a",
+      explanation: "On chaîne les accès par clés sur le dict json() retourné."
+    }
+  ];
+
+  // ============================================================
+  // ÉTAT DU QUIZ
+  // ============================================================
+  const questions = QUESTION_BANK.slice(0, TOTAL_QUESTIONS);
+  let currentIndex = 0;
+  let selectedKey = null;
+  let state = 'idle'; // idle | answered | next
+  const userAnswers = []; // { questionIndex, selected, correct }
+
+  // ============================================================
+  // DOM
+  // ============================================================
+  const $ = (id) => document.getElementById(id);
+  const quizScreen = $('quiz-screen');
+  const resultsScreen = $('results-screen');
+  const progressLabel = $('progress-label');
+  const progressFill = $('progress-fill');
+  const questionText = $('question-text');
+  const optionsEl = $('options');
+  const feedbackContainer = $('feedback-container');
+  const actionBtn = $('action-btn');
+  const actionHint = $('action-hint');
+
+  // ============================================================
+  // RENDU
+  // ============================================================
+  function renderQuestion() {
+    const q = questions[currentIndex];
+    selectedKey = null;
+    state = 'idle';
+
+    progressLabel.textContent = `Question ${currentIndex + 1} / ${TOTAL_QUESTIONS}`;
+    progressFill.style.width = `${((currentIndex) / TOTAL_QUESTIONS) * 100}%`;
+
+    questionText.innerHTML = q.question;
+
+    optionsEl.innerHTML = '';
+    ['a', 'b', 'c', 'd'].forEach((key) => {
+      const btn = document.createElement('button');
+      btn.className = 'option';
+      btn.dataset.key = key;
+      btn.innerHTML = `<span class="letter">${key.toUpperCase()}</span><span class="opt-text">${q.options[key]}</span>`;
+      btn.addEventListener('click', () => selectOption(key));
+      optionsEl.appendChild(btn);
+    });
+
+    feedbackContainer.innerHTML = '';
+    actionBtn.textContent = 'Valider';
+    actionBtn.disabled = true;
+    actionHint.innerHTML = 'Sélectionnez une option, puis <kbd>Entrée</kbd> pour valider.';
+  }
+
+  function selectOption(key) {
+    if (state !== 'idle') return;
+    selectedKey = key;
+    document.querySelectorAll('.option').forEach((el) => {
+      el.classList.toggle('selected', el.dataset.key === key);
+    });
+    actionBtn.disabled = false;
+  }
+
+  function validateAnswer() {
+    if (state !== 'idle' || !selectedKey) return;
+    const q = questions[currentIndex];
+    const isCorrect = selectedKey === q.correct;
+
+    document.querySelectorAll('.option').forEach((el) => {
+      el.disabled = true;
+      el.classList.remove('selected');
+      const k = el.dataset.key;
+      if (k === q.correct) {
+        el.classList.add('correct');
+      } else if (k === selectedKey && !isCorrect) {
+        el.classList.add('wrong');
+      }
+    });
+
+    const fb = document.createElement('div');
+    fb.className = `feedback ${isCorrect ? 'correct' : 'wrong'}`;
+    fb.innerHTML = `<strong>${isCorrect ? 'Correct' : 'Incorrect'}</strong>${q.explanation}`;
+    feedbackContainer.appendChild(fb);
+
+    userAnswers.push({
+      questionIndex: currentIndex,
+      selected: selectedKey,
+      correct: q.correct,
+      isCorrect
+    });
+
+    state = 'answered';
+    actionBtn.textContent = currentIndex === TOTAL_QUESTIONS - 1 ? 'Voir les résultats' : 'Question suivante';
+    actionBtn.disabled = false;
+    actionHint.innerHTML = 'Appuyez sur <kbd>Entrée</kbd> ou <kbd>Espace</kbd> pour continuer.';
+    progressFill.style.width = `${((currentIndex + 1) / TOTAL_QUESTIONS) * 100}%`;
+  }
+
+  function nextQuestion() {
+    if (state !== 'answered') return;
+    if (currentIndex < TOTAL_QUESTIONS - 1) {
+      currentIndex++;
+      renderQuestion();
+    } else {
+      showResults();
+    }
+  }
+
+  // ============================================================
+  // RÉSULTATS
+  // ============================================================
+  function showResults() {
+    quizScreen.style.display = 'none';
+    resultsScreen.style.display = 'block';
+
+    const correctCount = userAnswers.filter((a) => a.isCorrect).length;
+    const percent = Math.round((correctCount / TOTAL_QUESTIONS) * 100);
+
+    $('score-big').textContent = `${correctCount} / ${TOTAL_QUESTIONS}`;
+    $('score-percent').textContent = `${percent}% de bonnes réponses`;
+
+    const wrong = userAnswers.filter((a) => !a.isCorrect);
+    const reviewContainer = $('review-container');
+    reviewContainer.innerHTML = '';
+
+    if (wrong.length === 0) {
+      const congrats = document.createElement('div');
+      congrats.className = 'all-correct';
+      congrats.textContent = '🎉 Sans-faute ! Toutes les réponses sont correctes.';
+      reviewContainer.appendChild(congrats);
+      return;
+    }
+
+    const title = document.createElement('div');
+    title.className = 'review-title';
+    title.textContent = `À revoir (${wrong.length}) :`;
+    reviewContainer.appendChild(title);
+
+    wrong.forEach((a) => {
+      const q = questions[a.questionIndex];
+      const item = document.createElement('div');
+      item.className = 'review-item';
+      item.innerHTML = `
+        <div class="review-q">${a.questionIndex + 1}. ${q.question}</div>
+        <div class="review-line">Votre réponse : <span class="your">${a.selected.toUpperCase()}. ${q.options[a.selected]}</span></div>
+        <div class="review-line">Bonne réponse : <span class="right">${a.correct.toUpperCase()}. ${q.options[a.correct]}</span></div>
+      `;
+      reviewContainer.appendChild(item);
+    });
+  }
+
+  function restart() {
+    currentIndex = 0;
+    selectedKey = null;
+    state = 'idle';
+    userAnswers.length = 0;
+    resultsScreen.style.display = 'none';
+    quizScreen.style.display = 'block';
+    renderQuestion();
+  }
+
+  // ============================================================
+  // CONTRÔLES
+  // ============================================================
+  actionBtn.addEventListener('click', () => {
+    if (state === 'idle') validateAnswer();
+    else if (state === 'answered') nextQuestion();
+  });
+
+  $('restart-btn').addEventListener('click', restart);
+
+  document.addEventListener('keydown', (e) => {
+    if (resultsScreen.style.display !== 'none') return;
+
+    const key = e.key.toLowerCase();
+
+    if (state === 'idle') {
+      if (['a', 'b', 'c', 'd'].includes(key)) {
+        e.preventDefault();
+        selectOption(key);
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        if (selectedKey) validateAnswer();
+      }
+    } else if (state === 'answered') {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        nextQuestion();
+      }
+    }
+  });
+
+  // ============================================================
+  // DÉMARRAGE
+  // ============================================================
+  renderQuestion();
+</script>
+</body>
+</html>

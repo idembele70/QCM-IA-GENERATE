@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QCM RequestsLibrary - Robot Framework</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #ffffff;
+    color: #1a1a1a;
+    font-family: system-ui, -apple-system, "Segoe UI", Inter, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 40px 16px;
+    line-height: 1.5;
+  }
+  .card {
+    width: 100%;
+    max-width: 680px;
+    padding: 32px;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  .progress-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 14px;
+    color: #6b7280;
+    margin-bottom: 8px;
+  }
+  .progress-bar {
+    width: 100%;
+    height: 6px;
+    background: #f3f4f6;
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 28px;
+  }
+  .progress-fill {
+    height: 100%;
+    background: #2563eb;
+    border-radius: 3px;
+    transition: width 0.25s ease;
+    width: 0%;
+  }
+  .question-text {
+    font-size: 20px;
+    font-weight: 700;
+    line-height: 1.4;
+    margin-bottom: 24px;
+    color: #1a1a1a;
+  }
+  .question-text code {
+    background: #f3f4f6;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.9em;
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  }
+  .options {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  .option {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    width: 100%;
+    text-align: left;
+    padding: 14px 16px;
+    background: #ffffff;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 15px;
+    color: #1a1a1a;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .option:hover:not(:disabled) {
+    border-color: #2563eb;
+    background: #f8faff;
+  }
+  .option:disabled { cursor: default; }
+  .option .letter {
+    font-weight: 700;
+    color: #2563eb;
+    flex-shrink: 0;
+    min-width: 18px;
+  }
+  .option .text {
+    flex: 1;
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 14px;
+    word-break: break-word;
+  }
+  .option.selected {
+    border-color: #2563eb;
+    background: #eff6ff;
+  }
+  .option.correct {
+    border-color: #16a34a;
+    background: #f0fdf4;
+  }
+  .option.correct .letter { color: #16a34a; }
+  .option.incorrect {
+    border-color: #dc2626;
+    background: #fef2f2;
+  }
+  .option.incorrect .letter { color: #dc2626; }
+  .explanation {
+    margin-top: 16px;
+    padding: 12px 16px;
+    background: #f9fafb;
+    border-left: 3px solid #2563eb;
+    border-radius: 4px;
+    font-size: 14px;
+    color: #374151;
+  }
+  .explanation.hidden { display: none; }
+  .action-btn {
+    display: block;
+    width: 100%;
+    margin-top: 20px;
+    padding: 14px 20px;
+    background: #2563eb;
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s ease, opacity 0.15s ease;
+  }
+  .action-btn:hover:not(:disabled) { background: #1d4ed8; }
+  .action-btn:disabled {
+    background: #cbd5e1;
+    cursor: not-allowed;
+    opacity: 0.7;
+  }
+  .hint {
+    margin-top: 20px;
+    text-align: center;
+    font-size: 13px;
+    color: #9ca3af;
+  }
+  .hint kbd {
+    background: #f3f4f6;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    padding: 1px 6px;
+    font-family: ui-monospace, monospace;
+    font-size: 12px;
+    color: #374151;
+  }
+  /* Results */
+  .results h1 {
+    font-size: 24px;
+    margin-bottom: 8px;
+    color: #1a1a1a;
+  }
+  .score-big {
+    font-size: 56px;
+    font-weight: 800;
+    color: #2563eb;
+    margin: 16px 0 4px;
+    line-height: 1;
+  }
+  .score-detail {
+    font-size: 16px;
+    color: #6b7280;
+    margin-bottom: 28px;
+  }
+  .wrong-list h2 {
+    font-size: 16px;
+    margin-bottom: 12px;
+    color: #1a1a1a;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #e5e7eb;
+  }
+  .wrong-item {
+    padding: 14px 0;
+    border-bottom: 1px solid #f3f4f6;
+  }
+  .wrong-item:last-child { border-bottom: none; }
+  .wrong-q {
+    font-weight: 600;
+    margin-bottom: 8px;
+    font-size: 14px;
+    color: #1a1a1a;
+  }
+  .wrong-given, .wrong-correct {
+    font-size: 13px;
+    margin: 4px 0;
+    font-family: ui-monospace, monospace;
+  }
+  .wrong-given { color: #dc2626; }
+  .wrong-correct { color: #16a34a; }
+  .wrong-given strong, .wrong-correct strong {
+    font-family: system-ui, sans-serif;
+    margin-right: 4px;
+  }
+  .perfect {
+    text-align: center;
+    padding: 20px;
+    background: #f0fdf4;
+    border-radius: 8px;
+    color: #16a34a;
+    font-weight: 600;
+  }
+</style>
+</head>
+<body>
+<div class="card" id="app"></div>
+
+<script>
+const TOTAL_QUESTIONS = 20;
+
+const QUESTION_BANK = [
+  {
+    question: "Quel keyword permet d'envoyer une requête POST avec un body XML sur une session existante nommée <code>api</code> ?",
+    options: {
+      a: "POST Request    api    /orders    data=${xml_body}",
+      b: "POST On Session    api    /orders    data=${xml_body}",
+      c: "Post On Session    api    url=/orders    body=${xml_body}",
+      d: "POST    api    /orders    xml=${xml_body}"
+    },
+    correct: "b",
+    explanation: "POST On Session est le keyword officiel ; data transporte le payload XML brut."
+  },
+  {
+    question: "Pour envoyer un body XML, quel argument et quel header sont corrects pour <code>POST On Session</code> ?",
+    options: {
+      a: "json=${xml}    headers={'Content-Type': 'application/xml'}",
+      b: "params=${xml}    headers={'Content-Type': 'text/xml'}",
+      c: "data=${xml}    headers=&{headers}    avec Content-Type=application/xml",
+      d: "body=${xml}    Headers=&{headers}"
+    },
+    correct: "c",
+    explanation: "data envoie le XML brut ; headers (minuscule) accepte un dictionnaire Robot."
+  },
+  {
+    question: "Comment créer une session avec des headers XML appliqués à toutes les requêtes ?",
+    options: {
+      a: "Create Session    alias=api    url=${url}    default_headers=&{xml_headers}",
+      b: "New Session    api    ${url}    headers=&{xml_headers}",
+      c: "Create Session    api    url=${url}    Headers=&{xml_headers}",
+      d: "Create Session    api    ${url}    headers=&{xml_headers}"
+    },
+    correct: "d",
+    explanation: "Create Session accepte headers ; ils deviennent les headers par défaut de la session."
+  },
+  {
+    question: "Quelle assertion vérifie correctement que le code de statut d'une réponse XML est 201 ?",
+    options: {
+      a: "Should Be Equal    ${response.status_code}    201",
+      b: "Status Should Be    201    ${response}",
+      c: "Status Should Be    ${response}    201",
+      d: "Response Status Should Be    201    ${response}"
+    },
+    correct: "b",
+    explanation: "Status Should Be prend d'abord le code attendu, puis l'objet response."
+  },
+  {
+    question: "Comment passer des paramètres de requête (query string) lors d'un GET XML ?",
+    options: {
+      a: "GET On Session    api    /items    data=&{params}",
+      b: "GET On Session    api    /items    json=&{params}",
+      c: "GET On Session    api    /items    query=&{params}",
+      d: "GET On Session    api    /items    params=&{params}"
+    },
+    correct: "d",
+    explanation: "params= construit la query string ; data et json sont pour le body."
+  },
+  {
+    question: "Quelle est la différence correcte entre <code>data</code> et <code>json</code> dans POST On Session pour du XML ?",
+    options: {
+      a: "json sérialise automatiquement, donc parfait pour XML",
+      b: "data envoie le payload brut (adapté au XML), json sérialise un dict en JSON",
+      c: "data et json sont équivalents pour XML",
+      d: "json envoie du XML, data envoie du form-encoded uniquement"
+    },
+    correct: "b",
+    explanation: "Pour XML on utilise data avec une chaîne brute ; json est réservé au JSON."
+  },
+  {
+    question: "Comment accéder au texte XML brut renvoyé par une requête stockée dans <code>${response}</code> ?",
+    options: {
+      a: "${xml}=    Set Variable    ${response.text}",
+      b: "${xml}=    Set Variable    ${response.body}",
+      c: "${xml}=    Set Variable    ${response.content}",
+      d: "${xml}=    Get Response Body    ${response}"
+    },
+    correct: "a",
+    explanation: "response.text retourne le body décodé en string, idéal pour parser du XML."
+  },
+  {
+    question: "Quel keyword est INCORRECT dans la version moderne de RequestsLibrary ?",
+    options: {
+      a: "PUT On Session",
+      b: "DELETE On Session",
+      c: "Put Request",
+      d: "GET On Session"
+    },
+    correct: "c",
+    explanation: "Put Request est déprécié ; la syntaxe moderne est PUT On Session."
+  },
+  {
+    question: "Pour un PUT XML qui doit override les headers de session juste pour cet appel :",
+    options: {
+      a: "PUT On Session    api    /res/1    data=${xml}    headers=&{custom}",
+      b: "PUT On Session    api    /res/1    data=${xml}    default_headers=&{custom}",
+      c: "Update Session Headers    api    &{custom}    avant le PUT",
+      d: "PUT On Session    api    /res/1    data=${xml}    Headers=&{custom}"
+    },
+    correct: "a",
+    explanation: "headers= au niveau de la requête fusionne et écrase ceux de la session."
+  },
+  {
+    question: "Quelle assertion vérifie qu'un body XML contient la balise <code>&lt;status&gt;OK&lt;/status&gt;</code> ?",
+    options: {
+      a: "Should Contain    ${response.text}    <status>OK</status>",
+      b: "Should Contain    ${response.body}    <status>OK</status>",
+      c: "Should Be Equal As Strings    ${response}    <status>OK</status>",
+      d: "Response Should Contain    ${response}    <status>OK</status>"
+    },
+    correct: "a",
+    explanation: "Should Contain opère sur la string ; response.text donne le body en texte."
+  },
+  {
+    question: "Comment vérifier que le header <code>Content-Type</code> de la réponse est bien <code>application/xml</code> ?",
+    options: {
+      a: "Should Be Equal    ${response.headers}    application/xml",
+      b: "Should Be Equal As Strings    ${response.headers['Content-Type']}    application/xml",
+      c: "Header Should Be    Content-Type    application/xml",
+      d: "Should Contain    ${response.headers.Content-Type}    application/xml"
+    },
+    correct: "b",
+    explanation: "response.headers est un dict ; on accède par clé puis on compare en string."
+  },
+  {
+    question: "Pour DELETE avec un body XML (cas rare mais valide) sur une session :",
+    options: {
+      a: "DELETE Request    api    /res/1    data=${xml}",
+      b: "DELETE On Session    api    /res/1    body=${xml}    headers=&{h}",
+      c: "Delete    api    url=/res/1    data=${xml}",
+      d: "DELETE On Session    api    /res/1    data=${xml}    headers=&{h}"
+    },
+    correct: "d",
+    explanation: "DELETE On Session accepte data et headers comme les autres méthodes."
+  },
+  {
+    question: "Comment parser une réponse XML pour extraire la valeur d'un nœud avec Robot Framework ?",
+    options: {
+      a: "${val}=    Get Element Text    ${response.text}    .//id",
+      b: "${root}=    Parse Xml    ${response.text}\\n${val}=    Get Element Text    ${root}    id",
+      c: "${val}=    Evaluate    json.loads($response.text)['id']",
+      d: "${val}=    Get Json Value    ${response}    id"
+    },
+    correct: "b",
+    explanation: "XML Library : Parse Xml puis Get Element Text avec un XPath relatif."
+  },
+  {
+    question: "Quelle ligne crée correctement un dictionnaire de headers XML en Robot Framework ?",
+    options: {
+      a: "&{headers}=    Create Dictionary    Content-Type=application/xml    Accept=application/xml",
+      b: "${headers}=    Create List    Content-Type=application/xml    Accept=application/xml",
+      c: "&{headers}=    Set Variable    {Content-Type: application/xml}",
+      d: "&{headers}=    Create Dict    Content-Type:application/xml"
+    },
+    correct: "a",
+    explanation: "Create Dictionary avec syntaxe key=value et préfixe &{} pour un dict."
+  },
+  {
+    question: "Pourquoi cette ligne est-elle incorrecte : <code>POST On Session    api    /x    json=${xml_string}</code> ?",
+    options: {
+      a: "json= attend un dict Python, pas une string XML ; la requête échouera ou enverra du JSON invalide",
+      b: "Il manque l'argument headers obligatoire",
+      c: "Il faut utiliser POST Request à la place",
+      d: "L'alias api doit être en majuscules"
+    },
+    correct: "a",
+    explanation: "json= sérialise en JSON ; pour XML brut il faut data=."
+  },
+  {
+    question: "Comment passer le paramètre <code>expected_status</code> pour qu'une 4xx ne fasse pas échouer le test ?",
+    options: {
+      a: "POST On Session    api    /x    data=${xml}    expected_status=any",
+      b: "POST On Session    api    /x    data=${xml}    Expected_Status=400",
+      c: "POST On Session    api    /x    data=${xml}    ignore_status=True",
+      d: "POST On Session    api    /x    data=${xml}    raise_on_error=False"
+    },
+    correct: "a",
+    explanation: "expected_status=any (ou un code) désactive l'erreur automatique sur 4xx/5xx."
+  },
+  {
+    question: "Différence correcte entre <code>params</code> dans l'URL et l'argument <code>params=</code> ?",
+    options: {
+      a: "Aucune différence, les deux sont identiques",
+      b: "params= dans l'URL est encodé automatiquement, params= argument ne l'est pas",
+      c: "params= argument encode automatiquement les valeurs ; les écrire dans l'URL exige un encodage manuel",
+      d: "params= argument fonctionne uniquement avec GET"
+    },
+    correct: "c",
+    explanation: "L'argument params= gère l'URL-encoding ; dans l'URL il faut le faire soi-même."
+  },
+  {
+    question: "Quel keyword est faux et n'existe pas dans RequestsLibrary moderne ?",
+    options: {
+      a: "GET On Session",
+      b: "POST On Session",
+      c: "GET Request On Session",
+      d: "PATCH On Session"
+    },
+    correct: "c",
+    explanation: "GET Request On Session n'existe pas ; c'est GET On Session simplement."
+  },
+  {
+    question: "Pour vérifier qu'un body XML est exactement égal à une référence attendue :",
+    options: {
+      a: "Should Be Equal    ${response.text}    ${expected_xml}",
+      b: "Should Be Equal As Strings    ${response.text}    ${expected_xml}",
+      c: "Should Be Equal As Strings    ${response}    ${expected_xml}",
+      d: "Equal    ${response.body}    ${expected_xml}"
+    },
+    correct: "b",
+    explanation: "Should Be Equal As Strings compare deux chaînes ; response.text est la string."
+  },
+  {
+    question: "Ordre correct des arguments positionnels pour <code>Create Session</code> :",
+    options: {
+      a: "Create Session    url    alias    headers",
+      b: "Create Session    alias    url    headers",
+      c: "Create Session    alias    headers    url",
+      d: "Create Session    url    headers    alias"
+    },
+    correct: "b",
+    explanation: "Le premier argument est alias, le second l'URL de base, puis les options."
+  }
+];
+
+// State
+let currentIndex = 0;
+let selectedOption = null;
+let answered = false;
+let userAnswers = []; // {questionIndex, given, correct}
+const questions = QUESTION_BANK.slice(0, TOTAL_QUESTIONS);
+
+const app = document.getElementById('app');
+
+function render() {
+  if (currentIndex >= questions.length) {
+    renderResults();
+    return;
+  }
+  const q = questions[currentIndex];
+  const progressPct = (currentIndex / questions.length) * 100;
+
+  app.innerHTML = `
+    <div class="progress-info">
+      <span>Question ${currentIndex + 1} / ${questions.length}</span>
+      <span>${Math.round(progressPct)}%</span>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" style="width:${progressPct}%"></div></div>
+    <div class="question-text">${q.question}</div>
+    <div class="options" id="options">
+      ${['a','b','c','d'].map(letter => `
+        <button class="option" data-letter="${letter}">
+          <span class="letter">${letter.toUpperCase()}</span>
+          <span class="text">${escapeHtml(q.options[letter])}</span>
+        </button>
+      `).join('')}
+    </div>
+    <div class="explanation hidden" id="explanation"></div>
+    <button class="action-btn" id="action-btn" disabled>Valider</button>
+    <div class="hint" id="hint">
+      <kbd>A</kbd> <kbd>B</kbd> <kbd>C</kbd> <kbd>D</kbd> pour sélectionner · <kbd>Entrée</kbd> pour valider
+    </div>
+  `;
+
+  // Attach click listeners
+  document.querySelectorAll('.option').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (answered) return;
+      selectOption(btn.dataset.letter);
+    });
+  });
+
+  // Action button
+  document.getElementById('action-btn').addEventListener('click', () => {
+    if (!answered) {
+      validateAnswer();
+    } else {
+      nextQuestion();
+    }
+  });
+}
+
+function selectOption(letter) {
+  if (answered) return;
+  selectedOption = letter;
+  document.querySelectorAll('.option').forEach(btn => {
+    btn.classList.toggle('selected', btn.dataset.letter === letter);
+  });
+  document.getElementById('action-btn').disabled = false;
+}
+
+function validateAnswer() {
+  if (answered || !selectedOption) return;
+  answered = true;
+  const q = questions[currentIndex];
+  const isCorrect = selectedOption === q.correct;
+
+  userAnswers.push({
+    questionIndex: currentIndex,
+    given: selectedOption,
+    correct: q.correct,
+    isCorrect
+  });
+
+  document.querySelectorAll('.option').forEach(btn => {
+    btn.disabled = true;
+    btn.classList.remove('selected');
+    const letter = btn.dataset.letter;
+    if (letter === q.correct) {
+      btn.classList.add('correct');
+    } else if (letter === selectedOption && !isCorrect) {
+      btn.classList.add('incorrect');
+    }
+  });
+
+  const expEl = document.getElementById('explanation');
+  expEl.textContent = q.explanation;
+  expEl.classList.remove('hidden');
+
+  const actionBtn = document.getElementById('action-btn');
+  const isLast = currentIndex === questions.length - 1;
+  actionBtn.textContent = isLast ? 'Voir les résultats' : 'Question suivante';
+  actionBtn.disabled = false;
+
+  document.getElementById('hint').innerHTML =
+    '<kbd>Entrée</kbd> ou <kbd>Espace</kbd> pour continuer';
+}
+
+function nextQuestion() {
+  if (!answered) return;
+  currentIndex++;
+  selectedOption = null;
+  answered = false;
+  render();
+}
+
+function renderResults() {
+  const correctCount = userAnswers.filter(a => a.isCorrect).length;
+  const total = questions.length;
+  const pct = Math.round((correctCount / total) * 100);
+  const wrong = userAnswers.filter(a => !a.isCorrect);
+
+  app.innerHTML = `
+    <div class="results">
+      <h1>Résultats</h1>
+      <div class="score-big">${pct}%</div>
+      <div class="score-detail">${correctCount} / ${total} bonnes réponses</div>
+      ${wrong.length === 0
+        ? '<div class="perfect">🎉 Parfait ! Toutes les réponses sont correctes.</div>'
+        : `<div class="wrong-list">
+            <h2>Questions ratées (${wrong.length})</h2>
+            ${wrong.map(a => {
+              const q = questions[a.questionIndex];
+              return `
+                <div class="wrong-item">
+                  <div class="wrong-q">${q.question}</div>
+                  <div class="wrong-given"><strong>Votre réponse :</strong>${a.given.toUpperCase()}. ${escapeHtml(q.options[a.given])}</div>
+                  <div class="wrong-correct"><strong>Bonne réponse :</strong>${a.correct.toUpperCase()}. ${escapeHtml(q.options[a.correct])}</div>
+                </div>
+              `;
+            }).join('')}
+          </div>`
+      }
+    </div>
+  `;
+}
+
+function escapeHtml(s) {
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+// Keyboard handling - single global handler, gated by state
+document.addEventListener('keydown', (e) => {
+  // Results screen: ignore
+  if (currentIndex >= questions.length) return;
+
+  const key = e.key.toLowerCase();
+
+  if (['a','b','c','d'].includes(key) && !answered) {
+    e.preventDefault();
+    selectOption(key);
+    return;
+  }
+
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    if (!answered && selectedOption) {
+      validateAnswer();
+    } else if (answered) {
+      nextQuestion();
+    }
+    return;
+  }
+
+  if (e.key === ' ' && answered) {
+    e.preventDefault();
+    nextQuestion();
+    return;
+  }
+});
+
+render();
+</script>
+</body>
+</html>

@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QCM — Tests d'API XML avec RequestsLibrary</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: #ffffff;
+    color: #1a1a1a;
+    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    font-size: 16px;
+    line-height: 1.5;
+  }
+  body {
+    display: flex;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 24px 16px;
+  }
+  .card {
+    width: 100%;
+    max-width: 680px;
+    padding: 32px;
+    background: #ffffff;
+    border-radius: 12px;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  .progress-wrap {
+    margin-bottom: 28px;
+  }
+  .progress-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 14px;
+    color: #6b7280;
+    margin-bottom: 8px;
+    font-weight: 500;
+  }
+  .progress-bar {
+    width: 100%;
+    height: 8px;
+    background: #f3f4f6;
+    border-radius: 999px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: #2563eb;
+    width: 0%;
+    transition: width 0.3s ease;
+  }
+  .question-text {
+    font-size: 20px;
+    font-weight: 700;
+    line-height: 1.4;
+    margin: 0 0 24px 0;
+    color: #1a1a1a;
+  }
+  .question-text code,
+  .option-text code {
+    background: #f3f4f6;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: 'SF Mono', 'Monaco', 'Menlo', 'Consolas', monospace;
+    font-size: 0.9em;
+    color: #1a1a1a;
+    white-space: nowrap;
+  }
+  .options {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  .option {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    width: 100%;
+    text-align: left;
+    padding: 14px 16px;
+    background: #ffffff;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 15px;
+    color: #1a1a1a;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .option:hover:not(:disabled) {
+    border-color: #2563eb;
+    background: #f8fafc;
+  }
+  .option:disabled {
+    cursor: default;
+  }
+  .option.selected {
+    border-color: #2563eb;
+    background: #eff6ff;
+  }
+  .option.correct {
+    border-color: #16a34a;
+    background: #f0fdf4;
+    color: #166534;
+  }
+  .option.incorrect {
+    border-color: #dc2626;
+    background: #fef2f2;
+    color: #991b1b;
+  }
+  .option-letter {
+    font-weight: 700;
+    flex-shrink: 0;
+    min-width: 20px;
+  }
+  .option-text {
+    flex: 1;
+    line-height: 1.45;
+  }
+  .explanation {
+    margin-top: 16px;
+    padding: 12px 16px;
+    background: #f0fdf4;
+    border-left: 4px solid #16a34a;
+    border-radius: 4px;
+    font-size: 14px;
+    color: #166534;
+  }
+  .next-hint {
+    margin-top: 16px;
+    text-align: center;
+    font-size: 13px;
+    color: #6b7280;
+  }
+  .next-hint kbd {
+    background: #f3f4f6;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    padding: 1px 6px;
+    font-family: inherit;
+    font-size: 12px;
+  }
+  /* écran final */
+  .results-title {
+    font-size: 14px;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin: 0 0 8px 0;
+    font-weight: 600;
+  }
+  .results-score {
+    font-size: 48px;
+    font-weight: 700;
+    margin: 0 0 8px 0;
+    color: #1a1a1a;
+  }
+  .results-percent {
+    font-size: 32px;
+    font-weight: 700;
+    color: #2563eb;
+    margin: 0 0 8px 0;
+  }
+  .results-mention {
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0 0 32px 0;
+  }
+  .results-mention.excellent { color: #16a34a; }
+  .results-mention.bien { color: #2563eb; }
+  .results-mention.revoir { color: #dc2626; }
+  .missed-section h3 {
+    font-size: 16px;
+    color: #1a1a1a;
+    margin: 0 0 16px 0;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #e5e7eb;
+  }
+  .missed-item {
+    margin-bottom: 20px;
+    padding: 16px;
+    background: #fafafa;
+    border-radius: 8px;
+    border-left: 3px solid #dc2626;
+  }
+  .missed-num {
+    font-size: 12px;
+    color: #6b7280;
+    font-weight: 600;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .missed-q {
+    font-weight: 600;
+    margin-bottom: 12px;
+    line-height: 1.45;
+  }
+  .missed-q code,
+  .missed-given code,
+  .missed-correct code {
+    background: #f3f4f6;
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-family: 'SF Mono', 'Monaco', 'Menlo', 'Consolas', monospace;
+    font-size: 0.9em;
+  }
+  .missed-given, .missed-correct {
+    font-size: 14px;
+    line-height: 1.5;
+    margin-bottom: 4px;
+  }
+  .missed-given strong { color: #dc2626; }
+  .missed-correct strong { color: #16a34a; }
+  .results-perfect {
+    text-align: center;
+    padding: 24px;
+    background: #f0fdf4;
+    border-radius: 8px;
+    color: #166534;
+    font-weight: 600;
+  }
+</style>
+</head>
+<body>
+<div class="card" id="card">
+  <!-- contenu injecté en JS -->
+</div>
+
+<script>
+  // ============================================================
+  // VARIABLE DE CONFIGURATION (modifier ici uniquement)
+  // ============================================================
+  const TOTAL_QUESTIONS = 20;
+
+  // ============================================================
+  // BANQUE DE QUESTIONS
+  // Répartition stricte des bonnes réponses : 5 A, 5 B, 5 C, 5 D
+  // ============================================================
+  const QUESTION_BANK = [
+    // ---- Bonne réponse : A (x5) ----
+    {
+      question: "Quel keyword utiliser pour envoyer une requête POST avec un body XML sur une session aliasée <code>api</code> ?",
+      options: {
+        a: "<code>POST On Session    api    /endpoint    data=${xml_body}    headers=${headers}</code>",
+        b: "<code>POST Request    api    /endpoint    data=${xml_body}    headers=${headers}</code>",
+        c: "<code>POST On Session    api    /endpoint    json=${xml_body}    headers=${headers}</code>",
+        d: "<code>Post Xml On Session    api    /endpoint    body=${xml_body}</code>"
+      },
+      correct: "a",
+      explanation: "<code>POST On Session</code> est le keyword courant ; <code>data=</code> envoie le XML brut."
+    },
+    {
+      question: "Quel argument utiliser pour envoyer un payload XML dans une requête POST ?",
+      options: {
+        a: "<code>data=${xml_string}</code>",
+        b: "<code>json=${xml_string}</code>",
+        c: "<code>body=${xml_string}</code>",
+        d: "<code>xml=${xml_string}</code>"
+      },
+      correct: "a",
+      explanation: "<code>data=</code> envoie la string telle quelle ; <code>json=</code> sérialiserait en JSON."
+    },
+    {
+      question: "Comment vérifier que le status code d'une réponse vaut 200 ?",
+      options: {
+        a: "<code>Status Should Be    200    ${response}</code>",
+        b: "<code>Should Be Equal As Strings    ${response.status_code}    \"200\"</code>",
+        c: "<code>Response Status Should Be    ${response}    200</code>",
+        d: "<code>Status Code Should Be    200</code>"
+      },
+      correct: "a",
+      explanation: "<code>Status Should Be</code> prend le code attendu puis l'objet response."
+    },
+    {
+      question: "Comment lire le body XML brut d'une réponse en tant que string ?",
+      options: {
+        a: "<code>${body}=    Set Variable    ${response.text}</code>",
+        b: "<code>${body}=    Set Variable    ${response.xml()}</code>",
+        c: "<code>${body}=    Get Xml Body    ${response}</code>",
+        d: "<code>${body}=    Set Variable    ${response.body}</code>"
+      },
+      correct: "a",
+      explanation: "<code>response.text</code> renvoie le body décodé en string ; <code>.xml()</code> n'existe pas."
+    },
+    {
+      question: "Quelle est la bonne façon de définir les headers pour envoyer du XML ?",
+      options: {
+        a: "<code>${headers}=    Create Dictionary    Content-Type=application/xml    Accept=application/xml</code>",
+        b: "<code>${headers}=    Set Variable    Content-Type=application/xml</code>",
+        c: "<code>${headers}=    Create Headers    Content-Type    application/xml</code>",
+        d: "<code>${headers}=    Create Dictionary    Content-Type:application/xml</code>"
+      },
+      correct: "a",
+      explanation: "<code>Create Dictionary</code> avec syntaxe <code>cle=valeur</code> pour chaque header."
+    },
+
+    // ---- Bonne réponse : B (x5) ----
+    {
+      question: "Pourquoi <code>POST On Session    api    /users    json=${xml_body}</code> échoue-t-il ?",
+      options: {
+        a: "Parce que <code>json=</code> nécessite l'argument <code>headers=</code> en plus.",
+        b: "Parce que <code>json=</code> sérialise la valeur en JSON, ce qui corrompt le XML.",
+        c: "Parce que <code>json=</code> n'accepte que les dictionnaires Python.",
+        d: "Parce que le keyword correct est <code>Post Xml On Session</code>."
+      },
+      correct: "b",
+      explanation: "<code>json=</code> applique <code>json.dumps()</code> et casse le payload XML."
+    },
+    {
+      question: "Comment parser une string XML pour pouvoir y faire des assertions XPath ?",
+      options: {
+        a: "<code>${root}=    ${response.xml()}</code>",
+        b: "<code>${root}=    Parse Xml    ${response.text}</code>",
+        c: "<code>${root}=    Parse Xml    ${response}</code>",
+        d: "<code>${root}=    Get Xml    ${response.text}</code>"
+      },
+      correct: "b",
+      explanation: "<code>Parse Xml</code> de la XML Library prend la string XML en entrée."
+    },
+    {
+      question: "Quel keyword vérifie que le texte d'un élément XML vaut une valeur attendue ?",
+      options: {
+        a: "<code>Should Be Equal    ${element.text}    Alice</code>",
+        b: "<code>Element Text Should Be    ${root}    Alice    xpath=user/name</code>",
+        c: "<code>Xml Text Should Be    ${root}    user/name    Alice</code>",
+        d: "<code>Should Contain Text    ${root}    Alice</code>"
+      },
+      correct: "b",
+      explanation: "<code>Element Text Should Be</code> de la XML Library, avec <code>xpath=</code> ciblant l'élément."
+    },
+    {
+      question: "Quelle bibliothèque importer en plus de <code>RequestsLibrary</code> pour faire des assertions XPath sur du XML ?",
+      options: {
+        a: "<code>Library    XmlLibrary</code>",
+        b: "<code>Library    XML</code>",
+        c: "<code>Library    lxml</code>",
+        d: "<code>Library    RequestsLibrary.Xml</code>"
+      },
+      correct: "b",
+      explanation: "La librairie standard de Robot Framework s'importe simplement avec <code>Library    XML</code>."
+    },
+    {
+      question: "Comment lire le contenu d'un fichier XML local pour l'envoyer comme body ?",
+      options: {
+        a: "<code>${body}=    Read Xml File    payload.xml</code>",
+        b: "<code>${body}=    Get File    payload.xml</code>",
+        c: "<code>${body}=    Load File    payload.xml</code>",
+        d: "<code>${body}=    Open File    payload.xml</code>"
+      },
+      correct: "b",
+      explanation: "<code>Get File</code> de la OperatingSystem library renvoie le contenu en string."
+    },
+
+    // ---- Bonne réponse : C (x5) ----
+    {
+      question: "Quelle est la signature correcte d'une requête GET sur une session ?",
+      options: {
+        a: "<code>GET Request    api    /users/1</code>",
+        b: "<code>Get On Session    api    /users/1    headers=${headers}</code>",
+        c: "<code>GET On Session    api    /users/1    headers=${headers}</code>",
+        d: "<code>Session Get    api    /users/1</code>"
+      },
+      correct: "c",
+      explanation: "<code>GET On Session</code> en majuscules ; <code>GET Request</code> est obsolète."
+    },
+    {
+      question: "Comment récupérer la valeur de l'attribut <code>id</code> d'un élément <code>&lt;user&gt;</code> ?",
+      options: {
+        a: "<code>${id}=    Get Attribute    ${root}    user    id</code>",
+        b: "<code>${id}=    Get Xml Attribute    ${root}    user/@id</code>",
+        c: "<code>${id}=    Get Element Attribute    ${root}    id    xpath=user</code>",
+        d: "<code>${id}=    Element Attribute    ${root}    user    id</code>"
+      },
+      correct: "c",
+      explanation: "<code>Get Element Attribute</code> prend le nom d'attribut et un <code>xpath=</code>."
+    },
+    {
+      question: "Comment compter le nombre d'éléments <code>&lt;item&gt;</code> dans une réponse XML ?",
+      options: {
+        a: "<code>${count}=    Count Elements    ${root}    item</code>",
+        b: "<code>${count}=    Length    Get Elements    ${root}    item</code>",
+        c: "<code>${count}=    Get Element Count    ${root}    item</code>",
+        d: "<code>${count}=    Xml Count    ${root}    //item</code>"
+      },
+      correct: "c",
+      explanation: "<code>Get Element Count</code> de la XML Library renvoie un entier."
+    },
+    {
+      question: "Comment vérifier que le header <code>Content-Type</code> de la réponse est bien <code>application/xml</code> ?",
+      options: {
+        a: "<code>Should Be Equal    ${response.content_type}    application/xml</code>",
+        b: "<code>Header Should Be    ${response}    Content-Type    application/xml</code>",
+        c: "<code>Should Contain    ${response.headers}[Content-Type]    application/xml</code>",
+        d: "<code>Response Header Should Be    Content-Type    application/xml</code>"
+      },
+      correct: "c",
+      explanation: "<code>${response.headers}[Content-Type]</code> accède au header ; <code>Should Contain</code> tolère le charset."
+    },
+    {
+      question: "Quelle est la bonne syntaxe XPath pour cibler le premier <code>&lt;name&gt;</code> enfant direct d'<code>&lt;user&gt;</code> dans <code>Get Element</code> ?",
+      options: {
+        a: "<code>//user/name</code>",
+        b: "<code>/user/name</code>",
+        c: "<code>user/name</code>",
+        d: "<code>./user//name</code>"
+      },
+      correct: "c",
+      explanation: "La XML Library utilise des XPath relatifs à la racine, sans slash initial."
+    },
+
+    // ---- Bonne réponse : D (x5) ----
+    {
+      question: "Quel argument passer pour envoyer un fichier binaire en multipart dans une requête POST ?",
+      options: {
+        a: "<code>data=${file}</code>",
+        b: "<code>body=${file}</code>",
+        c: "<code>attachment=${file}</code>",
+        d: "<code>files=${files_dict}</code>"
+      },
+      correct: "d",
+      explanation: "<code>files=</code> attend un dictionnaire ; gère automatiquement le multipart/form-data."
+    },
+    {
+      question: "Pourquoi <code>Should Be Equal As Strings    ${response.status_code}    200</code> peut-il poser problème ?",
+      options: {
+        a: "Parce qu'il faut écrire <code>${response.statusCode}</code> en camelCase.",
+        b: "Parce que <code>Status Should Be</code> ne marche que sur les sessions.",
+        c: "Parce que <code>response.status_code</code> est une string et 200 un entier.",
+        d: "Parce que <code>response.status_code</code> est un entier ; il faut <code>Should Be Equal As Integers</code>."
+      },
+      correct: "d",
+      explanation: "<code>status_code</code> est un <em>int</em> ; comparer en strings peut fonctionner mais reste fragile."
+    },
+    {
+      question: "Que renvoie <code>${response.content}</code> sur une réponse XML ?",
+      options: {
+        a: "Une string décodée en UTF-8.",
+        b: "Un objet <code>ElementTree</code> déjà parsé.",
+        c: "Un dictionnaire des éléments racine.",
+        d: "Les bytes bruts du body, non décodés."
+      },
+      correct: "d",
+      explanation: "<code>response.content</code> renvoie des bytes ; <code>response.text</code> renvoie une string."
+    },
+    {
+      question: "Lequel de ces keywords <strong>n'existe pas</strong> dans la RequestsLibrary ou la XML Library ?",
+      options: {
+        a: "<code>Get Element Text</code>",
+        b: "<code>Element Should Exist</code>",
+        c: "<code>Parse Xml</code>",
+        d: "<code>Response Xml Should Be</code>"
+      },
+      correct: "d",
+      explanation: "<code>Response Xml Should Be</code> est inventé ; aucune library RF ne le fournit."
+    },
+    {
+      question: "Comment supprimer une ressource en passant un alias de session <code>api</code> et l'endpoint <code>/users/42</code> ?",
+      options: {
+        a: "<code>Delete Request    api    /users/42</code>",
+        b: "<code>Session Delete    api    /users/42</code>",
+        c: "<code>DELETE    api    /users/42</code>",
+        d: "<code>DELETE On Session    api    /users/42</code>"
+      },
+      correct: "d",
+      explanation: "<code>DELETE On Session</code> est le keyword moderne ; <code>Delete Request</code> est obsolète."
+    }
+  ];
+
+  // ============================================================
+  // MÉLANGE ALÉATOIRE (Fisher-Yates)
+  // ============================================================
+  function shuffle(arr) {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  // ============================================================
+  // ÉTAT GLOBAL
+  // ============================================================
+  let questions = shuffle(QUESTION_BANK).slice(0, TOTAL_QUESTIONS);
+  let currentIndex = 0;
+  let score = 0;
+  let selectedLetter = null;
+  let phase = "idle"; // "idle" | "answered" | "done"
+  let missed = []; // { num, question, options, given, correct }
+
+  const card = document.getElementById("card");
+
+  // ============================================================
+  // RENDU D'UNE QUESTION
+  // ============================================================
+  function renderQuestion() {
+    selectedLetter = null;
+    phase = "idle";
+    const q = questions[currentIndex];
+    const progressPercent = (currentIndex / questions.length) * 100;
+
+    card.innerHTML = `
+      <div class="progress-wrap">
+        <div class="progress-label">
+          <span>Question ${currentIndex + 1} / ${TOTAL_QUESTIONS}</span>
+          <span>${Math.round(progressPercent)}%</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" style="width: ${progressPercent}%"></div>
+        </div>
+      </div>
+      <h2 class="question-text">${q.question}</h2>
+      <div class="options" id="options">
+        ${["a","b","c","d"].map(letter => `
+          <button class="option" data-letter="${letter}">
+            <span class="option-letter">${letter.toUpperCase()}.</span>
+            <span class="option-text">${q.options[letter]}</span>
+          </button>
+        `).join("")}
+      </div>
+      <div id="feedback-area"></div>
+    `;
+
+    // listeners boutons
+    card.querySelectorAll(".option").forEach(btn => {
+      btn.addEventListener("click", () => {
+        if (phase !== "idle") return;
+        selectOption(btn.dataset.letter);
+        validateAnswer();
+      });
+    });
+  }
+
+  function selectOption(letter) {
+    if (phase !== "idle") return;
+    selectedLetter = letter;
+    card.querySelectorAll(".option").forEach(btn => {
+      btn.classList.toggle("selected", btn.dataset.letter === letter);
+    });
+  }
+
+  function validateAnswer() {
+    if (phase !== "idle" || !selectedLetter) return;
+    phase = "answered";
+    const q = questions[currentIndex];
+    const isCorrect = selectedLetter === q.correct;
+
+    if (isCorrect) {
+      score++;
+    } else {
+      missed.push({
+        num: currentIndex + 1,
+        question: q.question,
+        givenLetter: selectedLetter,
+        givenText: q.options[selectedLetter],
+        correctLetter: q.correct,
+        correctText: q.options[q.correct]
+      });
+    }
+
+    // appliquer styles correct/incorrect, désactiver tous les boutons
+    card.querySelectorAll(".option").forEach(btn => {
+      btn.disabled = true;
+      btn.classList.remove("selected");
+      const letter = btn.dataset.letter;
+      if (letter === q.correct) {
+        btn.classList.add("correct");
+      } else if (letter === selectedLetter && !isCorrect) {
+        btn.classList.add("incorrect");
+      }
+    });
+
+    // explication
+    const fb = document.getElementById("feedback-area");
+    fb.innerHTML = `
+      <div class="explanation">${q.explanation}</div>
+      <div class="next-hint">
+        <kbd>Entrée</kbd> ou <kbd>Espace</kbd> pour continuer
+      </div>
+    `;
+  }
+
+  function nextQuestion() {
+    if (phase !== "answered") return;
+    currentIndex++;
+    if (currentIndex >= questions.length) {
+      phase = "done";
+      renderResults();
+    } else {
+      renderQuestion();
+    }
+  }
+
+  // ============================================================
+  // ÉCRAN DE RÉSULTATS
+  // ============================================================
+  function renderResults() {
+    const total = questions.length;
+    const percent = Math.round((score / total) * 100);
+    let mention, mentionClass;
+    if (percent >= 80) { mention = "Excellent"; mentionClass = "excellent"; }
+    else if (percent >= 60) { mention = "Bien"; mentionClass = "bien"; }
+    else { mention = "À revoir"; mentionClass = "revoir"; }
+
+    const missedHtml = missed.length === 0
+      ? `<div class="results-perfect">✓ Toutes les réponses sont correctes.</div>`
+      : `
+        <div class="missed-section">
+          <h3>Questions ratées (${missed.length})</h3>
+          ${missed.map(m => `
+            <div class="missed-item">
+              <div class="missed-num">Question ${m.num}</div>
+              <div class="missed-q">${m.question}</div>
+              <div class="missed-given">
+                <strong>Votre réponse (${m.givenLetter.toUpperCase()})</strong> : ${m.givenText}
+              </div>
+              <div class="missed-correct">
+                <strong>Bonne réponse (${m.correctLetter.toUpperCase()})</strong> : ${m.correctText}
+              </div>
+            </div>
+          `).join("")}
+        </div>
+      `;
+
+    card.innerHTML = `
+      <p class="results-title">Score final</p>
+      <p class="results-score">${score} / ${total}</p>
+      <p class="results-percent">${percent}%</p>
+      <p class="results-mention ${mentionClass}">${mention}</p>
+      ${missedHtml}
+    `;
+  }
+
+  // ============================================================
+  // CONTRÔLES CLAVIER (un seul listener, vérifie phase)
+  // ============================================================
+  document.addEventListener("keydown", (e) => {
+    // ignore si modificateurs
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+
+    const key = e.key.toLowerCase();
+
+    if (phase === "idle") {
+      if (["a","b","c","d"].includes(key)) {
+        e.preventDefault();
+        selectOption(key);
+      } else if (e.key === "Enter") {
+        e.preventDefault();
+        if (selectedLetter) validateAnswer();
+      }
+    } else if (phase === "answered") {
+      if (e.key === "Enter" || e.key === " " || key === "spacebar") {
+        e.preventDefault();
+        nextQuestion();
+      }
+    }
+    // phase === "done" : pas d'interaction clavier
+  });
+
+  // ============================================================
+  // DÉMARRAGE
+  // ============================================================
+  renderQuestion();
+</script>
+</body>
+</html>

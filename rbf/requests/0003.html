@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QCM — RequestsLibrary Robot Framework</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #ffffff;
+    --surface: #f8f9fc;
+    --border: #e4e7ef;
+    --text: #1a1a1a;
+    --text-muted: #6b7280;
+    --accent: #2563eb;
+    --accent-light: #dbeafe;
+    --green: #16a34a;
+    --green-light: #dcfce7;
+    --red: #dc2626;
+    --red-light: #fee2e2;
+    --radius: 10px;
+    --shadow: 0 1px 3px rgba(0,0,0,.06), 0 4px 16px rgba(0,0,0,.06);
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', system-ui, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 40px 16px 60px;
+  }
+
+  .card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    box-shadow: var(--shadow);
+    max-width: 680px;
+    width: 100%;
+    padding: 32px;
+  }
+
+  /* Header */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+  }
+  .header-title {
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+  .header-counter {
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    color: var(--accent);
+    font-weight: 500;
+  }
+
+  /* Progress bar */
+  .progress-track {
+    height: 4px;
+    background: var(--border);
+    border-radius: 99px;
+    margin-bottom: 28px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 99px;
+    transition: width .35s cubic-bezier(.4,0,.2,1);
+  }
+
+  /* Question */
+  .question-text {
+    font-size: 17px;
+    font-weight: 600;
+    line-height: 1.55;
+    margin-bottom: 24px;
+    color: var(--text);
+  }
+
+  /* Code blocks inside question */
+  .question-text code, code {
+    font-family: 'DM Mono', monospace;
+    font-size: .88em;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 1px 5px;
+    border-radius: 4px;
+    color: #2563eb;
+  }
+
+  /* Options */
+  .options {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  .option-btn {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 14px 16px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--bg);
+    cursor: pointer;
+    text-align: left;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 400;
+    color: var(--text);
+    transition: border-color .15s, background .15s, transform .1s;
+    line-height: 1.5;
+  }
+  .option-btn:hover:not(:disabled) {
+    border-color: var(--accent);
+    background: var(--accent-light);
+    transform: translateX(2px);
+  }
+  .option-btn:disabled { cursor: default; transform: none; }
+
+  .option-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-muted);
+    flex-shrink: 0;
+    transition: background .15s, border-color .15s, color .15s;
+  }
+
+  /* States */
+  .option-btn.selected {
+    border-color: var(--accent);
+    background: var(--accent-light);
+  }
+  .option-btn.selected .option-label {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+  .option-btn.correct {
+    border-color: var(--green);
+    background: var(--green-light);
+  }
+  .option-btn.correct .option-label {
+    background: var(--green);
+    border-color: var(--green);
+    color: #fff;
+  }
+  .option-btn.incorrect {
+    border-color: var(--red);
+    background: var(--red-light);
+  }
+  .option-btn.incorrect .option-label {
+    background: var(--red);
+    border-color: var(--red);
+    color: #fff;
+  }
+
+  /* Explanation */
+  .explanation {
+    font-size: 14px;
+    color: var(--text-muted);
+    padding: 12px 14px;
+    background: var(--surface);
+    border-radius: var(--radius);
+    border-left: 3px solid var(--accent);
+    margin-bottom: 20px;
+    display: none;
+    line-height: 1.55;
+  }
+  .explanation.visible { display: block; }
+  .explanation strong { color: var(--text); }
+
+  /* Action row */
+  .action-row {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+  }
+
+  .btn-validate, .btn-next {
+    padding: 10px 22px;
+    border-radius: var(--radius);
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: opacity .15s, background .15s;
+  }
+  .btn-validate {
+    background: var(--accent);
+    color: #fff;
+  }
+  .btn-validate:disabled { opacity: .35; cursor: default; }
+  .btn-validate:not(:disabled):hover { background: #1d4ed8; }
+
+  .btn-next {
+    background: var(--text);
+    color: #fff;
+    display: none;
+  }
+  .btn-next.visible { display: block; }
+  .btn-next:hover { background: #333; }
+
+  /* Keyboard hint */
+  .kbd-hint {
+    font-size: 12px;
+    color: var(--text-muted);
+    text-align: center;
+    margin-top: 16px;
+  }
+  .kbd {
+    display: inline-block;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1px 5px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    background: var(--surface);
+  }
+
+  /* Results screen */
+  #results-screen { display: none; }
+  #results-screen.visible { display: block; }
+
+  .results-hero {
+    text-align: center;
+    padding: 24px 0 28px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 28px;
+  }
+  .results-score {
+    font-family: 'DM Mono', monospace;
+    font-size: 52px;
+    font-weight: 500;
+    color: var(--accent);
+    line-height: 1;
+    margin-bottom: 8px;
+  }
+  .results-pct {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+  }
+  .results-label {
+    font-size: 14px;
+    color: var(--text-muted);
+  }
+
+  .results-section-title {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 14px;
+  }
+
+  .missed-item {
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 12px;
+  }
+  .missed-q {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 10px;
+    line-height: 1.5;
+  }
+  .missed-answers {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    font-size: 13px;
+  }
+  .missed-given {
+    color: var(--red);
+  }
+  .missed-correct {
+    color: var(--green);
+  }
+
+  .btn-restart {
+    display: block;
+    width: 100%;
+    margin-top: 28px;
+    padding: 13px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius);
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .btn-restart:hover { background: #1d4ed8; }
+
+  .all-correct-msg {
+    text-align: center;
+    padding: 20px;
+    background: var(--green-light);
+    border-radius: var(--radius);
+    color: var(--green);
+    font-weight: 600;
+    font-size: 15px;
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <!-- Quiz screen -->
+  <div id="quiz-screen">
+    <div class="header">
+      <span class="header-title">RequestsLibrary · Robot Framework</span>
+      <span class="header-counter" id="counter">1 / 20</span>
+    </div>
+    <div class="progress-track">
+      <div class="progress-fill" id="progress-fill" style="width:0%"></div>
+    </div>
+    <p class="question-text" id="question-text"></p>
+    <div class="options" id="options"></div>
+    <div class="explanation" id="explanation"></div>
+    <div class="action-row">
+      <button class="btn-validate" id="btn-validate" disabled>Valider</button>
+      <button class="btn-next" id="btn-next">Suivant →</button>
+    </div>
+    <p class="kbd-hint"><kbd class="kbd">A</kbd> <kbd class="kbd">B</kbd> <kbd class="kbd">C</kbd> <kbd class="kbd">D</kbd> sélectionner &nbsp;·&nbsp; <kbd class="kbd">Entrée</kbd> valider / suivant</p>
+  </div>
+
+  <!-- Results screen -->
+  <div id="results-screen">
+    <div class="results-hero">
+      <div class="results-score" id="res-score"></div>
+      <div class="results-pct" id="res-pct"></div>
+      <div class="results-label">Score final</div>
+    </div>
+    <div id="res-missed-section">
+      <p class="results-section-title">Questions incorrectes</p>
+      <div id="res-missed-list"></div>
+    </div>
+    <button class="btn-restart" onclick="restart()">↺ Recommencer</button>
+  </div>
+</div>
+
+<script>
+const TOTAL_QUESTIONS = 20;
+
+const BANK = [
+  // --- PUT ---
+  {
+    question: "Quelle est la syntaxe correcte pour effectuer une requête PUT avec un body JSON en utilisant RequestsLibrary ?",
+    options: {
+      a: "Put Request    session    /api/users/1    data=${payload}",
+      b: "PUT    session    /api/users/1    json=${payload}",
+      c: "Put On Session    session    /api/users/1    json=${payload}",
+      d: "Put On Session    session    /api/users/1    data=${payload}    content_type=json"
+    },
+    correct: "c",
+    explanation: "Put On Session est le keyword correct ; json= sérialise automatiquement le dict en JSON."
+  },
+  {
+    question: "Vous souhaitez mettre à jour une ressource en envoyant un body JSON. Lequel de ces appels est INCORRECT ?",
+    options: {
+      a: "Put On Session    mysession    /resource/42    json=${body}",
+      b: "Put On Session    mysession    /resource/42    data=${body}    headers=${hdr}",
+      c: "Put Request    mysession    /resource/42    json=${body}",
+      d: "Put On Session    mysession    /resource/42    json=${body}    expected_status=200"
+    },
+    correct: "c",
+    explanation: "Put Request est obsolète depuis RF 5 ; il faut utiliser Put On Session."
+  },
+  {
+    question: "Quelle assertion vérifie qu'une réponse PUT a bien retourné le statut 204 ?",
+    options: {
+      a: "Should Be Equal    ${response.status_code}    204",
+      b: "Status Should Be    204    ${response}",
+      c: "Should Be Equal As Strings    ${response.status_code}    204",
+      d: "Status Should Be    ${response}    204"
+    },
+    correct: "b",
+    explanation: "Status Should Be attend d'abord le code attendu, puis l'objet réponse."
+  },
+
+  // --- DELETE ---
+  {
+    question: "Comment supprimer une ressource avec RequestsLibrary et vérifier la suppression ?",
+    options: {
+      a: "${r}=    Delete On Session    api    /items/5\n    Status Should Be    200    ${r}",
+      b: "${r}=    Delete Request    api    /items/5\n    Status Should Be    200    ${r}",
+      c: "${r}=    Delete On Session    api    items/5\n    Should Be Equal As Strings    ${r.status}    200",
+      d: "${r}=    Remove On Session    api    /items/5\n    Status Should Be    200    ${r}"
+    },
+    correct: "a",
+    explanation: "Delete On Session est le keyword actuel ; Status Should Be vérifie le code HTTP."
+  },
+  {
+    question: "Quelle différence entre `Delete On Session` avec `expected_status=204` et l'assertion `Status Should Be` ?",
+    options: {
+      a: "Aucune différence fonctionnelle, les deux lèvent une exception si le code est inattendu",
+      b: "`expected_status` ne lève pas d'erreur, contrairement à `Status Should Be`",
+      c: "`Status Should Be` est plus précis car il compare des entiers",
+      d: "`expected_status` ne fonctionne qu'avec DELETE, pas avec PUT"
+    },
+    correct: "a",
+    explanation: "Les deux lèvent une exception Robot Framework si le code HTTP ne correspond pas."
+  },
+  {
+    question: "Lors d'un DELETE avec body (rare mais possible), quel argument faut-il utiliser ?",
+    options: {
+      a: "body=${payload}",
+      b: "json=${payload}",
+      c: "content=${payload}",
+      d: "data_body=${payload}"
+    },
+    correct: "b",
+    explanation: "json= ou data= sont les arguments valides ; body= n'existe pas dans RequestsLibrary."
+  },
+
+  // --- BASIC AUTH ---
+  {
+    question: "Comment configurer une session avec Basic Auth dans RequestsLibrary ?",
+    options: {
+      a: "Create Session    api    ${URL}    auth=(${user}    ${pwd})",
+      b: "Create Session    api    ${URL}    auth=${auth}    où ${auth}=    Create List    ${user}    ${pwd}",
+      c: "Create Session    api    ${URL}    headers=Authorization: Basic ${encoded}",
+      d: "Create Session    api    ${URL}    username=${user}    password=${pwd}"
+    },
+    correct: "b",
+    explanation: "auth= accepte une liste [user, password] créée avec Create List ou une tuple Python."
+  },
+  {
+    question: "Quelle est l'erreur dans cette configuration de Basic Auth ?\n`Create Session    api    ${URL}    auth=${user}:${pwd}`",
+    options: {
+      a: "Il faut encoder le couple en base64 manuellement",
+      b: "auth= attend une liste ou tuple, pas une chaîne user:pwd",
+      c: "Il manque le keyword HTTPBasicAuth avant les credentials",
+      d: "Le séparateur doit être ; et non :"
+    },
+    correct: "b",
+    explanation: "auth= exige une liste/tuple [user, pwd] ; une chaîne brute provoque une erreur."
+  },
+
+  // --- API KEY / BEARER ---
+  {
+    question: "Comment ajouter un Bearer token à toutes les requêtes d'une session ?",
+    options: {
+      a: "Create Session    api    ${URL}    token=Bearer ${TOKEN}",
+      b: "Create Session    api    ${URL}    headers=&{hdr}    avec &{hdr}=    Authorization    Bearer ${TOKEN}",
+      c: "Create Session    api    ${URL}    bearer=${TOKEN}",
+      d: "Create Session    api    ${URL}    auth=Bearer    ${TOKEN}"
+    },
+    correct: "b",
+    explanation: "Les headers de session se passent via headers=&{dict} ; il n'y a pas d'argument bearer=."
+  },
+  {
+    question: "Vous devez envoyer une API key dans le header `X-API-Key` sur une seule requête GET. Quelle syntaxe est correcte ?",
+    options: {
+      a: "Get On Session    api    /data    params=X-API-Key=${KEY}",
+      b: "Get On Session    api    /data    headers=${{'X-API-Key': '${KEY}'}}",
+      c: "Get On Session    api    /data    api_key=${KEY}",
+      d: "Get On Session    api    /data    auth=X-API-Key:${KEY}"
+    },
+    correct: "b",
+    explanation: "headers= accepte un dictionnaire Python ; params= est réservé aux query strings."
+  },
+  {
+    question: "Quelle instruction crée correctement un dictionnaire de headers pour un Bearer token ?",
+    options: {
+      a: "&{HDR}=    Create Dictionary    Authorization=Bearer ${TOKEN}",
+      b: "&{HDR}=    Create Dictionary    Authorization    Bearer: ${TOKEN}",
+      c: "@{HDR}=    Create Dictionary    Authorization=Bearer ${TOKEN}",
+      d: "&{HDR}=    Set Variable    Authorization=Bearer ${TOKEN}"
+    },
+    correct: "a",
+    explanation: "Create Dictionary avec clé=valeur et &{} pour stocker un dict ; @ est pour les listes."
+  },
+
+  // --- HEADERS CUSTOM ---
+  {
+    question: "Comment surcharger le Content-Type uniquement pour une requête POST sans modifier la session ?",
+    options: {
+      a: "Post On Session    api    /endpoint    content_type=application/xml    data=${body}",
+      b: "Post On Session    api    /endpoint    headers=${{Content-Type: application/xml}}    data=${body}",
+      c: "Post On Session    api    /endpoint    headers=Content-Type=application/xml    data=${body}",
+      d: "Post On Session    api    /endpoint    data=${body}    override_header=Content-Type:application/xml"
+    },
+    correct: "b",
+    explanation: "headers= prend un dict Python inline ou une variable ; content_type= n'est pas un argument valide."
+  },
+  {
+    question: "Quelle est l'erreur dans cet appel ?\n`Get On Session    api    /report    params=${hdr}    headers=${params}`",
+    options: {
+      a: "params= et headers= sont inversés : les query params et les headers sont confondus",
+      b: "Il manque expected_status= pour valider la réponse",
+      c: "Get On Session ne supporte pas params= et headers= simultanément",
+      d: "La variable ${hdr} doit être une liste, pas un dict"
+    },
+    correct: "a",
+    explanation: "params= correspond aux query strings, headers= aux en-têtes HTTP ; les deux sont inversés ici."
+  },
+
+  // --- QUERY PARAMS ---
+  {
+    question: "Comment passer les query params `page=2&limit=50` avec RequestsLibrary ?",
+    options: {
+      a: "Get On Session    api    /items?page=2&limit=50",
+      b: "Get On Session    api    /items    params=page=2&limit=50",
+      c: "Get On Session    api    /items    params=${{page: 2, limit: 50}}",
+      d: "Get On Session    api    /items    query=${{page: 2, limit: 50}}"
+    },
+    correct: "c",
+    explanation: "params= accepte un dict Python ; query= n'existe pas, l'URL inline est déconseillée."
+  },
+  {
+    question: "Quelle différence entre passer les paramètres dans l'URL et via params= ?",
+    options: {
+      a: "Aucune, les deux sont strictement équivalents",
+      b: "params= encode automatiquement les caractères spéciaux (URL encoding) ; l'URL inline ne le fait pas",
+      c: "params= envoie les données dans le body, l'URL inline les envoie dans les headers",
+      d: "L'URL inline est plus rapide car elle évite une sérialisation interne"
+    },
+    correct: "b",
+    explanation: "params= gère l'URL encoding automatiquement ; une URL inline peut causer des erreurs d'encodage."
+  },
+
+  // --- ASSERTIONS STATUS / BODY ---
+  {
+    question: "Quelle assertion Robot Framework vérifie qu'une chaîne JSON contient la clé `id` ?",
+    options: {
+      a: "Should Contain    ${response.json()}    id",
+      b: "Should Contain    ${response.text}    id",
+      c: "Dictionary Should Contain Key    ${response.json()}    id",
+      d: "Should Be Equal    ${response.json()['id']}    id"
+    },
+    correct: "c",
+    explanation: "Dictionary Should Contain Key vérifie la présence d'une clé dans un dict retourné par .json()."
+  },
+  {
+    question: "Comment vérifier qu'une valeur JSON imbriquée est correcte ?\nRéponse : `{\"user\": {\"role\": \"admin\"}}`",
+    options: {
+      a: "Should Be Equal As Strings    ${response.json()['user']['role']}    admin",
+      b: "Should Be Equal    ${response.json().user.role}    admin",
+      c: "JSON Path Should Be Equal    ${response}    $.user.role    admin",
+      d: "Evaluate    '${response.json()[user][role]}' == 'admin'"
+    },
+    correct: "a",
+    explanation: "L'accès indexé Python sur .json() est la méthode standard ; .user.role n'est pas du Python."
+  },
+  {
+    question: "Quel keyword vérifie qu'un header de réponse a une valeur précise ?",
+    options: {
+      a: "Should Be Equal As Strings    ${response.headers}    Content-Type    application/json",
+      b: "Should Be Equal As Strings    ${response.headers['Content-Type']}    application/json",
+      c: "Header Should Be    ${response}    Content-Type    application/json",
+      d: "Should Contain    ${response.headers}    Content-Type=application/json"
+    },
+    correct: "b",
+    explanation: "response.headers est un dict ; Header Should Be n'est pas un keyword natif de RequestsLibrary."
+  },
+  {
+    question: "Comment utiliser `Evaluate` pour vérifier qu'un champ `count` est supérieur à 0 ?",
+    options: {
+      a: "Evaluate    ${response.json()['count']} > 0    modules=json",
+      b: "Should Be True    ${response.json()['count']} > 0",
+      c: "Evaluate    '${response.json()[count]}' > '0'",
+      d: "Should Be Greater Than    ${response.json()['count']}    0"
+    },
+    correct: "b",
+    explanation: "Should Be True évalue une expression booléenne Python ; Should Be Greater Than n'existe pas."
+  },
+  {
+    question: "Quelle est l'erreur dans cet appel ?\n`Status Should Be    ${response}    200`",
+    options: {
+      a: "L'ordre des arguments est inversé : Status Should Be attend d'abord le code, puis la réponse",
+      b: "200 doit être une chaîne : '200'",
+      c: "Il faut utiliser Should Be Equal As Integers à la place",
+      d: "Status Should Be ne fonctionne pas avec Put On Session"
+    },
+    correct: "a",
+    explanation: "Status Should Be attend (expected_status, response) ; ici response et 200 sont inversés."
+  }
+];
+
+// Shuffle and pick TOTAL_QUESTIONS
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+const QUESTIONS = shuffle(BANK).slice(0, Math.min(TOTAL_QUESTIONS, BANK.length));
+
+let current = 0;
+let selected = null;
+let state = 'idle'; // idle | answered
+let missed = [];
+
+const qText = document.getElementById('question-text');
+const optionsEl = document.getElementById('options');
+const explanationEl = document.getElementById('explanation');
+const btnValidate = document.getElementById('btn-validate');
+const btnNext = document.getElementById('btn-next');
+const counter = document.getElementById('counter');
+const progressFill = document.getElementById('progress-fill');
+const quizScreen = document.getElementById('quiz-screen');
+const resultsScreen = document.getElementById('results-screen');
+
+function renderQuestion(idx) {
+  state = 'idle';
+  selected = null;
+  const q = QUESTIONS[idx];
+
+  // Progress
+  counter.textContent = `${idx + 1} / ${TOTAL_QUESTIONS}`;
+  progressFill.style.width = `${(idx / TOTAL_QUESTIONS) * 100}%`;
+
+  // Question text — render inline code
+  qText.innerHTML = formatText(q.question);
+
+  // Options
+  optionsEl.innerHTML = '';
+  ['a', 'b', 'c', 'd'].forEach(letter => {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn';
+    btn.dataset.letter = letter;
+    btn.innerHTML = `<span class="option-label">${letter.toUpperCase()}</span><span>${formatText(q.options[letter])}</span>`;
+    btn.addEventListener('click', () => selectOption(letter));
+    optionsEl.appendChild(btn);
+  });
+
+  explanationEl.classList.remove('visible');
+  explanationEl.innerHTML = '';
+  btnValidate.disabled = true;
+  btnValidate.style.display = '';
+  btnNext.classList.remove('visible');
+}
+
+function formatText(str) {
+  // wrap backtick content in <code>
+  return str.replace(/`([^`]+)`/g, '<code>$1</code>').replace(/\n/g, '<br>');
+}
+
+function selectOption(letter) {
+  if (state !== 'idle') return;
+  selected = letter;
+  document.querySelectorAll('.option-btn').forEach(b => {
+    b.classList.toggle('selected', b.dataset.letter === letter);
+  });
+  btnValidate.disabled = false;
+}
+
+function validate() {
+  if (state !== 'idle' || selected === null) return;
+  state = 'answered';
+
+  const q = QUESTIONS[current];
+  const correct = q.correct;
+
+  document.querySelectorAll('.option-btn').forEach(b => {
+    b.disabled = true;
+    if (b.dataset.letter === correct) {
+      b.classList.add('correct');
+      b.classList.remove('selected');
+    }
+    if (b.dataset.letter === selected && selected !== correct) {
+      b.classList.add('incorrect');
+      b.classList.remove('selected');
+    }
+  });
+
+  explanationEl.innerHTML = `<strong>${selected === correct ? '✓ Correct' : '✗ Incorrect'}</strong> — ${q.explanation}`;
+  explanationEl.classList.add('visible');
+
+  if (selected !== correct) {
+    missed.push({ q, given: selected });
+  }
+
+  btnValidate.style.display = 'none';
+  btnNext.classList.add('visible');
+
+  // Update progress to show this question done
+  progressFill.style.width = `${((current + 1) / TOTAL_QUESTIONS) * 100}%`;
+}
+
+function next() {
+  if (state !== 'answered') return;
+  current++;
+  if (current >= TOTAL_QUESTIONS) {
+    showResults();
+  } else {
+    renderQuestion(current);
+  }
+}
+
+function showResults() {
+  quizScreen.style.display = 'none';
+  resultsScreen.classList.add('visible');
+
+  const score = TOTAL_QUESTIONS - missed.length;
+  document.getElementById('res-score').textContent = `${score} / ${TOTAL_QUESTIONS}`;
+  document.getElementById('res-pct').textContent = `${Math.round((score / TOTAL_QUESTIONS) * 100)} %`;
+
+  const missedSection = document.getElementById('res-missed-section');
+  const missedList = document.getElementById('res-missed-list');
+
+  if (missed.length === 0) {
+    missedSection.innerHTML = '<div class="all-correct-msg">🎉 Parfait ! Toutes les réponses sont correctes.</div>';
+    return;
+  }
+
+  missedList.innerHTML = '';
+  missed.forEach(({ q, given }) => {
+    const div = document.createElement('div');
+    div.className = 'missed-item';
+    div.innerHTML = `
+      <div class="missed-q">${formatText(q.question)}</div>
+      <div class="missed-answers">
+        <div class="missed-given">✗ Votre réponse (${given.toUpperCase()}) : ${formatText(q.options[given])}</div>
+        <div class="missed-correct">✓ Bonne réponse (${q.correct.toUpperCase()}) : ${formatText(q.options[q.correct])}</div>
+      </div>`;
+    missedList.appendChild(div);
+  });
+}
+
+function restart() {
+  current = 0;
+  selected = null;
+  state = 'idle';
+  missed = [];
+  QUESTIONS.splice(0, QUESTIONS.length, ...shuffle(BANK).slice(0, Math.min(TOTAL_QUESTIONS, BANK.length)));
+  quizScreen.style.display = '';
+  resultsScreen.classList.remove('visible');
+  renderQuestion(0);
+}
+
+btnValidate.addEventListener('click', validate);
+btnNext.addEventListener('click', next);
+
+document.addEventListener('keydown', e => {
+  // Don't interfere with any text input
+  if (['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName)) return;
+
+  const key = e.key.toLowerCase();
+  if (['a','b','c','d'].includes(key) && state === 'idle') {
+    selectOption(key);
+  } else if ((e.key === 'Enter' || e.key === ' ') && state === 'idle' && selected) {
+    e.preventDefault();
+    validate();
+  } else if ((e.key === 'Enter' || e.key === ' ') && state === 'answered') {
+    e.preventDefault();
+    next();
+  }
+});
+
+// Init
+renderQuestion(0);
+</script>
+</body>
+</html>

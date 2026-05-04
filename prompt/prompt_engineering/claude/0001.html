@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QCM – Prompt Engineering Claude</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f5f2ee;
+    --surface: #ffffff;
+    --border: #e2ddd7;
+    --text: #1a1612;
+    --sub: #6b6560;
+    --accent: #c0392b;
+    --accent-light: #fdf0ef;
+    --correct: #1a7a4a;
+    --correct-bg: #edf7f2;
+    --wrong: #c0392b;
+    --wrong-bg: #fdf0ef;
+    --neutral: #3d3935;
+    --progress-bg: #e2ddd7;
+    --btn-disabled: #d5d0cb;
+    --radius: 12px;
+    --shadow: 0 2px 16px rgba(0,0,0,0.07);
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 40px 16px 60px;
+  }
+
+  .card {
+    background: var(--surface);
+    border-radius: 20px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+    width: 100%;
+    max-width: 700px;
+    overflow: hidden;
+  }
+
+  .header {
+    padding: 28px 36px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .header-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.25rem;
+    color: var(--text);
+    letter-spacing: -0.01em;
+  }
+
+  .badge {
+    font-size: 0.75rem;
+    font-weight: 600;
+    background: var(--accent-light);
+    color: var(--accent);
+    border-radius: 100px;
+    padding: 4px 12px;
+    white-space: nowrap;
+  }
+
+  .progress-wrap {
+    padding: 18px 36px 0;
+  }
+
+  .progress-meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.78rem;
+    color: var(--sub);
+    margin-bottom: 8px;
+  }
+
+  .progress-bar {
+    height: 6px;
+    background: var(--progress-bg);
+    border-radius: 99px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 99px;
+    transition: width 0.45s cubic-bezier(.4,0,.2,1);
+  }
+
+  .body {
+    padding: 28px 36px 32px;
+  }
+
+  .question-num {
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--sub);
+    margin-bottom: 10px;
+  }
+
+  .question-text {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.18rem;
+    line-height: 1.55;
+    color: var(--text);
+    margin-bottom: 22px;
+  }
+
+  .options {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .option {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 18px;
+    cursor: pointer;
+    transition: border-color 0.18s, background 0.18s, transform 0.1s;
+    background: var(--surface);
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  .option:hover:not(.disabled) {
+    border-color: var(--accent);
+    background: var(--accent-light);
+    transform: translateY(-1px);
+  }
+
+  .option.selected { border-color: var(--accent); background: var(--accent-light); }
+  .option.correct  { border-color: var(--correct); background: var(--correct-bg); }
+  .option.wrong    { border-color: var(--wrong);   background: var(--wrong-bg); }
+  .option.disabled { cursor: default; pointer-events: none; }
+
+  .option-key {
+    width: 28px; height: 28px;
+    border-radius: 8px;
+    background: var(--bg);
+    border: 1.5px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--sub);
+    flex-shrink: 0;
+    transition: background 0.18s, border-color 0.18s, color 0.18s;
+  }
+
+  .option.selected .option-key { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .option.correct  .option-key { background: var(--correct); border-color: var(--correct); color: #fff; }
+  .option.wrong    .option-key { background: var(--wrong);   border-color: var(--wrong);   color: #fff; }
+
+  .option-text { font-size: 0.95rem; line-height: 1.45; color: var(--text); }
+
+  .feedback {
+    margin-top: 18px;
+    border-radius: var(--radius);
+    padding: 14px 18px;
+    font-size: 0.88rem;
+    line-height: 1.5;
+    display: none;
+  }
+  .feedback.correct { background: var(--correct-bg); color: var(--correct); border: 1px solid #a8ddc0; display: flex; gap: 10px; align-items: flex-start; }
+  .feedback.wrong   { background: var(--wrong-bg);   color: var(--wrong);   border: 1px solid #f5b8b3; display: flex; gap: 10px; align-items: flex-start; }
+  .feedback-icon { font-size: 1rem; flex-shrink: 0; margin-top: 1px; }
+
+  .actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 26px;
+    justify-content: flex-end;
+  }
+
+  button {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 600;
+    border: none;
+    border-radius: var(--radius);
+    padding: 12px 26px;
+    cursor: pointer;
+    transition: opacity 0.18s, transform 0.1s, background 0.18s;
+  }
+  button:active { transform: scale(0.97); }
+
+  #btn-validate {
+    background: var(--accent);
+    color: #fff;
+  }
+  #btn-validate:hover:not(:disabled) { opacity: 0.88; }
+  #btn-validate:disabled {
+    background: var(--btn-disabled);
+    color: #a09b96;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  #btn-next {
+    background: var(--neutral);
+    color: #fff;
+    display: none;
+  }
+  #btn-next:hover { opacity: 0.85; }
+
+  .score-screen {
+    display: none;
+    padding: 40px 36px;
+    text-align: center;
+  }
+  .score-screen h2 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 2rem;
+    margin-bottom: 8px;
+  }
+  .score-big {
+    font-family: 'DM Serif Display', serif;
+    font-size: 4rem;
+    color: var(--accent);
+    line-height: 1.1;
+    margin: 20px 0 10px;
+  }
+  .score-sub { color: var(--sub); font-size: 0.95rem; margin-bottom: 30px; }
+  #btn-restart {
+    background: var(--accent);
+    color: #fff;
+    padding: 14px 36px;
+  }
+
+  @media (max-width: 520px) {
+    .header, .progress-wrap, .body { padding-left: 20px; padding-right: 20px; }
+    .question-text { font-size: 1rem; }
+    .score-big { font-size: 3rem; }
+  }
+</style>
+</head>
+<body>
+<div class="card">
+
+  <!-- Header -->
+  <div class="header">
+    <span class="header-title">Prompt Engineering · Claude</span>
+    <span class="badge" id="badge">Question 1/20</span>
+  </div>
+
+  <!-- Progress -->
+  <div class="progress-wrap">
+    <div class="progress-meta">
+      <span id="prog-label">Progression</span>
+      <span id="prog-pct">0 %</span>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="prog-fill" style="width:0%"></div></div>
+  </div>
+
+  <!-- Quiz body -->
+  <div class="body" id="quiz-body">
+    <div class="question-num" id="q-num">Question 1 sur 20</div>
+    <div class="question-text" id="q-text"></div>
+    <div class="options" id="q-options"></div>
+    <div class="feedback" id="feedback">
+      <span class="feedback-icon" id="fb-icon"></span>
+      <span id="fb-text"></span>
+    </div>
+    <div class="actions">
+      <button id="btn-validate" disabled>Valider</button>
+      <button id="btn-next">Suivant →</button>
+    </div>
+  </div>
+
+  <!-- Score -->
+  <div class="score-screen" id="score-screen">
+    <h2>Quiz terminé 🎉</h2>
+    <div class="score-big" id="score-val"></div>
+    <div class="score-sub" id="score-msg"></div>
+    <button id="btn-restart" onclick="restart()">Recommencer</button>
+  </div>
+
+</div>
+
+<script>
+const questions = [
+  {
+    q: "Qu'est-ce que le prompt engineering ?",
+    opts: ["Modifier les poids du modèle", "Concevoir des instructions textuelles pour orienter les réponses de l'IA", "Compiler du code pour l'IA", "Entraîner un nouveau modèle"],
+    answer: 1,
+    expl: "C'est guider l'IA avec des instructions claires, sans la modifier."
+  },
+  {
+    q: "Quel est le principal avantage du prompt engineering par rapport au fine-tuning ?",
+    opts: ["Il est plus précis sur des tâches très spécifiques", "Il ne nécessite pas de GPU ni de gros jeux de données", "Il modifie durablement les capacités du modèle", "Il est obligatoire pour utiliser Claude"],
+    answer: 1,
+    expl: "Pas besoin de matériel coûteux, juste de bonnes instructions."
+  },
+  {
+    q: "Pourquoi la clarté des instructions est-elle cruciale dans un prompt ?",
+    opts: ["Elle réduit la facture API", "Les formulations vagues sont la principale cause de mauvais résultats", "Elle empêche Claude de poser des questions", "Elle accélère le temps de réponse"],
+    answer: 1,
+    expl: "Les instructions floues donnent des réponses floues."
+  },
+  {
+    q: "Qu'est-ce que la technique « multishot » (few-shot) ?",
+    opts: ["Envoyer plusieurs requêtes simultanément", "Fournir plusieurs exemples entrée-sortie dans le prompt", "Utiliser plusieurs modèles en parallèle", "Répéter la question plusieurs fois"],
+    answer: 1,
+    expl: "Montrer des exemples concrets guide mieux l'IA."
+  },
+  {
+    q: "À quoi servent les balises XML dans un prompt Claude ?",
+    opts: ["Accélérer l'API", "Structurer le contenu pour que Claude le parse mieux", "Chiffrer les données envoyées", "Forcer une langue de réponse"],
+    answer: 1,
+    expl: "Les balises séparent clairement les sections du prompt."
+  },
+  {
+    q: "Que fait la technique « chain of thought » ?",
+    opts: ["Divise le prompt en plusieurs fichiers", "Encourage Claude à raisonner étape par étape", "Connecte plusieurs API ensemble", "Génère un résumé automatique"],
+    answer: 1,
+    expl: "Penser en étapes réduit les erreurs de logique."
+  },
+  {
+    q: "Qu'est-ce qu'un « system prompt » ?",
+    opts: ["Un message d'erreur système", "Un prompt qui donne à Claude un rôle ou un contexte particulier", "Un résumé automatique de la conversation", "Un fichier de configuration JSON"],
+    answer: 1,
+    expl: "Il définit le rôle ou les règles avant la conversation."
+  },
+  {
+    q: "Quelle est la bonne façon d'attribuer un rôle à Claude ?",
+    opts: ["Écrire en majuscules seulement", "Utiliser « Tu es un expert en… » dans le system prompt", "Envoyer une image du rôle souhaité", "Modifier le paramètre temperature à 0"],
+    answer: 1,
+    expl: "Définir un rôle clair améliore la pertinence des réponses."
+  },
+  {
+    q: "Qu'est-ce que le « prompt chaining » ?",
+    opts: ["Lier des prompts à une base de données", "Enchaîner plusieurs prompts où chacun s'appuie sur le précédent", "Copier-coller plusieurs fois le même prompt", "Fusionner deux modèles IA"],
+    answer: 1,
+    expl: "On découpe un gros problème en étapes simples."
+  },
+  {
+    q: "Quelle technique consiste à amorcer la réponse de Claude avec un début de texte ?",
+    opts: ["Few-shot prompting", "Prefill (pré-remplissage) de la réponse", "Chain of thought", "Zero-shot prompting"],
+    answer: 1,
+    expl: "Commencer la réponse force Claude à continuer dans ce format."
+  },
+  {
+    q: "Combien d'exemples sont recommandés pour un prompt complexe ?",
+    opts: ["Aucun exemple n'est utile", "Un seul exemple suffit toujours", "Plusieurs exemples variés (multishot) pour plus de cohérence", "Exactement 100 exemples"],
+    answer: 2,
+    expl: "Plusieurs exemples différents améliorent la cohérence des sorties."
+  },
+  {
+    q: "Le prompt engineering est-il compatible avec les mises à jour du modèle ?",
+    opts: ["Non, il faut tout réécrire à chaque update", "Oui, les bons prompts fonctionnent généralement après les mises à jour", "Seulement si on utilise le fine-tuning en parallèle", "Cela dépend du fournisseur cloud"],
+    answer: 1,
+    expl: "Les prompts bien écrits survivent aux changements de version."
+  },
+  {
+    q: "Quelle est la meilleure approche pour un document très long dans un prompt ?",
+    opts: ["Envoyer tout le texte brut sans mise en forme", "Découper en sections avec des balises XML et indiquer les zones clés", "Réduire le document à 5 mots", "Utiliser uniquement des images du document"],
+    answer: 1,
+    expl: "Les balises aident Claude à naviguer dans les longs textes."
+  },
+  {
+    q: "Quel outil intégré à Claude aide à démarrer un prompt rapidement ?",
+    opts: ["Le gestionnaire de fichiers", "Le générateur de prompts automatique", "Le debugger de code", "Le traducteur automatique"],
+    answer: 1,
+    expl: "Le générateur propose une base de prompt instantanément."
+  },
+  {
+    q: "Pourquoi le prompt engineering est-il préférable au fine-tuning pour itérer rapidement ?",
+    opts: ["Parce qu'il est illégal de faire du fine-tuning", "Les modifications de prompts sont instantanées, sans cycle d'entraînement", "Le fine-tuning coûte moins cher", "Le prompt engineering nécessite moins de tokens"],
+    answer: 1,
+    expl: "Modifier un prompt prend des secondes, pas des jours."
+  },
+  {
+    q: "Quelle formulation est un exemple de prompt clair et direct ?",
+    opts: ["« Résume ça »", "« Peux-tu peut-être essayer de résumer ce texte si tu veux »", "« Résume ce document en trois points »", "« Fais quelque chose avec ce texte »"],
+    answer: 2,
+    expl: "Une instruction précise donne un résultat précis."
+  },
+  {
+    q: "Qu'est-ce que le « zero-shot prompting » ?",
+    opts: ["Un prompt sans aucune instruction", "Demander une tâche sans fournir d'exemple", "Envoyer le prompt en zéro seconde", "Un prompt qui génère zéro token"],
+    answer: 1,
+    expl: "On pose la question directement, sans exemple préalable."
+  },
+  {
+    q: "Pourquoi éviter le fine-tuning pour les cas où le prompt engineering suffit ?",
+    opts: ["Le fine-tuning améliore trop la qualité", "Il est risqué, coûteux et peut effacer des connaissances générales", "Il est interdit par Anthropic", "Il fonctionne uniquement pour les images"],
+    answer: 1,
+    expl: "Le fine-tuning peut faire oublier au modèle des compétences générales."
+  },
+  {
+    q: "Pour quelle raison l'A/B testing est-il utile en prompt engineering ?",
+    opts: ["Pour décider quelle couleur d'interface utiliser", "Pour comparer deux versions de prompt et choisir la meilleure", "Pour tester la vitesse réseau de l'API", "Pour alterner entre GPT et Claude automatiquement"],
+    answer: 1,
+    expl: "Tester deux prompts côte à côte révèle lequel fonctionne mieux."
+  },
+  {
+    q: "Quelle propriété du prompt engineering facilite le travail en équipe ?",
+    opts: ["Les prompts sont exécutés sur GPU privé", "Les prompts sont lisibles et faciles à partager et relire", "Les prompts sont chiffrés automatiquement", "Les prompts s'exécutent hors ligne"],
+    answer: 1,
+    expl: "Du texte lisible, c'est facile à réviser et collaborer dessus."
+  }
+];
+
+// Shuffle to avoid always same letter being correct
+function shuffleOptions(q) {
+  const indices = [0,1,2,3];
+  for (let i = indices.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i+1));
+    [indices[i], indices[j]] = [indices[j], indices[i]];
+  }
+  const newOpts = indices.map(i => q.opts[i]);
+  const newAnswer = indices.indexOf(q.answer);
+  return { ...q, opts: newOpts, answer: newAnswer };
+}
+
+let shuffled = questions.map(shuffleOptions);
+let current = 0;
+let selected = null;
+let validated = false;
+let score = 0;
+
+const keys = ['a','b','c','d'];
+
+function render() {
+  const q = shuffled[current];
+  document.getElementById('badge').textContent = `Question ${current+1}/20`;
+  document.getElementById('q-num').textContent = `Question ${current+1} sur 20`;
+  document.getElementById('q-text').textContent = q.q;
+
+  const pct = Math.round((current / 20) * 100);
+  document.getElementById('prog-fill').style.width = pct + '%';
+  document.getElementById('prog-pct').textContent = pct + ' %';
+
+  const optsEl = document.getElementById('q-options');
+  optsEl.innerHTML = '';
+  q.opts.forEach((opt, i) => {
+    const div = document.createElement('div');
+    div.className = 'option';
+    div.dataset.i = i;
+    div.innerHTML = `<span class="option-key">${keys[i].toUpperCase()}</span><span class="option-text">${opt}</span>`;
+    div.addEventListener('click', () => selectOption(i));
+    optsEl.appendChild(div);
+  });
+
+  document.getElementById('feedback').className = 'feedback';
+  document.getElementById('feedback').style.display = 'none';
+  document.getElementById('btn-validate').disabled = true;
+  document.getElementById('btn-next').style.display = 'none';
+  document.getElementById('btn-validate').style.display = '';
+  selected = null;
+  validated = false;
+}
+
+function selectOption(i) {
+  if (validated) return;
+  selected = i;
+  document.querySelectorAll('.option').forEach((el, idx) => {
+    el.classList.toggle('selected', idx === i);
+  });
+  document.getElementById('btn-validate').disabled = false;
+}
+
+function validate() {
+  if (selected === null || validated) return;
+  validated = true;
+  const q = shuffled[current];
+  const isCorrect = selected === q.answer;
+  if (isCorrect) score++;
+
+  document.querySelectorAll('.option').forEach((el, i) => {
+    el.classList.add('disabled');
+    el.classList.remove('selected');
+    if (i === q.answer) el.classList.add('correct');
+    else if (i === selected && !isCorrect) el.classList.add('wrong');
+  });
+
+  const fb = document.getElementById('feedback');
+  const fbIcon = document.getElementById('fb-icon');
+  const fbText = document.getElementById('fb-text');
+  fb.style.display = 'flex';
+  if (isCorrect) {
+    fb.className = 'feedback correct';
+    fbIcon.textContent = '✓';
+    fbText.textContent = q.expl;
+  } else {
+    fb.className = 'feedback wrong';
+    fbIcon.textContent = '✗';
+    fbText.textContent = `Bonne réponse : ${q.opts[q.answer]}. ${q.expl}`;
+  }
+
+  document.getElementById('btn-validate').disabled = true;
+  document.getElementById('btn-next').style.display = current < 19 ? 'block' : 'none';
+  if (current === 19) {
+    setTimeout(showScore, 800);
+  }
+}
+
+function next() {
+  current++;
+  if (current < 20) render();
+  else showScore();
+}
+
+function showScore() {
+  document.getElementById('quiz-body').style.display = 'none';
+  const ss = document.getElementById('score-screen');
+  ss.style.display = 'block';
+  document.getElementById('score-val').textContent = `${score} / 20`;
+  const pct = Math.round((score/20)*100);
+  document.getElementById('prog-fill').style.width = '100%';
+  document.getElementById('prog-pct').textContent = '100 %';
+  document.getElementById('badge').textContent = 'Terminé !';
+  let msg = '';
+  if (pct >= 90) msg = 'Excellent ! Tu maîtrises le prompt engineering Claude. 🏆';
+  else if (pct >= 70) msg = 'Très bon niveau ! Quelques révisions et tu es au top. 👍';
+  else if (pct >= 50) msg = 'Pas mal ! Relis la doc pour consolider tes bases. 📖';
+  else msg = 'Continue à explorer la documentation Anthropic. 💪';
+  document.getElementById('score-msg').textContent = msg;
+}
+
+function restart() {
+  shuffled = questions.map(shuffleOptions);
+  current = 0; score = 0;
+  document.getElementById('quiz-body').style.display = '';
+  document.getElementById('score-screen').style.display = 'none';
+  render();
+}
+
+document.getElementById('btn-validate').addEventListener('click', validate);
+document.getElementById('btn-next').addEventListener('click', next);
+
+document.addEventListener('keydown', e => {
+  const k = e.key.toLowerCase();
+  if (keys.includes(k) && !validated) {
+    selectOption(keys.indexOf(k));
+  }
+  if (e.key === 'Enter') {
+    if (!validated && selected !== null) validate();
+    else if (validated && current < 19) next();
+  }
+});
+
+render();
+</script>
+</body>
+</html>

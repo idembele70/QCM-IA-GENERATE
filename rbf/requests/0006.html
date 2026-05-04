@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QCM — Tests API XML · Robot Framework</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Sora:wght@400;600;700;800&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #ffffff;
+    --surface: #f8fafc;
+    --border: #e2e8f0;
+    --text: #1a1a1a;
+    --text-muted: #64748b;
+    --accent: #2563eb;
+    --accent-light: #eff6ff;
+    --accent-border: #bfdbfe;
+    --green: #16a34a;
+    --green-light: #f0fdf4;
+    --green-border: #bbf7d0;
+    --red: #dc2626;
+    --red-light: #fef2f2;
+    --red-border: #fecaca;
+    --code-bg: #f3f4f6;
+    --shadow: 0 1px 3px rgba(0,0,0,.06), 0 4px 16px rgba(0,0,0,.04);
+    --shadow-lg: 0 8px 32px rgba(37,99,235,.12);
+  }
+
+  body {
+    font-family: 'Sora', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 40px 16px 60px;
+    line-height: 1.6;
+  }
+
+  .quiz-wrap {
+    width: 100%;
+    max-width: 680px;
+  }
+
+  /* Header */
+  .quiz-header {
+    margin-bottom: 28px;
+  }
+
+  .quiz-title {
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 6px;
+  }
+
+  .quiz-subtitle {
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--text);
+    line-height: 1.2;
+  }
+
+  /* Progress */
+  .progress-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 28px;
+  }
+
+  .progress-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+    white-space: nowrap;
+    min-width: 96px;
+  }
+
+  .progress-bar-bg {
+    flex: 1;
+    height: 6px;
+    background: var(--border);
+    border-radius: 99px;
+    overflow: hidden;
+  }
+
+  .progress-bar-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 99px;
+    transition: width .4s cubic-bezier(.4,0,.2,1);
+  }
+
+  /* Card */
+  .card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 32px;
+    box-shadow: var(--shadow);
+  }
+
+  /* Question */
+  .question-num {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 12px;
+  }
+
+  .question-text {
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 24px;
+    line-height: 1.5;
+  }
+
+  .question-text code,
+  .option-text code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .82em;
+    background: var(--code-bg);
+    padding: 2px 6px;
+    border-radius: 5px;
+    color: #1e3a5f;
+    word-break: break-all;
+  }
+
+  /* Options */
+  .options {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  .option-btn {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px 16px;
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    cursor: pointer;
+    text-align: left;
+    font-family: inherit;
+    font-size: 14.5px;
+    color: var(--text);
+    transition: border-color .15s, background .15s, box-shadow .15s;
+    width: 100%;
+    line-height: 1.5;
+  }
+
+  .option-btn:hover:not(:disabled) {
+    border-color: var(--accent);
+    background: var(--accent-light);
+    box-shadow: 0 0 0 3px var(--accent-border);
+  }
+
+  .option-btn.selected {
+    border-color: var(--accent);
+    background: var(--accent-light);
+    box-shadow: 0 0 0 3px var(--accent-border);
+  }
+
+  .option-btn.correct {
+    border-color: var(--green);
+    background: var(--green-light);
+    box-shadow: 0 0 0 3px var(--green-border);
+  }
+
+  .option-btn.incorrect {
+    border-color: var(--red);
+    background: var(--red-light);
+    box-shadow: 0 0 0 3px var(--red-border);
+  }
+
+  .option-btn:disabled {
+    cursor: not-allowed;
+  }
+
+  .option-letter {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 26px;
+    height: 26px;
+    border-radius: 6px;
+    background: var(--border);
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-muted);
+    letter-spacing: 0;
+    flex-shrink: 0;
+    transition: background .15s, color .15s;
+  }
+
+  .option-btn.selected .option-letter { background: var(--accent); color: #fff; }
+  .option-btn.correct .option-letter  { background: var(--green); color: #fff; }
+  .option-btn.incorrect .option-letter { background: var(--red); color: #fff; }
+
+  .option-text {
+    flex: 1;
+  }
+
+  /* Validate button */
+  .validate-btn {
+    width: 100%;
+    padding: 13px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-family: inherit;
+    font-size: 14.5px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background .15s, transform .1s;
+    margin-bottom: 16px;
+  }
+
+  .validate-btn:hover:not(:disabled) {
+    background: #1d4ed8;
+  }
+
+  .validate-btn:disabled {
+    background: var(--border);
+    color: var(--text-muted);
+    cursor: not-allowed;
+  }
+
+  .next-btn {
+    width: 100%;
+    padding: 13px;
+    background: var(--text);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-family: inherit;
+    font-size: 14.5px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background .15s;
+  }
+
+  .next-btn:hover { background: #333; }
+
+  /* Explanation */
+  .explanation {
+    display: none;
+    background: var(--green-light);
+    border-left: 3px solid var(--green);
+    border-radius: 0 8px 8px 0;
+    padding: 12px 14px;
+    font-size: 13.5px;
+    color: #15803d;
+    font-weight: 500;
+    margin-bottom: 16px;
+    line-height: 1.5;
+  }
+
+  .explanation.show { display: block; }
+
+  /* Keyboard hint */
+  .kbd-hint {
+    text-align: center;
+    font-size: 11.5px;
+    color: var(--text-muted);
+    margin-top: 12px;
+  }
+
+  .kbd {
+    display: inline-block;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1px 5px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--text-muted);
+  }
+
+  /* Results */
+  .results { display: none; }
+  .results.show { display: block; }
+
+  .score-big {
+    text-align: center;
+    padding: 32px 0 24px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 24px;
+  }
+
+  .score-fraction {
+    font-size: 54px;
+    font-weight: 800;
+    color: var(--text);
+    line-height: 1;
+  }
+
+  .score-fraction span { color: var(--accent); }
+
+  .score-pct {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--accent);
+    margin-top: 6px;
+  }
+
+  .score-mention {
+    display: inline-block;
+    margin-top: 10px;
+    padding: 4px 14px;
+    border-radius: 99px;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: .04em;
+  }
+
+  .mention-excellent { background: var(--green-light); color: var(--green); }
+  .mention-bien { background: #fefce8; color: #a16207; }
+  .mention-revoir { background: var(--red-light); color: var(--red); }
+
+  .errors-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 16px;
+  }
+
+  .error-item {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 12px;
+    background: var(--surface);
+  }
+
+  .error-qnum {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: var(--accent);
+    margin-bottom: 6px;
+  }
+
+  .error-qtext {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 10px;
+    line-height: 1.45;
+  }
+
+  .error-answers {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .error-given {
+    font-size: 12.5px;
+    color: var(--red);
+    background: var(--red-light);
+    border-radius: 6px;
+    padding: 5px 10px;
+    font-weight: 500;
+  }
+
+  .error-correct {
+    font-size: 12.5px;
+    color: var(--green);
+    background: var(--green-light);
+    border-radius: 6px;
+    padding: 5px 10px;
+    font-weight: 500;
+  }
+
+  .restart-btn {
+    width: 100%;
+    padding: 14px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    margin-top: 20px;
+    transition: background .15s;
+  }
+
+  .restart-btn:hover { background: #1d4ed8; }
+
+  .no-errors {
+    text-align: center;
+    color: var(--green);
+    font-weight: 700;
+    font-size: 16px;
+    padding: 20px 0;
+  }
+</style>
+</head>
+<body>
+<div class="quiz-wrap">
+  <div class="quiz-header">
+    <div class="quiz-title">Robot Framework · RequestsLibrary + XML Library</div>
+    <div class="quiz-subtitle">Tests d'API XML — QCM Avancé</div>
+  </div>
+
+  <div class="progress-row">
+    <div class="progress-label" id="progress-label">Question 1 / 20</div>
+    <div class="progress-bar-bg">
+      <div class="progress-bar-fill" id="progress-fill" style="width:5%"></div>
+    </div>
+  </div>
+
+  <!-- Quiz screen -->
+  <div id="quiz-screen">
+    <div class="card">
+      <div class="question-num" id="q-num">Question 1</div>
+      <div class="question-text" id="q-text"></div>
+      <div class="options" id="options"></div>
+      <div class="explanation" id="explanation"></div>
+      <button class="validate-btn" id="validate-btn" disabled>Valider la réponse</button>
+      <button class="next-btn" id="next-btn" style="display:none">Question suivante →</button>
+      <div class="kbd-hint">
+        Clavier : <span class="kbd">A</span> <span class="kbd">B</span> <span class="kbd">C</span> <span class="kbd">D</span> pour sélectionner &nbsp;|&nbsp; <span class="kbd">Entrée</span> pour valider / avancer
+      </div>
+    </div>
+  </div>
+
+  <!-- Results screen -->
+  <div id="results-screen" class="results">
+    <div class="card">
+      <div class="score-big">
+        <div class="score-fraction" id="score-fraction"></div>
+        <div class="score-pct" id="score-pct"></div>
+        <div id="score-mention"></div>
+      </div>
+      <div class="errors-title" id="errors-title"></div>
+      <div id="errors-list"></div>
+      <button class="restart-btn" onclick="restart()">🔄 Recommencer</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const TOTAL_QUESTIONS = 20;
+
+const ALL_QUESTIONS = [
+  // === A (5 correctes) ===
+  {
+    question: "Quel keyword Robot Framework permet d'envoyer une requête POST avec un body XML à une session existante ?",
+    options: {
+      a: "<code>POST On Session</code> avec l'argument <code>data=</code> et le body XML en string",
+      b: "<code>POST Request</code> avec l'argument <code>json=</code> contenant la chaîne XML",
+      c: "<code>POST On Session</code> avec l'argument <code>json=</code> contenant la chaîne XML",
+      d: "<code>Send Post</code> avec l'argument <code>body=</code> et le body XML"
+    },
+    correct: "a",
+    explanation: "POST On Session + data= envoie le payload XML brut sans sérialisation JSON."
+  },
+  {
+    question: "Comment charger le contenu d'un fichier XML externe pour l'utiliser comme body dans une requête POST ?",
+    options: {
+      a: "<code>${xml}=    Get Binary File    payload.xml</code> puis passer <code>data=${xml}</code>",
+      b: "<code>${xml}=    Import Resource    payload.xml</code> puis passer <code>data=${xml}</code>",
+      c: "<code>${xml}=    Load Xml    payload.xml</code> puis passer <code>body=${xml}</code>",
+      d: "<code>${xml}=    Read File    payload.xml</code> puis passer <code>json=${xml}</code>"
+    },
+    correct: "a",
+    explanation: "Get Binary File lit le fichier en bytes; data= l'envoie brut sans altération."
+  },
+  {
+    question: "Lors d'un PUT sur une API REST XML, quel header est obligatoire pour indiquer le format du body envoyé ?",
+    options: {
+      a: "<code>Content-Type=application/xml</code> (ou <code>text/xml</code>)",
+      b: "<code>Accept=application/xml</code> uniquement",
+      c: "<code>Content-Type=application/json</code> lorsqu'on utilise <code>data=</code>",
+      d: "<code>X-Format=xml</code> selon la spécification REST officielle"
+    },
+    correct: "a",
+    explanation: "Content-Type=application/xml signale au serveur le format du body envoyé."
+  },
+  {
+    question: "Quel keyword de la <strong>XML Library</strong> permet de récupérer le texte d'un élément via un XPath ?",
+    options: {
+      a: "<code>Get Element Text    ${xml_root}    ./user/name</code>",
+      b: "<code>Get Element    ${xml_root}    //user/name</code>",
+      c: "<code>response.xml()    xpath=//user/name</code>",
+      d: "<code>Get Xml Element Text    ${xml_root}    user/name</code>"
+    },
+    correct: "a",
+    explanation: "Get Element Text de la XML Library retourne le texte de l'élément XPath."
+  },
+  {
+    question: "Comment vérifier qu'un attribut XML a une valeur précise avec la XML Library ?",
+    options: {
+      a: "<code>Element Attribute Should Be    ${root}    user    id    42</code>",
+      b: "<code>Should Be Equal    ${root.attrib['id']}    42</code>",
+      c: "<code>Check Xml Attribute    ${root}    //user/@id    42</code>",
+      d: "<code>XML Attribute Should Be    ${root}    user    id    42</code>"
+    },
+    correct: "a",
+    explanation: "Element Attribute Should Be est le keyword natif XML Library pour les attributs."
+  },
+
+  // === B (5 correctes) ===
+  {
+    question: "Pourquoi ne faut-il <strong>pas</strong> utiliser <code>json=</code> pour envoyer un payload XML avec RequestsLibrary ?",
+    options: {
+      a: "Parce que <code>json=</code> n'existe pas dans la RequestsLibrary",
+      b: "Parce que <code>json=</code> sérialise l'argument en JSON, corrompant le payload XML",
+      c: "Parce que <code>json=</code> ajoute automatiquement un header <code>Accept: text/html</code>",
+      d: "Parce que <code>json=</code> est réservé aux requêtes GET"
+    },
+    correct: "b",
+    explanation: "json= sérialise en JSON; il faut data= pour envoyer du XML brut."
+  },
+  {
+    question: "Quelle est la différence entre <code>${response.text}</code> et <code>${response.content}</code> sur l'objet response ?",
+    options: {
+      a: "<code>response.text</code> renvoie des bytes ; <code>response.content</code> renvoie une string",
+      b: "<code>response.text</code> renvoie une string décodée ; <code>response.content</code> renvoie des bytes bruts",
+      c: "Les deux sont identiques, ce sont des alias de la RequestsLibrary",
+      d: "<code>response.content</code> parse automatiquement le XML retourné"
+    },
+    correct: "b",
+    explanation: "response.text = string décodée; response.content = bytes bruts."
+  },
+  {
+    question: "Comment définir correctement les headers XML avec RequestsLibrary avant d'appeler <code>POST On Session</code> ?",
+    options: {
+      a: "<code>Set Headers    Content-Type=application/xml    Accept=application/xml</code>",
+      b: "<code>${headers}=    Create Dictionary    Content-Type=application/xml    Accept=application/xml</code>",
+      c: "<code>${headers}=    Create List    Content-Type    application/xml</code>",
+      d: "<code>Add Header    application/xml    application/xml</code>"
+    },
+    correct: "b",
+    explanation: "Create Dictionary crée le dict de headers, passé via headers=${headers}."
+  },
+  {
+    question: "Quel keyword vérifie qu'un élément existe dans un document XML parsé avec la XML Library ?",
+    options: {
+      a: "<code>XML Should Contain    ${root}    ./product</code>",
+      b: "<code>Element Should Exist    ${root}    ./product</code>",
+      c: "<code>Should Contain Element    ${root}    ./product</code>",
+      d: "<code>Xpath Should Match    ${root}    ./product</code>"
+    },
+    correct: "b",
+    explanation: "Element Should Exist est le keyword natif XML Library pour tester l'existence."
+  },
+  {
+    question: "Après avoir parsé le XML de réponse, comment compter le nombre d'éléments <code>&lt;item&gt;</code> ?",
+    options: {
+      a: "<code>${count}=    Get Length    ${root}    xpath=.//item</code>",
+      b: "<code>${count}=    Get Element Count    ${root}    .//item</code>",
+      c: "<code>${count}=    Count Elements    ${root}    //item</code>",
+      d: "<code>${count}=    Get Elements Length    ${root}    item</code>"
+    },
+    correct: "b",
+    explanation: "Get Element Count de la XML Library retourne le nombre d'éléments XPath."
+  },
+
+  // === C (5 correctes) ===
+  {
+    question: "Quelle est la syntaxe correcte pour parser le body XML d'une réponse avec la XML Library ?",
+    options: {
+      a: "<code>${root}=    ${response.xml()}    </code> (méthode native RequestsLibrary)",
+      b: "<code>${root}=    Load Xml    ${response.text}</code>",
+      c: "<code>${root}=    Parse Xml    ${response.text}</code>",
+      d: "<code>${root}=    Parse Xml    ${response.content}</code> (bytes obligatoires)"
+    },
+    correct: "c",
+    explanation: "Parse Xml accepte une string XML décodée (response.text)."
+  },
+  {
+    question: "Quelle library Robot Framework doit être importée <strong>en plus</strong> de la RequestsLibrary pour travailler avec les réponses XML ?",
+    options: {
+      a: "XmlParserLibrary",
+      b: "BuiltIn (qui contient Parse Xml)",
+      c: "XML",
+      d: "Collections (qui gère les structures XML)"
+    },
+    correct: "c",
+    explanation: "La library XML de Robot Framework fournit Parse Xml, Get Element, etc."
+  },
+  {
+    question: "Comment vérifier le status code d'une réponse HTTP dans Robot Framework ?",
+    options: {
+      a: "<code>Should Be Equal As Integers    ${response.status}    200</code>",
+      b: "<code>Assert Status    ${response}    200    OK</code>",
+      c: "<code>Status Should Be    200    ${response}</code>",
+      d: "<code>Should Be Equal    ${response.status_code}    200</code>"
+    },
+    correct: "c",
+    explanation: "Status Should Be est le keyword dédié de la RequestsLibrary."
+  },
+  {
+    question: "Lors d'un <code>DELETE On Session</code>, comment s'assure-t-on de cibler la bonne session ?",
+    options: {
+      a: "On passe l'URL complète comme premier argument",
+      b: "On utilise <code>Select Session    alias</code> avant le keyword DELETE",
+      c: "On passe l'alias de session comme premier argument de <code>DELETE On Session</code>",
+      d: "On utilise <code>GET On Session</code> puis chaîne avec <code>DELETE On Session</code>"
+    },
+    correct: "c",
+    explanation: "L'alias de session est obligatoirement le premier argument de DELETE On Session."
+  },
+  {
+    question: "Quel XPath est correct pour <code>Get Element</code> afin d'accéder à l'enfant direct <code>&lt;name&gt;</code> de la racine ?",
+    options: {
+      a: "<code>//name</code> (sélecteur absolu)",
+      b: "<code>name/text()</code>",
+      c: "<code>name</code> (chemin relatif depuis la racine)",
+      d: "<code>./root/name</code>"
+    },
+    correct: "c",
+    explanation: "Get Element utilise un chemin relatif; 'name' cible l'enfant direct de la racine."
+  },
+
+  // === D (5 correctes) ===
+  {
+    question: "Pourquoi <code>GET Request</code> est-il déconseillé au profit de <code>GET On Session</code> ?",
+    options: {
+      a: "<code>GET Request</code> ne supporte pas les headers XML",
+      b: "<code>GET Request</code> utilise json= par défaut, causant des erreurs XML",
+      c: "<code>GET Request</code> nécessite de créer une session à chaque appel",
+      d: "<code>GET Request</code> est un ancien keyword déprécié; <code>GET On Session</code> est l'API actuelle"
+    },
+    correct: "d",
+    explanation: "GET Request est déprécié depuis RequestsLibrary v0.9; GET On Session est l'API actuelle."
+  },
+  {
+    question: "Comment vérifier le <code>Content-Type</code> retourné par le serveur dans la réponse XML ?",
+    options: {
+      a: "<code>Header Should Contain    ${response}    Content-Type    xml</code>",
+      b: "<code>Check Response Header    Content-Type    application/xml</code>",
+      c: "<code>Response Header Should Be    ${response}    Content-Type    application/xml</code>",
+      d: "<code>Should Contain    ${response.headers['Content-Type']}    xml</code>"
+    },
+    correct: "d",
+    explanation: "response.headers['Content-Type'] donne l'en-tête; Should Contain vérifie sa valeur."
+  },
+  {
+    question: "Quelle assertion est la plus adaptée pour comparer deux textes XML extraits avec <code>Get Element Text</code> ?",
+    options: {
+      a: "<code>Should Be Equal As Integers    ${text}    Alice</code>",
+      b: "<code>Element Text Should Match    ${root}    name    Alice</code>",
+      c: "<code>XML Text Should Be    ${root}    ./name    Alice</code>",
+      d: "<code>Element Text Should Be    ${root}    ./name    Alice</code>"
+    },
+    correct: "d",
+    explanation: "Element Text Should Be est le keyword XML Library pour comparer le texte d'un élément."
+  },
+  {
+    question: "Lorsqu'un même XPath retourne plusieurs nœuds, quel keyword permet de les récupérer tous ?",
+    options: {
+      a: "<code>Get Element    ${root}    .//item</code> (retourne une liste automatiquement)",
+      b: "<code>Collect Elements    ${root}    .//item</code>",
+      c: "<code>Find All Elements    ${root}    xpath=.//item</code>",
+      d: "<code>Get Elements    ${root}    .//item</code>"
+    },
+    correct: "d",
+    explanation: "Get Elements de la XML Library retourne la liste de tous les nœuds XPath correspondants."
+  },
+  {
+    question: "Comment envoyer une requête PUT avec un body XML chargé depuis un fichier et les bons headers ?",
+    options: {
+      a: `<code>${'${xml}'}=    Get Binary File    update.xml\nPUT On Session    api    /resource    json=${'{xml}'}</code>`,
+      b: `<code>${'${xml}'}=    Import Resource    update.xml\nPUT On Session    api    /resource    data=${'{xml}'}</code>`,
+      c: `<code>${'${xml}'}=    Get File    update.xml\nPUT On Session    api    /resource    body=${'{xml}'}</code>`,
+      d: `<code>${'${xml}'}=    Get Binary File    update.xml\nPUT On Session    api    /resource    data=${'{xml}'}    headers=${'{headers}'}</code>`
+    },
+    correct: "d",
+    explanation: "Get Binary File + data= + headers=${headers} est la combinaison correcte pour PUT XML."
+  }
+];
+
+// === State ===
+let questions = [];
+let current = 0;
+let score = 0;
+let selected = null;
+let phase = "idle"; // "idle" | "answered" | "done"
+let mistakes = [];
+
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function init() {
+  questions = shuffle([...ALL_QUESTIONS]).slice(0, TOTAL_QUESTIONS);
+  current = 0; score = 0; selected = null; phase = "idle"; mistakes = [];
+  document.getElementById('results-screen').classList.remove('show');
+  document.getElementById('quiz-screen').style.display = '';
+  renderQuestion();
+}
+
+function renderQuestion() {
+  const q = questions[current];
+  const pct = Math.round(((current) / TOTAL_QUESTIONS) * 100);
+  document.getElementById('progress-label').textContent = `Question ${current + 1} / ${TOTAL_QUESTIONS}`;
+  document.getElementById('progress-fill').style.width = Math.max(5, pct) + '%';
+  document.getElementById('q-num').textContent = `Question ${current + 1}`;
+  document.getElementById('q-text').innerHTML = q.question;
+
+  const optDiv = document.getElementById('options');
+  optDiv.innerHTML = '';
+  ['a', 'b', 'c', 'd'].forEach(letter => {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn';
+    btn.dataset.letter = letter;
+    btn.innerHTML = `<span class="option-letter">${letter.toUpperCase()}</span><span class="option-text">${q.options[letter]}</span>`;
+    btn.addEventListener('click', () => selectOption(letter));
+    optDiv.appendChild(btn);
+  });
+
+  document.getElementById('explanation').classList.remove('show');
+  document.getElementById('explanation').textContent = '';
+  document.getElementById('validate-btn').disabled = true;
+  document.getElementById('validate-btn').style.display = '';
+  document.getElementById('next-btn').style.display = 'none';
+  selected = null;
+  phase = "idle";
+}
+
+function selectOption(letter) {
+  if (phase !== "idle") return;
+  selected = letter;
+  document.querySelectorAll('.option-btn').forEach(btn => {
+    btn.classList.toggle('selected', btn.dataset.letter === letter);
+  });
+  document.getElementById('validate-btn').disabled = false;
+}
+
+function validate() {
+  if (phase !== "idle" || selected === null) return;
+  phase = "answered";
+  const q = questions[current];
+  const isCorrect = selected === q.correct;
+
+  document.querySelectorAll('.option-btn').forEach(btn => {
+    btn.disabled = true;
+    const l = btn.dataset.letter;
+    if (l === q.correct) btn.classList.add('correct');
+    else if (l === selected && !isCorrect) btn.classList.add('incorrect');
+    btn.classList.remove('selected');
+  });
+
+  if (isCorrect) {
+    score++;
+  } else {
+    mistakes.push({ idx: current, given: selected });
+  }
+
+  const expEl = document.getElementById('explanation');
+  expEl.textContent = q.explanation;
+  expEl.classList.add('show');
+
+  document.getElementById('validate-btn').style.display = 'none';
+  document.getElementById('next-btn').style.display = '';
+  document.getElementById('next-btn').textContent = current < TOTAL_QUESTIONS - 1 ? 'Question suivante →' : 'Voir les résultats →';
+}
+
+function nextQuestion() {
+  if (phase !== "answered") return;
+  current++;
+  if (current >= TOTAL_QUESTIONS) {
+    showResults();
+  } else {
+    renderQuestion();
+  }
+}
+
+function showResults() {
+  phase = "done";
+  document.getElementById('quiz-screen').style.display = 'none';
+  document.getElementById('results-screen').classList.add('show');
+
+  const pct = Math.round((score / TOTAL_QUESTIONS) * 100);
+  document.getElementById('progress-label').textContent = `Terminé !`;
+  document.getElementById('progress-fill').style.width = '100%';
+
+  document.getElementById('score-fraction').innerHTML = `${score}<span> / ${TOTAL_QUESTIONS}</span>`;
+  document.getElementById('score-pct').textContent = `${pct} %`;
+
+  const mentionEl = document.getElementById('score-mention');
+  let mentionClass, mentionText;
+  if (pct >= 80) { mentionClass = 'mention-excellent'; mentionText = '🏆 Excellent'; }
+  else if (pct >= 60) { mentionClass = 'mention-bien'; mentionText = '👍 Bien'; }
+  else { mentionClass = 'mention-revoir'; mentionText = '📚 À revoir'; }
+  mentionEl.innerHTML = `<span class="score-mention ${mentionClass}">${mentionText}</span>`;
+
+  const errorsTitle = document.getElementById('errors-title');
+  const errorsList = document.getElementById('errors-list');
+  errorsList.innerHTML = '';
+
+  if (mistakes.length === 0) {
+    errorsTitle.textContent = '';
+    errorsList.innerHTML = '<div class="no-errors">🎉 Aucune erreur — Score parfait !</div>';
+  } else {
+    errorsTitle.textContent = `Erreurs (${mistakes.length} question${mistakes.length > 1 ? 's' : ''})`;
+    mistakes.forEach(m => {
+      const q = questions[m.idx];
+      const div = document.createElement('div');
+      div.className = 'error-item';
+      div.innerHTML = `
+        <div class="error-qnum">Question ${m.idx + 1}</div>
+        <div class="error-qtext">${q.question}</div>
+        <div class="error-answers">
+          <div class="error-given">✗ Votre réponse (${m.given.toUpperCase()}) : ${q.options[m.given]}</div>
+          <div class="error-correct">✓ Bonne réponse (${q.correct.toUpperCase()}) : ${q.options[q.correct]}</div>
+        </div>`;
+      errorsList.appendChild(div);
+    });
+  }
+}
+
+function restart() {
+  init();
+}
+
+// === Keyboard ===
+document.addEventListener('keydown', (e) => {
+  if (phase === "done") return;
+  const key = e.key.toLowerCase();
+
+  if (phase === "idle") {
+    if (['a','b','c','d'].includes(key)) {
+      e.preventDefault();
+      selectOption(key);
+    } else if (key === 'enter' && selected !== null) {
+      e.preventDefault();
+      validate();
+    }
+  } else if (phase === "answered") {
+    if (key === 'enter' || key === ' ') {
+      e.preventDefault();
+      nextQuestion();
+    }
+  }
+});
+
+document.getElementById('validate-btn').addEventListener('click', validate);
+document.getElementById('next-btn').addEventListener('click', nextQuestion);
+
+// Boot
+init();
+</script>
+</body>
+</html>
