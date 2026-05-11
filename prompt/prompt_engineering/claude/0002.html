@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QCM — Prompting Best Practices Claude Opus 4.7</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: #f7f8fa;
+    color: #1a1a1a;
+    line-height: 1.5;
+    min-height: 100vh;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .container {
+    width: 100%;
+    max-width: 760px;
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+    padding: 28px;
+    margin-bottom: 60px;
+  }
+  .top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    font-size: 14px;
+    color: #555;
+  }
+  .progress-info { font-weight: 500; }
+  .timer { font-variant-numeric: tabular-nums; font-weight: 500; }
+  .progress-bar {
+    width: 100%;
+    height: 6px;
+    background: #e6e8ec;
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 28px;
+  }
+  .progress-fill {
+    height: 100%;
+    background: #2563eb;
+    width: 0%;
+    transition: width 0.3s ease;
+  }
+  .question {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 22px;
+    color: #111;
+  }
+  .answers { display: flex; flex-direction: column; gap: 10px; }
+  .answer {
+    border: 2px solid #e6e8ec;
+    background: #fafbfc;
+    border-radius: 8px;
+    padding: 14px 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    transition: all 0.15s ease;
+    font-size: 15px;
+  }
+  .answer:hover:not(.validated) { border-color: #b6c2d3; background: #f0f3f8; }
+  .answer .letter {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: #e6e8ec;
+    color: #333;
+    font-weight: 600;
+    font-size: 13px;
+    flex-shrink: 0;
+  }
+  .answer.preselected {
+    border-color: #2563eb;
+    background: #eff4ff;
+  }
+  .answer.preselected .letter { background: #2563eb; color: #fff; }
+  .answer.correct {
+    border-color: #16a34a;
+    background: #ecfdf5;
+    color: #14532d;
+  }
+  .answer.correct .letter { background: #16a34a; color: #fff; }
+  .answer.incorrect {
+    border-color: #dc2626;
+    background: #fef2f2;
+    color: #7f1d1d;
+  }
+  .answer.incorrect .letter { background: #dc2626; color: #fff; }
+  .answer.validated { cursor: default; }
+  .justification {
+    margin-top: 18px;
+    padding: 12px 14px;
+    background: #f0f7ff;
+    border-left: 3px solid #2563eb;
+    border-radius: 4px;
+    font-size: 14px;
+    color: #1e3a5f;
+    display: none;
+  }
+  .justification.visible { display: block; }
+  .next-hint {
+    margin-top: 16px;
+    font-size: 13px;
+    color: #777;
+    text-align: center;
+    font-style: italic;
+    display: none;
+  }
+  .next-hint.visible { display: block; }
+  .shortcuts {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(255,255,255,0.95);
+    border-top: 1px solid #e6e8ec;
+    padding: 8px 16px;
+    text-align: center;
+    font-size: 12px;
+    color: #777;
+  }
+  .result-screen { text-align: center; padding: 20px 0; }
+  .result-screen h1 {
+    font-size: 28px;
+    margin-bottom: 24px;
+    color: #111;
+  }
+  .score-big {
+    font-size: 48px;
+    font-weight: 700;
+    color: #2563eb;
+    margin: 16px 0;
+  }
+  .result-detail {
+    font-size: 16px;
+    color: #555;
+    margin: 8px 0;
+  }
+  .restart-btn {
+    margin-top: 28px;
+    background: #2563eb;
+    color: #fff;
+    border: none;
+    padding: 12px 28px;
+    font-size: 15px;
+    font-weight: 500;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.15s ease;
+  }
+  .restart-btn:hover { background: #1d4ed8; }
+  @media (max-width: 600px) {
+    .container { padding: 20px 16px; }
+    .question { font-size: 16px; }
+    .answer { font-size: 14px; padding: 12px; }
+    .shortcuts { font-size: 11px; }
+  }
+</style>
+</head>
+<body>
+<div class="container" id="app"></div>
+<div class="shortcuts">Raccourcis : <strong>a / b / c / d</strong> présélectionner — <strong>Entrée</strong> valider — <strong>Espace / Entrée</strong> question suivante</div>
+
+<script>
+const questions = [
+  {
+    q: "Quel niveau d'effort est recommandé par défaut pour la plupart des cas d'usage de codage et d'agentique avec Claude Opus 4.7 ?",
+    a: ["max", "xhigh", "high", "medium"],
+    correct: 1,
+    j: "xhigh est le réglage optimal pour codage et agentique."
+  },
+  {
+    q: "Comparé à Claude Opus 4.6, comment Claude Opus 4.7 calibre-t-il la longueur de ses réponses ?",
+    a: [
+      "Il produit toujours des réponses plus longues",
+      "Il utilise une verbosité fixe par défaut",
+      "Il adapte la longueur à la complexité perçue de la tâche",
+      "Il raccourcit systématiquement par rapport à 4.6"
+    ],
+    correct: 2,
+    j: "Il calibre selon la complexité jugée de la tâche."
+  },
+  {
+    q: "Pourquoi privilégier des exemples positifs plutôt que des instructions négatives pour réduire la verbosité ?",
+    a: [
+      "Ils sont moins coûteux en tokens",
+      "Ils montrent concrètement la concision attendue",
+      "Ils empêchent toute forme de raisonnement",
+      "Ils désactivent la pensée adaptative"
+    ],
+    correct: 1,
+    j: "Les exemples positifs sont plus efficaces que les négatifs."
+  },
+  {
+    q: "Quel comportement caractérise Claude Opus 4.7 face aux instructions, contrairement à 4.6 ?",
+    a: [
+      "Il généralise davantage les instructions implicitement",
+      "Il interprète les instructions plus littéralement",
+      "Il infère plus librement les besoins non exprimés",
+      "Il ignore les instructions explicites"
+    ],
+    correct: 1,
+    j: "Il interprète plus littéralement, sans généralisation silencieuse."
+  },
+  {
+    q: "Vous voulez qu'une instruction de formatage s'applique à toutes les sections. Que faire avec Claude Opus 4.7 ?",
+    a: [
+      "Laisser le modèle inférer la portée",
+      "Indiquer explicitement la portée (« à chaque section »)",
+      "Réduire l'effort à low",
+      "Activer le mode thinking étendu"
+    ],
+    correct: 1,
+    j: "Préciser la portée car le modèle ne généralise pas seul."
+  },
+  {
+    q: "Quelle est la résolution maximale supportée pour le computer use sur Claude Opus 4.7 ?",
+    a: ["1080p", "1366×768", "2576px / 3,75 MP", "4K (4096px)"],
+    correct: 2,
+    j: "La nouvelle résolution maximale est 2576px / 3,75 MP."
+  },
+  {
+    q: "Pour le computer use, quelle résolution offre le meilleur équilibre performance/coût selon les tests ?",
+    a: ["720p", "1366×768", "1080p", "La résolution maximale"],
+    correct: 2,
+    j: "1080p offre le meilleur équilibre performance/coût."
+  },
+  {
+    q: "Quel mode de thinking utilisent Claude Opus 4.6 et Sonnet 4.6 ?",
+    a: [
+      "Manual thinking avec budget_tokens",
+      "Extended thinking obligatoire",
+      "Adaptive thinking (le modèle décide)",
+      "Pas de thinking disponible"
+    ],
+    correct: 2,
+    j: "Adaptive thinking laisse le modèle décider dynamiquement."
+  },
+  {
+    q: "Lors de la migration de extended thinking vers adaptive thinking, où contrôle-t-on désormais le budget ?",
+    a: [
+      "Via budget_tokens dans thinking",
+      "Via le paramètre effort",
+      "Via max_tokens uniquement",
+      "Via temperature"
+    ],
+    correct: 1,
+    j: "Le contrôle de budget passe par le paramètre effort."
+  },
+  {
+    q: "Que se passe-t-il si vous tentez un prefill sur Claude Mythos Preview ?",
+    a: [
+      "Le prefill fonctionne normalement",
+      "Le modèle ignore silencieusement le prefill",
+      "La requête renvoie une erreur 400",
+      "Le prefill est converti automatiquement"
+    ],
+    correct: 2,
+    j: "Mythos Preview renvoie une erreur 400 sur prefill."
+  },
+  {
+    q: "Pour remplacer un prefill servant à forcer un format JSON, quelle est la meilleure approche moderne ?",
+    a: [
+      "Utiliser Structured Outputs ou demander explicitement le schéma",
+      "Augmenter max_tokens",
+      "Désactiver le thinking",
+      "Réduire l'effort à low"
+    ],
+    correct: 0,
+    j: "Structured Outputs contraint la réponse à un schéma."
+  },
+  {
+    q: "Pour les documents longs (20k+ tokens), où placer idéalement le contenu volumineux ?",
+    a: [
+      "En bas du prompt, après la requête",
+      "Au milieu, entouré d'instructions",
+      "En haut du prompt, avant la requête",
+      "Dans un message system séparé"
+    ],
+    correct: 2,
+    j: "Le contenu long au début améliore la performance."
+  },
+  {
+    q: "Quel gain de qualité de réponse peut apporter le placement de la requête en fin de prompt sur entrées multi-documents ?",
+    a: ["Environ 5%", "Environ 15%", "Environ 30%", "Aucun gain mesurable"],
+    correct: 2,
+    j: "Jusqu'à 30% d'amélioration sur entrées multi-documents."
+  },
+  {
+    q: "Pour les tâches longues sur documents, quelle pratique aide Claude à traverser le bruit ?",
+    a: [
+      "Demander un résumé général d'abord",
+      "Demander d'extraire des citations pertinentes en premier",
+      "Lui demander d'ignorer les détails",
+      "Compresser les documents"
+    ],
+    correct: 1,
+    j: "Citer d'abord les passages pertinents filtre le bruit."
+  },
+  {
+    q: "Votre harnais de code review tuné pour un ancien modèle voit sa recall baisser sur 4.7. Quelle est la cause probable ?",
+    a: [
+      "Régression de capacité du modèle",
+      "Le modèle suit plus fidèlement les instructions de filtrage",
+      "Un bug du modèle",
+      "Une limite de tokens trop basse"
+    ],
+    correct: 1,
+    j: "Le modèle suit plus fidèlement les consignes de filtrage."
+  },
+  {
+    q: "Pour maximiser la recall d'un harnais de bug-finding avec Claude Opus 4.7, quelle stratégie est recommandée ?",
+    a: [
+      "Demander uniquement les bugs critiques",
+      "Demander toutes les findings avec confidence + severity, filtrer ensuite",
+      "Réduire l'effort à low",
+      "Désactiver les outils"
+    ],
+    correct: 1,
+    j: "Coverage d'abord, filtrage dans une étape séparée."
+  },
+  {
+    q: "Le style de design par défaut de Claude Opus 4.7 conviendrait le mieux à quel type de brief ?",
+    a: [
+      "Dashboard fintech",
+      "App de santé clinique",
+      "Site éditorial ou hospitality",
+      "Outil pour développeurs"
+    ],
+    correct: 2,
+    j: "Le style éditorial/hospitality correspond au défaut."
+  },
+  {
+    q: "Quelle approche permet de briser efficacement le style design par défaut de Claude Opus 4.7 ?",
+    a: [
+      "Dire « ne pas utiliser de crème » uniquement",
+      "Demander « clean et minimal »",
+      "Spécifier une alternative concrète (palette, typo précises)",
+      "Augmenter l'effort à max"
+    ],
+    correct: 2,
+    j: "Spécifier une alternative concrète et précise fonctionne."
+  },
+  {
+    q: "Concernant la création de subagents, comment se comporte Claude Opus 4.7 par défaut ?",
+    a: [
+      "Il spawn plus de subagents que 4.6",
+      "Il spawn moins de subagents par défaut",
+      "Il refuse de créer des subagents",
+      "Le comportement est identique à 4.6"
+    ],
+    correct: 1,
+    j: "Claude Opus 4.7 spawn moins de subagents par défaut."
+  },
+  {
+    q: "Quelle directive système rend Claude plus proactif à exécuter des actions plutôt que suggérer ?",
+    a: [
+      "do_not_act_before_instructions",
+      "default_to_action",
+      "use_parallel_tool_calls",
+      "frontend_aesthetics"
+    ],
+    correct: 1,
+    j: "default_to_action pousse à implémenter par défaut."
+  },
+  {
+    q: "Pour les appels d'outils parallèles, quelle recommandation est correcte ?",
+    a: [
+      "Toujours appeler les outils en séquence pour la stabilité",
+      "Appels parallèles si indépendants, séquentiels si dépendances",
+      "Toujours en parallèle, même avec dépendances",
+      "Ne jamais paralléliser plus de 2 outils"
+    ],
+    correct: 1,
+    j: "Paralléliser uniquement les appels indépendants."
+  },
+  {
+    q: "Avec Claude Opus 4.6/4.7, comment formuler une instruction de tool use précédemment écrite en majuscules « CRITICAL: You MUST... » ?",
+    a: [
+      "Renforcer davantage en majuscules",
+      "Garder telle quelle pour la fiabilité",
+      "Adoucir vers un ton normal (« Use this tool when... »)",
+      "Supprimer toute instruction d'outil"
+    ],
+    correct: 2,
+    j: "Adoucir car ces modèles sont plus réactifs au system."
+  },
+  {
+    q: "Si Claude Opus 4.7 fournit trop de mises à jour de progression utilisateur, que faire avec l'ancien scaffolding ?",
+    a: [
+      "Le conserver tel quel",
+      "Le retirer car le modèle gère mieux nativement",
+      "Le renforcer avec plus de règles",
+      "Augmenter l'effort à max"
+    ],
+    correct: 1,
+    j: "Retirer le scaffolding, le modèle gère nativement mieux."
+  },
+  {
+    q: "Pour un produit de codage interactif synchrone, quelle stratégie maximise performance et efficience tokens ?",
+    a: [
+      "Multiplier les tours utilisateur courts",
+      "Bien spécifier la tâche dès le premier tour humain",
+      "Réduire l'effort à low",
+      "Désactiver le thinking"
+    ],
+    correct: 1,
+    j: "Spécifier clairement la tâche dès le premier tour."
+  },
+  {
+    q: "Si Claude Opus 4.7 montre du raisonnement superficiel sur des tâches complexes, quelle est la première action recommandée ?",
+    a: [
+      "Ajouter « think harder » en majuscules",
+      "Augmenter l'effort à high ou xhigh",
+      "Réduire max_tokens",
+      "Activer le mode prefill"
+    ],
+    correct: 1,
+    j: "Augmenter l'effort plutôt que prompter autour."
+  },
+  {
+    q: "Pour Claude Opus 4.7 à effort max ou xhigh, quel max_tokens initial est recommandé ?",
+    a: ["4 000 tokens", "16 000 tokens", "64 000 tokens", "1 000 tokens"],
+    correct: 2,
+    j: "Démarrer à 64k tokens pour laisser de la marge."
+  },
+  {
+    q: "Lorsque le thinking est désactivé sur Claude Opus 4.5, à quel mot le modèle est-il particulièrement sensible ?",
+    a: ["« analyse »", "« think » et ses variantes", "« explique »", "« réponds »"],
+    correct: 1,
+    j: "Le modèle est sensible à « think » et ses variantes."
+  },
+  {
+    q: "Quelle pratique est recommandée pour le few-shot prompting avec thinking ?",
+    a: [
+      "Éviter tout exemple avec thinking",
+      "Utiliser des balises <thinking> dans les exemples",
+      "Mettre les exemples en JSON strict",
+      "Ne fournir qu'un seul exemple"
+    ],
+    correct: 1,
+    j: "Les balises <thinking> dans exemples guident le pattern."
+  },
+  {
+    q: "Pour structurer des prompts complexes avec instructions, contexte et exemples mélangés, quelle technique est privilégiée ?",
+    a: [
+      "Listes à puces markdown",
+      "Balises XML descriptives et cohérentes",
+      "Séparateurs de tirets",
+      "JSON imbriqué"
+    ],
+    correct: 1,
+    j: "Les balises XML évitent les ambiguïtés d'interprétation."
+  },
+  {
+    q: "Combien d'exemples sont recommandés pour un few-shot prompting efficace ?",
+    a: ["1 à 2", "3 à 5", "10 à 15", "Plus de 20"],
+    correct: 1,
+    j: "3 à 5 exemples diversifiés donnent les meilleurs résultats."
+  },
+  {
+    q: "Concernant le style d'écriture, quelle différence Claude Opus 4.7 présente vs 4.6 ?",
+    a: [
+      "Plus chaleureux et validation-forward",
+      "Plus direct, opinionné, moins d'emojis",
+      "Strictement identique",
+      "Toujours plus verbeux"
+    ],
+    correct: 1,
+    j: "Plus direct, opinionné, moins validation-forward."
+  },
+  {
+    q: "Pour contrôler le formatage de sortie, quelle formulation est la plus efficace ?",
+    a: [
+      "« N'utilise pas de markdown »",
+      "« Réponds en prose fluide en paragraphes »",
+      "Laisser le modèle décider",
+      "Mettre des règles en majuscules"
+    ],
+    correct: 1,
+    j: "Dire ce qu'il faut faire plutôt que ne pas faire."
+  },
+  {
+    q: "Claude Opus 4.6 utilise par défaut quel format pour les expressions mathématiques ?",
+    a: ["Texte brut", "LaTeX", "MathML", "ASCII art"],
+    correct: 1,
+    j: "LaTeX est le défaut pour expressions mathématiques."
+  },
+  {
+    q: "Si à effort low sur tâche modérément complexe vous voyez de l'under-thinking, mais devez garder low pour la latence, que faire ?",
+    a: [
+      "Accepter le compromis sans changement",
+      "Ajouter une guidance ciblée « think carefully through... »",
+      "Désactiver totalement le thinking",
+      "Passer à un autre modèle"
+    ],
+    correct: 1,
+    j: "Ajouter une guidance ciblée pour stimuler le raisonnement."
+  }
+];
+
+let currentQ = 0;
+let preselected = null;
+let validated = false;
+let score = 0;
+let startTime = null;
+let timerInterval = null;
+let userAnswers = [];
+
+const app = document.getElementById('app');
+
+function formatTime(ms) {
+  const totalSec = Math.floor(ms / 1000);
+  const m = String(Math.floor(totalSec / 60)).padStart(2, '0');
+  const s = String(totalSec % 60).padStart(2, '0');
+  return `${m}:${s}`;
+}
+
+function startTimer() {
+  if (startTime === null) startTime = Date.now();
+  timerInterval = setInterval(() => {
+    const el = document.getElementById('timer');
+    if (el) el.textContent = formatTime(Date.now() - startTime);
+  }, 1000);
+}
+
+function stopTimer() {
+  if (timerInterval) clearInterval(timerInterval);
+}
+
+function render() {
+  if (currentQ >= questions.length) {
+    renderResult();
+    return;
+  }
+  const q = questions[currentQ];
+  const letters = ['a', 'b', 'c', 'd'];
+  const progressPct = ((currentQ) / questions.length) * 100;
+  app.innerHTML = `
+    <div class="top-bar">
+      <div class="progress-info">Question ${currentQ + 1} / ${questions.length}</div>
+      <div class="timer" id="timer">00:00</div>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" style="width:${progressPct}%"></div></div>
+    <div class="question">${q.q}</div>
+    <div class="answers" id="answers">
+      ${q.a.map((ans, i) => `
+        <div class="answer" data-idx="${i}">
+          <span class="letter">${letters[i]}</span>
+          <span>${ans}</span>
+        </div>
+      `).join('')}
+    </div>
+    <div class="justification" id="justification"></div>
+    <div class="next-hint" id="next-hint">Appuyez sur Entrée ou Espace pour continuer →</div>
+  `;
+  if (startTime === null) startTimer();
+  document.querySelectorAll('.answer').forEach(el => {
+    el.addEventListener('click', () => handleAnswerClick(parseInt(el.dataset.idx)));
+  });
+}
+
+function handleAnswerClick(idx) {
+  if (validated) return;
+  if (preselected === idx) {
+    validate();
+  } else {
+    preselect(idx);
+  }
+}
+
+function preselect(idx) {
+  if (validated) return;
+  preselected = idx;
+  document.querySelectorAll('.answer').forEach((el, i) => {
+    el.classList.toggle('preselected', i === idx);
+  });
+}
+
+function validate() {
+  if (validated || preselected === null) return;
+  validated = true;
+  const q = questions[currentQ];
+  const isCorrect = preselected === q.correct;
+  if (isCorrect) score++;
+  userAnswers.push({ q: currentQ, chosen: preselected, correct: q.correct, isCorrect });
+
+  document.querySelectorAll('.answer').forEach((el, i) => {
+    el.classList.add('validated');
+    el.classList.remove('preselected');
+    if (i === q.correct) {
+      el.classList.add('correct');
+    } else if (i === preselected && !isCorrect) {
+      el.classList.add('incorrect');
+    }
+  });
+
+  const just = document.getElementById('justification');
+  just.textContent = '✓ ' + q.j;
+  just.classList.add('visible');
+  document.getElementById('next-hint').classList.add('visible');
+
+  const progressPct = ((currentQ + 1) / questions.length) * 100;
+  document.querySelector('.progress-fill').style.width = progressPct + '%';
+}
+
+function nextQuestion() {
+  currentQ++;
+  preselected = null;
+  validated = false;
+  render();
+}
+
+function renderResult() {
+  stopTimer();
+  const totalMs = Date.now() - startTime;
+  const pct = Math.round((score / questions.length) * 100);
+  app.innerHTML = `
+    <div class="result-screen">
+      <h1>Quiz terminé !</h1>
+      <div class="score-big">${score} / ${questions.length}</div>
+      <div class="result-detail"><strong>${pct}%</strong> de bonnes réponses</div>
+      <div class="result-detail">Temps total : <strong>${formatTime(totalMs)}</strong></div>
+      <button class="restart-btn" id="restart">Recommencer</button>
+    </div>
+  `;
+  document.getElementById('restart').addEventListener('click', restart);
+}
+
+function restart() {
+  currentQ = 0;
+  preselected = null;
+  validated = false;
+  score = 0;
+  startTime = null;
+  userAnswers = [];
+  stopTimer();
+  render();
+}
+
+document.addEventListener('keydown', (e) => {
+  if (currentQ >= questions.length) return;
+  const key = e.key.toLowerCase();
+  const map = { a: 0, b: 1, c: 2, d: 3 };
+  if (key in map) {
+    e.preventDefault();
+    if (!validated) preselect(map[key]);
+  } else if (e.key === 'Enter') {
+    e.preventDefault();
+    if (validated) {
+      nextQuestion();
+    } else if (preselected !== null) {
+      validate();
+    }
+  } else if (e.key === ' ') {
+    e.preventDefault();
+    if (validated) nextQuestion();
+  }
+});
+
+render();
+</script>
+</body>
+</html>
