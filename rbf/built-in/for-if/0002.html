@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QCM Robot Framework — IF & FOR (Expert)</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,800&family=JetBrains+Mono:wght@400;500;700&family=Inter+Tight:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f5f1ea;
+    --bg-alt: #ebe5d9;
+    --paper: #fdfbf6;
+    --ink: #1a1814;
+    --ink-soft: #4a463e;
+    --accent: #8b1e3f;
+    --accent-soft: #b8456a;
+    --success: #2d6b3e;
+    --success-bg: #d8e8d4;
+    --error: #a02828;
+    --error-bg: #f0d4d0;
+    --line: #d4cdb8;
+    --code-bg: #1f1c17;
+    --code-ink: #e8dfca;
+    --warn: #8b1e3f;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter Tight', sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    min-height: 100vh;
+    padding: 40px 20px;
+    line-height: 1.5;
+    background-image:
+      radial-gradient(circle at 10% 10%, rgba(139, 30, 63, 0.05) 0%, transparent 45%),
+      radial-gradient(circle at 90% 90%, rgba(26, 24, 20, 0.04) 0%, transparent 45%);
+  }
+
+  .container {
+    max-width: 820px;
+    margin: 0 auto;
+  }
+
+  header {
+    border-bottom: 2px solid var(--ink);
+    padding-bottom: 20px;
+    margin-bottom: 30px;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: end;
+    gap: 20px;
+  }
+
+  .title-block .eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--accent);
+    margin-bottom: 8px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .difficulty-badge {
+    background: var(--accent);
+    color: white;
+    padding: 2px 8px;
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+  }
+
+  h1 {
+    font-family: 'Fraunces', serif;
+    font-weight: 800;
+    font-size: clamp(2rem, 5vw, 3.2rem);
+    line-height: 0.95;
+    letter-spacing: -0.02em;
+  }
+
+  h1 em {
+    font-style: italic;
+    color: var(--accent);
+    font-weight: 400;
+  }
+
+  .meta {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--ink-soft);
+    text-align: right;
+    line-height: 1.6;
+  }
+
+  .meta strong {
+    color: var(--ink);
+    font-weight: 700;
+  }
+
+  .progress-wrap { margin-bottom: 35px; }
+
+  .progress-info {
+    display: flex;
+    justify-content: space-between;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    margin-bottom: 8px;
+    color: var(--ink-soft);
+  }
+
+  .progress-info .current {
+    color: var(--accent);
+    font-weight: 700;
+  }
+
+  .progress-bar {
+    height: 6px;
+    background: var(--bg-alt);
+    border: 1px solid var(--line);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: var(--ink);
+    width: 0%;
+    transition: width 0.5s cubic-bezier(0.65, 0, 0.35, 1);
+    position: relative;
+  }
+
+  .progress-fill::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: var(--accent);
+  }
+
+  .card {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    padding: 40px;
+    box-shadow:
+      0 1px 0 var(--line),
+      0 20px 40px -20px rgba(26, 24, 20, 0.15);
+    position: relative;
+    animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(15px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .question-number {
+    font-family: 'Fraunces', serif;
+    font-size: 5rem;
+    font-weight: 800;
+    line-height: 1;
+    color: var(--accent);
+    font-style: italic;
+    position: absolute;
+    top: 25px;
+    right: 40px;
+    opacity: 0.12;
+    pointer-events: none;
+  }
+
+  .question-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    background: var(--ink);
+    color: var(--paper);
+    padding: 4px 10px;
+    margin-bottom: 20px;
+    font-weight: 500;
+  }
+
+  .question-tag .dot {
+    width: 6px;
+    height: 6px;
+    background: var(--accent);
+    border-radius: 50%;
+  }
+
+  .question-text {
+    font-family: 'Fraunces', serif;
+    font-size: 1.4rem;
+    font-weight: 600;
+    line-height: 1.3;
+    margin-bottom: 20px;
+    color: var(--ink);
+    letter-spacing: -0.01em;
+  }
+
+  .code-snippet {
+    font-family: 'JetBrains Mono', monospace;
+    background: var(--code-bg);
+    color: var(--code-ink);
+    padding: 18px 20px;
+    font-size: 0.82rem;
+    line-height: 1.65;
+    margin-bottom: 25px;
+    overflow-x: auto;
+    border-left: 3px solid var(--accent);
+    white-space: pre;
+  }
+
+  .code-snippet .kw { color: #e8784f; font-weight: 500; }
+  .code-snippet .var { color: #8fb8d6; }
+  .code-snippet .str { color: #b5cf9a; }
+  .code-snippet .com { color: #7a7165; font-style: italic; }
+  .code-snippet .num { color: #d4a85a; }
+
+  .options {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 25px;
+  }
+
+  .option {
+    background: var(--bg);
+    border: 1px solid var(--line);
+    padding: 14px 18px;
+    cursor: pointer;
+    text-align: left;
+    font-family: 'Inter Tight', sans-serif;
+    font-size: 0.95rem;
+    color: var(--ink);
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    position: relative;
+    width: 100%;
+  }
+
+  .option:hover:not(:disabled) {
+    background: var(--bg-alt);
+    border-color: var(--ink);
+    transform: translateX(3px);
+  }
+
+  .option-letter {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    font-weight: 700;
+    width: 24px;
+    height: 24px;
+    border: 1px solid var(--ink);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    background: var(--paper);
+  }
+
+  .option-text { flex: 1; }
+
+  .option.correct {
+    background: var(--success-bg);
+    border-color: var(--success);
+    color: var(--success);
+    font-weight: 500;
+  }
+
+  .option.correct .option-letter {
+    background: var(--success);
+    color: white;
+    border-color: var(--success);
+  }
+
+  .option.incorrect {
+    background: var(--error-bg);
+    border-color: var(--error);
+    color: var(--error);
+    font-weight: 500;
+  }
+
+  .option.incorrect .option-letter {
+    background: var(--error);
+    color: white;
+    border-color: var(--error);
+  }
+
+  .option:disabled { cursor: not-allowed; }
+
+  .explanation {
+    padding: 14px 18px;
+    margin-bottom: 20px;
+    border-left: 3px solid var(--ink);
+    background: var(--bg-alt);
+    font-style: italic;
+    font-family: 'Fraunces', serif;
+    font-size: 1rem;
+    color: var(--ink);
+    display: none;
+    animation: fadeIn 0.4s ease;
+  }
+
+  .explanation.show { display: block; }
+  .explanation::before {
+    content: '⟶ ';
+    font-style: normal;
+    color: var(--accent);
+    font-weight: 700;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .next-btn {
+    background: var(--ink);
+    color: var(--paper);
+    border: none;
+    padding: 14px 28px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    display: none;
+    align-items: center;
+    gap: 10px;
+    font-weight: 500;
+  }
+
+  .next-btn.show { display: inline-flex; animation: fadeIn 0.4s ease; }
+
+  .next-btn:hover {
+    background: var(--accent);
+    transform: translateX(4px);
+  }
+
+  .next-btn .arrow {
+    font-family: serif;
+    font-size: 1.1rem;
+    transition: transform 0.25s ease;
+  }
+
+  .next-btn:hover .arrow { transform: translateX(3px); }
+
+  .results { display: none; animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
+  .results.show { display: block; }
+
+  .score-card {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    padding: 50px 40px;
+    text-align: center;
+    margin-bottom: 30px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .score-card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -10%;
+    width: 300px;
+    height: 300px;
+    background: radial-gradient(circle, rgba(139, 30, 63, 0.08) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .score-eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: var(--accent);
+    margin-bottom: 10px;
+  }
+
+  .score-number {
+    font-family: 'Fraunces', serif;
+    font-weight: 800;
+    font-size: 7rem;
+    line-height: 0.9;
+    letter-spacing: -0.04em;
+    margin-bottom: 5px;
+  }
+
+  .score-number .total {
+    color: var(--ink-soft);
+    font-weight: 400;
+    font-style: italic;
+  }
+
+  .score-percent {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 1.5rem;
+    color: var(--ink-soft);
+    margin-bottom: 20px;
+  }
+
+  .score-percent strong {
+    color: var(--accent);
+    font-weight: 600;
+    font-style: normal;
+  }
+
+  .score-message {
+    font-family: 'Fraunces', serif;
+    font-size: 1.1rem;
+    color: var(--ink);
+    max-width: 480px;
+    margin: 0 auto;
+    line-height: 1.4;
+  }
+
+  .review-section h2 {
+    font-family: 'Fraunces', serif;
+    font-size: 1.6rem;
+    font-weight: 700;
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .review-section h2 .count {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    background: var(--error);
+    color: white;
+    padding: 3px 9px;
+    font-weight: 500;
+  }
+
+  .review-card {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--error);
+    padding: 22px 25px;
+    margin-bottom: 14px;
+  }
+
+  .review-card .q-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--ink-soft);
+    margin-bottom: 6px;
+  }
+
+  .review-card .q-text {
+    font-family: 'Fraunces', serif;
+    font-size: 1.05rem;
+    font-weight: 600;
+    margin-bottom: 14px;
+    line-height: 1.35;
+  }
+
+  .review-card .answer-row {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 6px;
+    align-items: baseline;
+    font-size: 0.9rem;
+  }
+
+  .answer-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    width: 80px;
+    flex-shrink: 0;
+    font-weight: 500;
+  }
+
+  .label-wrong { color: var(--error); }
+  .label-right { color: var(--success); }
+  .answer-text { color: var(--ink); }
+
+  .perfect-message {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--success);
+    padding: 30px;
+    text-align: center;
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 1.2rem;
+  }
+
+  .restart-btn {
+    background: transparent;
+    color: var(--ink);
+    border: 1px solid var(--ink);
+    padding: 14px 28px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    margin-top: 30px;
+    font-weight: 500;
+  }
+
+  .restart-btn:hover {
+    background: var(--ink);
+    color: var(--paper);
+  }
+
+  @media (max-width: 600px) {
+    body { padding: 25px 15px; }
+    header { grid-template-columns: 1fr; }
+    .meta { text-align: left; }
+    .card { padding: 30px 22px; }
+    .question-number { font-size: 3.5rem; top: 15px; right: 22px; }
+    .question-text { font-size: 1.15rem; }
+    .score-number { font-size: 5rem; }
+    .code-snippet { font-size: 0.75rem; padding: 14px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <div class="title-block">
+      <div class="eyebrow">
+        QCM · 20 Questions
+        <span class="difficulty-badge">EXPERT</span>
+      </div>
+      <h1>Robot Framework <em>IF & FOR</em></h1>
+    </div>
+    <div class="meta">
+      <strong>Pièges & subtilités</strong><br>
+      Niveau difficile
+    </div>
+  </header>
+
+  <div class="progress-wrap" id="progressWrap">
+    <div class="progress-info">
+      <span>Question <span class="current" id="currentQ">1</span> / 20</span>
+      <span id="progressPercent">0%</span>
+    </div>
+    <div class="progress-bar">
+      <div class="progress-fill" id="progressFill"></div>
+    </div>
+  </div>
+
+  <div id="quizArea"></div>
+  <div id="resultsArea" class="results"></div>
+</div>
+
+<script>
+const questions = [
+  {
+    q: "Que se passe-t-il si la liste passée à FOR ... IN est vide ?",
+    code: '<span class="var">@{liste}</span>=    Create List\n<span class="kw">FOR</span>    <span class="var">${i}</span>    <span class="kw">IN</span>    @{liste}\n    Log    <span class="var">${i}</span>\n<span class="kw">END</span>',
+    options: [
+      "Erreur : la boucle doit avoir au moins une itération",
+      "La boucle ne s'exécute pas, aucun log produit",
+      "Un log avec ${i} = None est produit",
+      "Avertissement seulement si IN RANGE est vide"
+    ],
+    correct: 1,
+    expl: "Une liste vide produit zéro itération, sans erreur."
+  },
+  {
+    q: "Quelle est la portée d'une variable créée dans FOR après la boucle ?",
+    code: '<span class="kw">FOR</span>    <span class="var">${i}</span>    <span class="kw">IN RANGE</span>    3\n    <span class="var">${x}</span>=    Set Variable    <span class="var">${i}</span>\n<span class="kw">END</span>\nLog    <span class="var">${x}</span>',
+    options: [
+      "Erreur : ${x} n'existe plus après END",
+      "${x} contient la dernière valeur assignée (2)",
+      "${x} contient la liste [0, 1, 2]",
+      "${x} est None car le scope est local"
+    ],
+    correct: 1,
+    expl: "Les variables FOR persistent au scope englobant après END."
+  },
+  {
+    q: "Comportement de IF avec une chaîne vide comme condition ?",
+    code: '<span class="var">${val}</span>=    Set Variable    <span class="str">${EMPTY}</span>\n<span class="kw">IF</span>    <span class="var">${val}</span>\n    Log    vrai\n<span class="kw">ELSE</span>\n    Log    faux\n<span class="kw">END</span>',
+    options: [
+      "Affiche : vrai (chaîne définie)",
+      "Affiche : faux (chaîne vide est falsy)",
+      "Erreur : condition non booléenne",
+      "Affiche : vrai car ${EMPTY} est défini"
+    ],
+    correct: 1,
+    expl: "Une chaîne vide est évaluée comme False en Python."
+  },
+  {
+    q: "Comparez ces deux conditions. Sont-elles équivalentes ?",
+    code: '<span class="com"># Version A</span>\n<span class="kw">IF</span>    <span class="str">\'${status}\'</span> == <span class="str">\'PASS\'</span>\n\n<span class="com"># Version B</span>\n<span class="kw">IF</span>    <span class="var">$status</span> == <span class="str">\'PASS\'</span>',
+    options: [
+      "Oui, totalement équivalentes",
+      "Non, A peut échouer si ${status} contient des quotes",
+      "Non, B est syntaxiquement invalide",
+      "Non, A évalue toujours False"
+    ],
+    correct: 1,
+    expl: "${var} est remplacée textuellement, $var passe l'objet."
+  },
+  {
+    q: "Que produit cette boucle imbriquée ?",
+    code: '<span class="kw">FOR</span>    <span class="var">${i}</span>    <span class="kw">IN RANGE</span>    <span class="num">2</span>\n    <span class="kw">FOR</span>    <span class="var">${j}</span>    <span class="kw">IN RANGE</span>    <span class="num">2</span>\n        <span class="kw">IF</span>    <span class="var">${i}</span> == <span class="var">${j}</span>\n            <span class="kw">CONTINUE</span>\n        <span class="kw">END</span>\n        Log    <span class="var">${i}${j}</span>\n    <span class="kw">END</span>\n<span class="kw">END</span>',
+    options: [
+      "00, 11",
+      "01, 10",
+      "00, 01, 10, 11",
+      "01, 10, 11"
+    ],
+    correct: 1,
+    expl: "CONTINUE saute quand i==j, donc 01 et 10 restent."
+  },
+  {
+    q: "BREAK dans une boucle imbriquée affecte quelle boucle ?",
+    code: null,
+    options: [
+      "Toutes les boucles imbriquées en remontant",
+      "Uniquement la boucle FOR la plus interne",
+      "Uniquement la boucle FOR la plus externe",
+      "Cela dépend d'un paramètre 'level' à passer à BREAK"
+    ],
+    correct: 1,
+    expl: "BREAK sort seulement de la boucle immédiate englobante."
+  },
+  {
+    q: "Quel est le piège dans ce IF ?",
+    code: '<span class="var">${age}</span>=    Set Variable    <span class="str">25</span>\n<span class="kw">IF</span>    <span class="var">${age}</span> > <span class="num">18</span>\n    Log    Majeur\n<span class="kw">END</span>',
+    options: [
+      "Aucun piège, ${age} > 18 vaut True",
+      "${age} est une chaîne donc comparaison invalide",
+      "RF convertit automatiquement, fonctionne sans souci",
+      "Il faut écrire int(${age}) > 18"
+    ],
+    correct: 2,
+    expl: "RF tente la conversion numérique automatiquement dans IF."
+  },
+  {
+    q: "Que fait FOR ... IN ZIP avec des listes de tailles différentes en mode STRICT ?",
+    code: '<span class="kw">FOR</span>    <span class="var">${a}</span>    <span class="var">${b}</span>    <span class="kw">IN ZIP</span>    @{l1}    @{l2}    mode=STRICT\n    Log    <span class="var">${a}-${b}</span>\n<span class="kw">END</span>',
+    options: [
+      "Tronque silencieusement à la plus courte",
+      "Lève une erreur si les listes n'ont pas la même taille",
+      "Complète avec None la liste la plus courte",
+      "Boucle infinie jusqu'à interruption"
+    ],
+    correct: 1,
+    expl: "STRICT exige des longueurs strictement identiques sinon erreur."
+  },
+  {
+    q: "Que retourne ce mot-clé ?",
+    code: '<span class="kw">*** Keywords ***</span>\nVerifier\n    <span class="kw">FOR</span>    <span class="var">${i}</span>    <span class="kw">IN RANGE</span>    <span class="num">5</span>\n        <span class="kw">IF</span>    <span class="var">${i}</span> == <span class="num">3</span>\n            <span class="kw">RETURN</span>    <span class="var">${i}</span>\n        <span class="kw">END</span>\n    <span class="kw">END</span>\n    <span class="kw">RETURN</span>    -<span class="num">1</span>',
+    options: [
+      "Retourne -1, RETURN dans FOR est ignoré",
+      "Retourne 3, RETURN sort de la boucle et du mot-clé",
+      "Erreur : RETURN interdit dans FOR",
+      "Retourne [0, 1, 2, 3] puis -1"
+    ],
+    correct: 1,
+    expl: "RETURN termine immédiatement le mot-clé entier."
+  },
+  {
+    q: "Combien d'itérations pour ce IN RANGE ?",
+    code: '<span class="kw">FOR</span>    <span class="var">${i}</span>    <span class="kw">IN RANGE</span>    <span class="num">10</span>    <span class="num">2</span>    -<span class="num">2</span>\n    Log    <span class="var">${i}</span>\n<span class="kw">END</span>',
+    options: [
+      "4 itérations : 10, 8, 6, 4",
+      "5 itérations : 10, 8, 6, 4, 2",
+      "0 itération",
+      "Erreur : pas négatif interdit"
+    ],
+    correct: 0,
+    expl: "De 10 à 2 exclus, pas -2 : 10, 8, 6, 4."
+  },
+  {
+    q: "Quel est le comportement de TRY/EXCEPT dans une boucle ?",
+    code: '<span class="kw">FOR</span>    <span class="var">${i}</span>    <span class="kw">IN RANGE</span>    <span class="num">3</span>\n    <span class="kw">TRY</span>\n        Mot Cle Risque    <span class="var">${i}</span>\n    <span class="kw">EXCEPT</span>\n        Log    erreur <span class="var">${i}</span>\n    <span class="kw">END</span>\n<span class="kw">END</span>',
+    options: [
+      "L'erreur capturée stoppe la boucle",
+      "Chaque itération a son propre TRY/EXCEPT indépendant",
+      "EXCEPT doit englober tout le FOR",
+      "TRY n'est pas autorisé dans FOR"
+    ],
+    correct: 1,
+    expl: "TRY/EXCEPT s'évalue à chaque itération indépendamment."
+  },
+  {
+    q: "Différence entre IF \"${x}\" et IF $x ?",
+    code: null,
+    options: [
+      "Aucune différence en pratique",
+      "${x} est substitué littéralement, $x passe l'objet Python",
+      "$x est obsolète depuis RF 6",
+      "${x} ne fonctionne que pour les chaînes"
+    ],
+    correct: 1,
+    expl: "$x évite les problèmes de quotes et types complexes."
+  },
+  {
+    q: "Que vaut ${result} ?",
+    code: '<span class="var">${result}</span>=    Set Variable    <span class="str">initial</span>\n<span class="kw">FOR</span>    <span class="var">${n}</span>    <span class="kw">IN</span>    <span class="num">1</span>    <span class="num">2</span>    <span class="num">3</span>\n    <span class="var">${result}</span>=    Set Variable    <span class="var">${n}</span>\n<span class="kw">END</span>',
+    options: [
+      "initial",
+      "1",
+      "3",
+      "[1, 2, 3]"
+    ],
+    correct: 2,
+    expl: "FOR ... IN itère sur les valeurs littérales données."
+  },
+  {
+    q: "Quel piège avec ce ELSE IF ?",
+    code: '<span class="kw">IF</span>    <span class="var">${x}</span> > <span class="num">10</span>\n    Log    grand\n<span class="kw">ELSEIF</span>    <span class="var">${x}</span> > <span class="num">5</span>\n    Log    moyen\n<span class="kw">END</span>',
+    options: [
+      "Aucun piège, syntaxe correcte",
+      "ELSEIF en un mot est invalide, il faut ELSE IF",
+      "Manque le ELSE final obligatoire",
+      "${x} doit être déclaré avant le IF"
+    ],
+    correct: 1,
+    expl: "ELSE IF s'écrit en deux mots, sinon erreur de parsing."
+  },
+  {
+    q: "Performance : IF natif vs Run Keyword If pour 10000 itérations ?",
+    code: null,
+    options: [
+      "Run Keyword If est plus rapide (optimisé en C)",
+      "IF natif est plus rapide (pas d'argument parsing)",
+      "Strictement identique en performance",
+      "Run Keyword If est obsolète et désactivé"
+    ],
+    correct: 1,
+    expl: "IF natif évite le parsing d'arguments à chaque appel."
+  },
+  {
+    q: "Que fait ce code en RF 7 ?",
+    code: '<span class="var">@{nums}</span>=    Create List    <span class="num">1</span>    <span class="num">2</span>    <span class="num">3</span>\n<span class="kw">VAR</span>    <span class="var">${total}</span>    <span class="num">0</span>\n<span class="kw">FOR</span>    <span class="var">${n}</span>    <span class="kw">IN</span>    @{nums}\n    <span class="kw">VAR</span>    <span class="var">${total}</span>    ${{<span class="var">$total</span> + <span class="var">$n</span>}}\n<span class="kw">END</span>\nLog    <span class="var">${total}</span>',
+    options: [
+      "Affiche 0, VAR crée toujours une variable locale",
+      "Affiche 6, VAR au scope par défaut hérite",
+      "Erreur : VAR ne supporte pas l'évaluation Python",
+      "Affiche 3, garde seulement la dernière valeur"
+    ],
+    correct: 1,
+    expl: "VAR sans scope=LOCAL réutilise la variable existante."
+  },
+  {
+    q: "Quel est l'effet de cette imbrication FOR + IF + BREAK ?",
+    code: '<span class="kw">FOR</span>    <span class="var">${i}</span>    <span class="kw">IN RANGE</span>    <span class="num">5</span>\n    <span class="kw">IF</span>    <span class="var">${i}</span> >= <span class="num">2</span>\n        <span class="kw">BREAK</span>\n    <span class="kw">ELSE</span>\n        Log    <span class="var">${i}</span>\n    <span class="kw">END</span>\n<span class="kw">END</span>',
+    options: [
+      "Logue 0, 1 puis sort",
+      "Logue 0, 1, 2 puis sort",
+      "Erreur : BREAK interdit dans IF",
+      "Logue 0, 1, 2, 3, 4"
+    ],
+    correct: 0,
+    expl: "Pour i=2 le BREAK s'exécute avant le Log."
+  },
+  {
+    q: "Comportement de ${var} non défini dans un IF ?",
+    code: '<span class="kw">IF</span>    <span class="var">${var_inexistante}</span> == <span class="str">\'test\'</span>\n    Log    trouvé\n<span class="kw">END</span>',
+    options: [
+      "Condition False, ne fait rien",
+      "Erreur 'Variable not found' au runtime",
+      "Comparée à None implicitement",
+      "Crée la variable automatiquement"
+    ],
+    correct: 1,
+    expl: "Variable non définie lève une erreur dès évaluation."
+  },
+  {
+    q: "Que retourne cette construction ELSE IF en cascade ?",
+    code: '<span class="var">${x}</span>=    Set Variable    <span class="num">7</span>\n<span class="kw">IF</span>    <span class="var">${x}</span> < <span class="num">5</span>\n    Log    A\n<span class="kw">ELSE IF</span>    <span class="var">${x}</span> < <span class="num">10</span>\n    Log    B\n<span class="kw">ELSE IF</span>    <span class="var">${x}</span> < <span class="num">8</span>\n    Log    C\n<span class="kw">ELSE</span>\n    Log    D\n<span class="kw">END</span>',
+    options: [
+      "Affiche B puis C (deux conditions vraies)",
+      "Affiche B seulement (premier ELSE IF vrai)",
+      "Affiche C (dernier ELSE IF vrai prioritaire)",
+      "Affiche D (aucune condition n'arrête le flux)"
+    ],
+    correct: 1,
+    expl: "Le premier ELSE IF vrai stoppe la cascade."
+  },
+  {
+    q: "Quelle est la bonne façon de cumuler dans une boucle FOR (RF 7) ?",
+    code: null,
+    options: [
+      "VAR    ${sum}    ${{$sum + $n}}    dans la boucle",
+      "Utiliser une liste @{sums} et Sum List à la fin",
+      "Évaluation Python en une ligne avec ${{sum([...])}}",
+      "Toutes ces approches sont valides selon le contexte"
+    ],
+    correct: 3,
+    expl: "Plusieurs approches valables, à choisir selon lisibilité."
+  }
+];
+
+let currentIndex = 0;
+let score = 0;
+let answered = false;
+const wrongAnswers = [];
+
+const quizArea = document.getElementById('quizArea');
+const resultsArea = document.getElementById('resultsArea');
+const progressFill = document.getElementById('progressFill');
+const currentQEl = document.getElementById('currentQ');
+const progressPercent = document.getElementById('progressPercent');
+
+function renderQuestion() {
+  answered = false;
+  const q = questions[currentIndex];
+  const letters = ['A', 'B', 'C', 'D'];
+
+  currentQEl.textContent = currentIndex + 1;
+  const pct = Math.round((currentIndex / questions.length) * 100);
+  progressFill.style.width = pct + '%';
+  progressPercent.textContent = pct + '%';
+
+  let codeHTML = q.code ? `<div class="code-snippet">${q.code}</div>` : '';
+
+  quizArea.innerHTML = `
+    <article class="card">
+      <div class="question-number">${String(currentIndex + 1).padStart(2, '0')}</div>
+      <span class="question-tag"><span class="dot"></span>Question ${currentIndex + 1} · Expert</span>
+      <h2 class="question-text">${q.q}</h2>
+      ${codeHTML}
+      <div class="options" id="options">
+        ${q.options.map((opt, i) => `
+          <button class="option" data-index="${i}" onclick="selectOption(${i})">
+            <span class="option-letter">${letters[i]}</span>
+            <span class="option-text">${opt}</span>
+          </button>
+        `).join('')}
+      </div>
+      <div class="explanation" id="explanation"></div>
+      <button class="next-btn" id="nextBtn" onclick="nextQuestion()">
+        ${currentIndex === questions.length - 1 ? 'Voir mes résultats' : 'Question suivante'}
+        <span class="arrow">→</span>
+      </button>
+    </article>
+  `;
+}
+
+function selectOption(index) {
+  if (answered) return;
+  answered = true;
+
+  const q = questions[currentIndex];
+  const optionsEls = document.querySelectorAll('.option');
+  const explEl = document.getElementById('explanation');
+  const nextBtn = document.getElementById('nextBtn');
+
+  optionsEls.forEach((el, i) => {
+    el.disabled = true;
+    if (i === q.correct) el.classList.add('correct');
+    else if (i === index) el.classList.add('incorrect');
+  });
+
+  if (index === q.correct) {
+    score++;
+  } else {
+    wrongAnswers.push({
+      num: currentIndex + 1,
+      question: q.q,
+      userAnswer: q.options[index],
+      correctAnswer: q.options[q.correct]
+    });
+  }
+
+  explEl.textContent = q.expl;
+  explEl.classList.add('show');
+  nextBtn.classList.add('show');
+}
+
+function nextQuestion() {
+  currentIndex++;
+  if (currentIndex >= questions.length) {
+    showResults();
+  } else {
+    renderQuestion();
+  }
+}
+
+function showResults() {
+  document.getElementById('progressWrap').style.display = 'none';
+  quizArea.style.display = 'none';
+  progressFill.style.width = '100%';
+
+  const percent = Math.round((score / questions.length) * 100);
+  let message = '';
+  if (percent === 100) message = "Niveau expert confirmé. Vous maîtrisez les subtilités les plus pointues.";
+  else if (percent >= 80) message = "Très solide. Vous évitez la plupart des pièges du framework.";
+  else if (percent >= 60) message = "Bon niveau avancé. Quelques pièges classiques restent à dompter.";
+  else if (percent >= 40) message = "Niveau intermédiaire. Les cas limites demandent plus de pratique.";
+  else message = "Les subtilités résistent encore. Documentation officielle recommandée.";
+
+  let wrongHTML = '';
+  if (wrongAnswers.length > 0) {
+    wrongHTML = `
+      <div class="review-section">
+        <h2>À revoir <span class="count">${wrongAnswers.length}</span></h2>
+        ${wrongAnswers.map(w => `
+          <div class="review-card">
+            <div class="q-num">Question ${w.num}</div>
+            <div class="q-text">${w.question}</div>
+            <div class="answer-row">
+              <span class="answer-label label-wrong">Votre rép.</span>
+              <span class="answer-text">${w.userAnswer}</span>
+            </div>
+            <div class="answer-row">
+              <span class="answer-label label-right">Correcte</span>
+              <span class="answer-text">${w.correctAnswer}</span>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  } else {
+    wrongHTML = `
+      <div class="perfect-message">
+        Score parfait. Vous êtes au niveau expert sur les conditions et boucles.
+      </div>
+    `;
+  }
+
+  resultsArea.innerHTML = `
+    <div class="score-card">
+      <div class="score-eyebrow">Résultat final · Expert</div>
+      <div class="score-number">${score}<span class="total">/20</span></div>
+      <div class="score-percent">Réussite : <strong>${percent}%</strong></div>
+      <div class="score-message">${message}</div>
+    </div>
+    ${wrongHTML}
+    <div style="text-align:center;">
+      <button class="restart-btn" onclick="restart()">Recommencer le QCM</button>
+    </div>
+  `;
+  resultsArea.classList.add('show');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function restart() {
+  currentIndex = 0;
+  score = 0;
+  wrongAnswers.length = 0;
+  document.getElementById('progressWrap').style.display = 'block';
+  quizArea.style.display = 'block';
+  resultsArea.classList.remove('show');
+  resultsArea.innerHTML = '';
+  renderQuestion();
+}
+
+renderQuestion();
+</script>
+
+</body>
+</html>

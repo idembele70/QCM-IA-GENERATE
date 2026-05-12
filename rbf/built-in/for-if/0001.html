@@ -1,0 +1,972 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QCM Robot Framework — IF & FOR (Avancé)</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,800&family=JetBrains+Mono:wght@400;500;700&family=Inter+Tight:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f5f1ea;
+    --bg-alt: #ebe5d9;
+    --paper: #fdfbf6;
+    --ink: #1a1814;
+    --ink-soft: #4a463e;
+    --accent: #c8431f;
+    --accent-soft: #e8784f;
+    --success: #2d6b3e;
+    --success-bg: #d8e8d4;
+    --error: #a02828;
+    --error-bg: #f0d4d0;
+    --line: #d4cdb8;
+    --code-bg: #2a2620;
+    --code-ink: #e8dfca;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter Tight', sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    min-height: 100vh;
+    padding: 40px 20px;
+    line-height: 1.5;
+    background-image:
+      radial-gradient(circle at 15% 20%, rgba(200, 67, 31, 0.04) 0%, transparent 40%),
+      radial-gradient(circle at 85% 80%, rgba(45, 107, 62, 0.04) 0%, transparent 40%);
+  }
+
+  .container {
+    max-width: 820px;
+    margin: 0 auto;
+  }
+
+  /* HEADER */
+  header {
+    border-bottom: 2px solid var(--ink);
+    padding-bottom: 20px;
+    margin-bottom: 30px;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: end;
+    gap: 20px;
+  }
+
+  .title-block .eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--accent);
+    margin-bottom: 8px;
+    font-weight: 500;
+  }
+
+  h1 {
+    font-family: 'Fraunces', serif;
+    font-weight: 800;
+    font-size: clamp(2rem, 5vw, 3.2rem);
+    line-height: 0.95;
+    letter-spacing: -0.02em;
+  }
+
+  h1 em {
+    font-style: italic;
+    color: var(--accent);
+    font-weight: 400;
+  }
+
+  .meta {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--ink-soft);
+    text-align: right;
+    line-height: 1.6;
+  }
+
+  .meta strong {
+    color: var(--ink);
+    font-weight: 700;
+  }
+
+  /* PROGRESS */
+  .progress-wrap {
+    margin-bottom: 35px;
+  }
+
+  .progress-info {
+    display: flex;
+    justify-content: space-between;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    margin-bottom: 8px;
+    color: var(--ink-soft);
+  }
+
+  .progress-info .current {
+    color: var(--accent);
+    font-weight: 700;
+  }
+
+  .progress-bar {
+    height: 6px;
+    background: var(--bg-alt);
+    border: 1px solid var(--line);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: var(--ink);
+    width: 0%;
+    transition: width 0.5s cubic-bezier(0.65, 0, 0.35, 1);
+    position: relative;
+  }
+
+  .progress-fill::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: var(--accent);
+  }
+
+  /* QUESTION CARD */
+  .card {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    padding: 40px;
+    box-shadow:
+      0 1px 0 var(--line),
+      0 20px 40px -20px rgba(26, 24, 20, 0.15);
+    position: relative;
+    animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(15px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .question-number {
+    font-family: 'Fraunces', serif;
+    font-size: 5rem;
+    font-weight: 800;
+    line-height: 1;
+    color: var(--accent);
+    font-style: italic;
+    position: absolute;
+    top: 25px;
+    right: 40px;
+    opacity: 0.15;
+    pointer-events: none;
+  }
+
+  .question-tag {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    background: var(--ink);
+    color: var(--paper);
+    padding: 4px 10px;
+    margin-bottom: 20px;
+    font-weight: 500;
+  }
+
+  .question-text {
+    font-family: 'Fraunces', serif;
+    font-size: 1.5rem;
+    font-weight: 600;
+    line-height: 1.3;
+    margin-bottom: 20px;
+    color: var(--ink);
+    letter-spacing: -0.01em;
+  }
+
+  .code-snippet {
+    font-family: 'JetBrains Mono', monospace;
+    background: var(--code-bg);
+    color: var(--code-ink);
+    padding: 18px 20px;
+    font-size: 0.85rem;
+    line-height: 1.6;
+    margin-bottom: 25px;
+    overflow-x: auto;
+    border-left: 3px solid var(--accent);
+    white-space: pre;
+  }
+
+  .code-snippet .kw { color: #e8784f; font-weight: 500; }
+  .code-snippet .var { color: #8fb8d6; }
+  .code-snippet .str { color: #b5cf9a; }
+  .code-snippet .com { color: #7a7165; font-style: italic; }
+
+  /* OPTIONS */
+  .options {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 25px;
+  }
+
+  .option {
+    background: var(--bg);
+    border: 1px solid var(--line);
+    padding: 14px 18px;
+    cursor: pointer;
+    text-align: left;
+    font-family: 'Inter Tight', sans-serif;
+    font-size: 0.95rem;
+    color: var(--ink);
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    position: relative;
+    width: 100%;
+  }
+
+  .option:hover:not(:disabled) {
+    background: var(--bg-alt);
+    border-color: var(--ink);
+    transform: translateX(3px);
+  }
+
+  .option-letter {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    font-weight: 700;
+    width: 24px;
+    height: 24px;
+    border: 1px solid var(--ink);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    background: var(--paper);
+  }
+
+  .option-text {
+    flex: 1;
+  }
+
+  .option.correct {
+    background: var(--success-bg);
+    border-color: var(--success);
+    color: var(--success);
+    font-weight: 500;
+  }
+
+  .option.correct .option-letter {
+    background: var(--success);
+    color: white;
+    border-color: var(--success);
+  }
+
+  .option.incorrect {
+    background: var(--error-bg);
+    border-color: var(--error);
+    color: var(--error);
+    font-weight: 500;
+  }
+
+  .option.incorrect .option-letter {
+    background: var(--error);
+    color: white;
+    border-color: var(--error);
+  }
+
+  .option:disabled {
+    cursor: not-allowed;
+  }
+
+  /* EXPLANATION */
+  .explanation {
+    padding: 14px 18px;
+    margin-bottom: 20px;
+    border-left: 3px solid var(--ink);
+    background: var(--bg-alt);
+    font-style: italic;
+    font-family: 'Fraunces', serif;
+    font-size: 1rem;
+    color: var(--ink);
+    display: none;
+    animation: fadeIn 0.4s ease;
+  }
+
+  .explanation.show { display: block; }
+  .explanation::before {
+    content: '⟶ ';
+    font-style: normal;
+    color: var(--accent);
+    font-weight: 700;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* NEXT BUTTON */
+  .next-btn {
+    background: var(--ink);
+    color: var(--paper);
+    border: none;
+    padding: 14px 28px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    display: none;
+    align-items: center;
+    gap: 10px;
+    font-weight: 500;
+  }
+
+  .next-btn.show { display: inline-flex; animation: fadeIn 0.4s ease; }
+
+  .next-btn:hover {
+    background: var(--accent);
+    transform: translateX(4px);
+  }
+
+  .next-btn .arrow {
+    font-family: serif;
+    font-size: 1.1rem;
+    transition: transform 0.25s ease;
+  }
+
+  .next-btn:hover .arrow { transform: translateX(3px); }
+
+  /* RESULTS */
+  .results {
+    display: none;
+    animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .results.show { display: block; }
+
+  .score-card {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    padding: 50px 40px;
+    text-align: center;
+    margin-bottom: 30px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .score-card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -10%;
+    width: 300px;
+    height: 300px;
+    background: radial-gradient(circle, rgba(200, 67, 31, 0.08) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .score-eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: var(--accent);
+    margin-bottom: 10px;
+  }
+
+  .score-number {
+    font-family: 'Fraunces', serif;
+    font-weight: 800;
+    font-size: 7rem;
+    line-height: 0.9;
+    letter-spacing: -0.04em;
+    margin-bottom: 5px;
+  }
+
+  .score-number .total {
+    color: var(--ink-soft);
+    font-weight: 400;
+    font-style: italic;
+  }
+
+  .score-percent {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 1.5rem;
+    color: var(--ink-soft);
+    margin-bottom: 20px;
+  }
+
+  .score-percent strong {
+    color: var(--accent);
+    font-weight: 600;
+    font-style: normal;
+  }
+
+  .score-message {
+    font-family: 'Fraunces', serif;
+    font-size: 1.1rem;
+    color: var(--ink);
+    max-width: 480px;
+    margin: 0 auto;
+    line-height: 1.4;
+  }
+
+  .review-section h2 {
+    font-family: 'Fraunces', serif;
+    font-size: 1.6rem;
+    font-weight: 700;
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .review-section h2 .count {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    background: var(--error);
+    color: white;
+    padding: 3px 9px;
+    font-weight: 500;
+  }
+
+  .review-card {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--error);
+    padding: 22px 25px;
+    margin-bottom: 14px;
+  }
+
+  .review-card .q-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--ink-soft);
+    margin-bottom: 6px;
+  }
+
+  .review-card .q-text {
+    font-family: 'Fraunces', serif;
+    font-size: 1.05rem;
+    font-weight: 600;
+    margin-bottom: 14px;
+    line-height: 1.35;
+  }
+
+  .review-card .answer-row {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 6px;
+    align-items: baseline;
+    font-size: 0.9rem;
+  }
+
+  .answer-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    width: 80px;
+    flex-shrink: 0;
+    font-weight: 500;
+  }
+
+  .label-wrong { color: var(--error); }
+  .label-right { color: var(--success); }
+
+  .answer-text { color: var(--ink); }
+
+  .perfect-message {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--success);
+    padding: 30px;
+    text-align: center;
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 1.2rem;
+  }
+
+  .restart-btn {
+    background: transparent;
+    color: var(--ink);
+    border: 1px solid var(--ink);
+    padding: 14px 28px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    margin-top: 30px;
+    font-weight: 500;
+  }
+
+  .restart-btn:hover {
+    background: var(--ink);
+    color: var(--paper);
+  }
+
+  /* RESPONSIVE */
+  @media (max-width: 600px) {
+    body { padding: 25px 15px; }
+    header { grid-template-columns: 1fr; }
+    .meta { text-align: left; }
+    .card { padding: 30px 22px; }
+    .question-number { font-size: 3.5rem; top: 15px; right: 22px; }
+    .question-text { font-size: 1.2rem; }
+    .score-number { font-size: 5rem; }
+    .code-snippet { font-size: 0.78rem; padding: 14px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <div class="title-block">
+      <div class="eyebrow">QCM · Niveau Avancé · 20 Questions</div>
+      <h1>Robot Framework <em>IF & FOR</em></h1>
+    </div>
+    <div class="meta">
+      <strong>Conditions & Boucles</strong><br>
+      Exercice interactif
+    </div>
+  </header>
+
+  <div class="progress-wrap" id="progressWrap">
+    <div class="progress-info">
+      <span>Question <span class="current" id="currentQ">1</span> / 20</span>
+      <span id="progressPercent">0%</span>
+    </div>
+    <div class="progress-bar">
+      <div class="progress-fill" id="progressFill"></div>
+    </div>
+  </div>
+
+  <div id="quizArea"></div>
+  <div id="resultsArea" class="results"></div>
+</div>
+
+<script>
+const questions = [
+  {
+    q: "Quelle est la syntaxe correcte pour une condition IF/ELSE IF/ELSE en Robot Framework (RF 5+) ?",
+    code: null,
+    options: [
+      "IF ... ELSEIF ... ELSE ... END",
+      "IF ... ELSE IF ... ELSE ... END",
+      "IF ... ELIF ... ELSE ... ENDIF",
+      "Run Keyword If ... Run Keyword Else"
+    ],
+    correct: 1,
+    expl: "ELSE IF s'écrit en deux mots, séparés par un espace."
+  },
+  {
+    q: "Comment itérer sur une plage de 0 à 9 inclus avec FOR ?",
+    code: null,
+    options: [
+      "FOR ${i} IN RANGE 0 9",
+      "FOR ${i} IN RANGE 0 10",
+      "FOR ${i} IN 0 10",
+      "FOR ${i} FROM 0 TO 9"
+    ],
+    correct: 1,
+    expl: "RANGE 0 10 exclut la borne supérieure, donc 0 à 9."
+  },
+  {
+    q: "Que fait le mot-clé CONTINUE dans une boucle FOR ?",
+    code: null,
+    options: [
+      "Termine définitivement la boucle",
+      "Saute à l'itération suivante immédiatement",
+      "Recommence l'itération courante",
+      "Met en pause l'exécution"
+    ],
+    correct: 1,
+    expl: "CONTINUE passe à l'itération suivante sans exécuter la suite."
+  },
+  {
+    q: "Quelle structure permet d'itérer sur un dictionnaire avec clé et valeur ?",
+    code: null,
+    options: [
+      "FOR ${item} IN @{dict}",
+      "FOR ${key} IN &{dict}",
+      "FOR ${key} ${value} IN &{dict}",
+      "FOR ${k}=${v} IN ${dict}"
+    ],
+    correct: 2,
+    expl: "Avec &{dict}, on récupère clé et valeur en parallèle."
+  },
+  {
+    q: "Que retourne ce code ?",
+    code: '<span class="kw">FOR</span>    <span class="var">${i}</span>    <span class="kw">IN RANGE</span>    1    5    2\n    Log    <span class="var">${i}</span>\n<span class="kw">END</span>',
+    options: [
+      "1, 2, 3, 4",
+      "1, 3 (2 est l'incrément)",
+      "1, 3, 5",
+      "2, 4"
+    ],
+    correct: 1,
+    expl: "RANGE 1 5 2 produit 1 puis 3, s'arrête avant 5."
+  },
+  {
+    q: "Comment sortir prématurément d'une boucle FOR ?",
+    code: null,
+    options: [
+      "Exit For Loop",
+      "BREAK",
+      "Return From Keyword",
+      "Toutes les réponses sont correctes"
+    ],
+    correct: 3,
+    expl: "BREAK est le moderne, mais les autres fonctionnent aussi."
+  },
+  {
+    q: "Quelle est la différence entre IF et Run Keyword If ?",
+    code: null,
+    options: [
+      "Aucune, ce sont des synonymes",
+      "IF est natif RF5+, Run Keyword If est l'ancienne syntaxe",
+      "Run Keyword If est plus rapide",
+      "IF ne supporte pas ELSE"
+    ],
+    correct: 1,
+    expl: "IF est la syntaxe native moderne depuis Robot Framework 5."
+  },
+  {
+    q: "Quelle expression est valide dans une condition IF ?",
+    code: null,
+    options: [
+      'IF "${status}" == "OK"',
+      "IF ${value} > 10 and ${value} < 100",
+      "IF $variable in ['a', 'b', 'c']",
+      "Toutes ces expressions sont valides"
+    ],
+    correct: 3,
+    expl: "IF accepte toute expression Python évaluable directement."
+  },
+  {
+    q: "Que se passe-t-il ici ?",
+    code: '<span class="kw">FOR</span>    <span class="var">${item}</span>    <span class="kw">IN</span>    @{liste}\n    <span class="kw">IF</span>    <span class="var">${item}</span> == <span class="str">\'stop\'</span>\n        <span class="kw">BREAK</span>\n    <span class="kw">END</span>\n    Log    <span class="var">${item}</span>\n<span class="kw">END</span>',
+    options: [
+      "Erreur de syntaxe : BREAK interdit ici",
+      "La boucle s'arrête quand item vaut 'stop'",
+      "La boucle saute l'élément 'stop' uniquement",
+      "Tous les éléments sont loggés sauf 'stop'"
+    ],
+    correct: 1,
+    expl: "BREAK termine la boucle dès la condition vérifiée."
+  },
+  {
+    q: "Comment utiliser une variable de type liste dans FOR ... IN ?",
+    code: null,
+    options: [
+      "FOR ${i} IN ${ma_liste}",
+      "FOR ${i} IN @{ma_liste}",
+      "FOR ${i} IN &{ma_liste}",
+      "FOR ${i} IN *${ma_liste}"
+    ],
+    correct: 1,
+    expl: "@{liste} déballe la liste en éléments individuels."
+  },
+  {
+    q: "Quelle est la syntaxe correcte de FOR avec énumération (index + valeur) ?",
+    code: null,
+    options: [
+      "FOR ${index} ${item} IN ENUMERATE @{liste}",
+      "FOR ${i}, ${v} IN @{liste}",
+      "FOR ${item} INDEX ${i} IN @{liste}",
+      "FOR ENUM ${liste}"
+    ],
+    correct: 0,
+    expl: "IN ENUMERATE fournit l'index puis la valeur, séparés."
+  },
+  {
+    q: "Peut-on imbriquer des boucles FOR en Robot Framework ?",
+    code: null,
+    options: [
+      "Non, uniquement depuis RF 7",
+      "Oui, depuis RF 5 avec END pour chaque boucle",
+      "Non, jamais autorisé",
+      "Oui mais une seule profondeur d'imbrication"
+    ],
+    correct: 1,
+    expl: "L'imbrication est supportée depuis Robot Framework 5."
+  },
+  {
+    q: "Quel est le résultat de ce IF ?",
+    code: '<span class="var">${x}</span>=    Set Variable    5\n<span class="kw">IF</span>    <span class="var">${x}</span> > 10\n    Log    Grand\n<span class="kw">ELSE IF</span>    <span class="var">${x}</span> > 3\n    Log    Moyen\n<span class="kw">ELSE</span>\n    Log    Petit\n<span class="kw">END</span>',
+    options: [
+      "Affiche : Grand",
+      "Affiche : Moyen",
+      "Affiche : Petit",
+      "Affiche : Moyen et Petit"
+    ],
+    correct: 1,
+    expl: "x=5 ne dépasse pas 10 mais dépasse 3."
+  },
+  {
+    q: "Comment itérer en parallèle sur deux listes de même taille ?",
+    code: null,
+    options: [
+      "FOR ${a} ${b} IN ZIP @{liste1} @{liste2}",
+      "FOR ${a} IN @{liste1} AND ${b} IN @{liste2}",
+      "FOR ${a} ${b} IN PARALLEL @{liste1} @{liste2}",
+      "Impossible, il faut deux boucles imbriquées"
+    ],
+    correct: 0,
+    expl: "IN ZIP combine deux ou plusieurs listes en parallèle."
+  },
+  {
+    q: "Quel est le rôle de l'option mode=SHORTEST dans FOR ... IN ZIP ?",
+    code: null,
+    options: [
+      "Limite à la liste la plus courte (défaut)",
+      "Force toutes les listes à la même taille minimale",
+      "Optimise la performance de la boucle",
+      "Ignore les éléments null"
+    ],
+    correct: 0,
+    expl: "SHORTEST stoppe sur la plus courte, mode par défaut."
+  },
+  {
+    q: "Que fait ce code ?",
+    code: '<span class="kw">FOR</span>    <span class="var">${i}</span>    <span class="kw">IN RANGE</span>    10\n    <span class="kw">IF</span>    <span class="var">${i}</span> % 2 == 0\n        <span class="kw">CONTINUE</span>\n    <span class="kw">END</span>\n    Log    <span class="var">${i}</span>\n<span class="kw">END</span>',
+    options: [
+      "Affiche tous les nombres de 0 à 9",
+      "Affiche les nombres pairs uniquement",
+      "Affiche les nombres impairs uniquement",
+      "Affiche uniquement 0"
+    ],
+    correct: 2,
+    expl: "CONTINUE saute les pairs, donc affiche les impairs."
+  },
+  {
+    q: "Quelle assertion est correcte pour un IF inline (sur une ligne) ?",
+    code: null,
+    options: [
+      "${x}=    IF    ${a} > 0    Set Variable    positif    ELSE    Set Variable    négatif",
+      "${x}=    IF    ${a} > 0    positif    ELSE    négatif",
+      "Les expressions IF inline n'existent pas",
+      "${x}=    Set Variable If    ${a} > 0    positif    négatif"
+    ],
+    correct: 0,
+    expl: "L'IF inline assigne via un mot-clé pour chaque branche."
+  },
+  {
+    q: "Quel comportement a TRY/EXCEPT combiné avec FOR ?",
+    code: null,
+    options: [
+      "TRY ne peut pas être utilisé dans FOR",
+      "TRY/EXCEPT capture les erreurs sans interrompre la boucle",
+      "TRY interrompt automatiquement la boucle",
+      "FOR doit être à l'intérieur de TRY obligatoirement"
+    ],
+    correct: 1,
+    expl: "TRY/EXCEPT permet de gérer les erreurs par itération."
+  },
+  {
+    q: "Que produit ce code ?",
+    code: '<span class="var">@{nums}</span>=    Create List    1    2    3\n<span class="kw">FOR</span>    <span class="var">${i}</span>    <span class="var">${n}</span>    <span class="kw">IN ENUMERATE</span>    @{nums}    start=10\n    Log    <span class="var">${i}</span>:<span class="var">${n}</span>\n<span class="kw">END</span>',
+    options: [
+      "0:1, 1:2, 2:3",
+      "10:1, 11:2, 12:3",
+      "1:10, 2:11, 3:12",
+      "Erreur : start n'existe pas"
+    ],
+    correct: 1,
+    expl: "L'argument start décale l'index de départ à 10."
+  },
+  {
+    q: "Quelle est la meilleure pratique pour des conditions complexes en RF ?",
+    code: null,
+    options: [
+      "Multiplier les Run Keyword If imbriqués",
+      "Utiliser IF/ELSE IF natif et extraire la logique en mot-clés",
+      "Toujours écrire en Python externe",
+      "Utiliser des variables booléennes globales partout"
+    ],
+    correct: 1,
+    expl: "Le natif IF/ELSE IF est lisible et maintenable."
+  }
+];
+
+let currentIndex = 0;
+let score = 0;
+let answered = false;
+const wrongAnswers = [];
+
+const quizArea = document.getElementById('quizArea');
+const resultsArea = document.getElementById('resultsArea');
+const progressFill = document.getElementById('progressFill');
+const currentQEl = document.getElementById('currentQ');
+const progressPercent = document.getElementById('progressPercent');
+
+function renderQuestion() {
+  answered = false;
+  const q = questions[currentIndex];
+  const letters = ['A', 'B', 'C', 'D'];
+
+  currentQEl.textContent = currentIndex + 1;
+  const pct = Math.round((currentIndex / questions.length) * 100);
+  progressFill.style.width = pct + '%';
+  progressPercent.textContent = pct + '%';
+
+  let codeHTML = q.code ? `<div class="code-snippet">${q.code}</div>` : '';
+
+  quizArea.innerHTML = `
+    <article class="card">
+      <div class="question-number">${String(currentIndex + 1).padStart(2, '0')}</div>
+      <span class="question-tag">Question ${currentIndex + 1}</span>
+      <h2 class="question-text">${q.q}</h2>
+      ${codeHTML}
+      <div class="options" id="options">
+        ${q.options.map((opt, i) => `
+          <button class="option" data-index="${i}" onclick="selectOption(${i})">
+            <span class="option-letter">${letters[i]}</span>
+            <span class="option-text">${opt}</span>
+          </button>
+        `).join('')}
+      </div>
+      <div class="explanation" id="explanation"></div>
+      <button class="next-btn" id="nextBtn" onclick="nextQuestion()">
+        ${currentIndex === questions.length - 1 ? 'Voir mes résultats' : 'Question suivante'}
+        <span class="arrow">→</span>
+      </button>
+    </article>
+  `;
+}
+
+function selectOption(index) {
+  if (answered) return;
+  answered = true;
+
+  const q = questions[currentIndex];
+  const optionsEls = document.querySelectorAll('.option');
+  const explEl = document.getElementById('explanation');
+  const nextBtn = document.getElementById('nextBtn');
+
+  optionsEls.forEach((el, i) => {
+    el.disabled = true;
+    if (i === q.correct) el.classList.add('correct');
+    else if (i === index) el.classList.add('incorrect');
+  });
+
+  if (index === q.correct) {
+    score++;
+  } else {
+    wrongAnswers.push({
+      num: currentIndex + 1,
+      question: q.q,
+      userAnswer: q.options[index],
+      correctAnswer: q.options[q.correct]
+    });
+  }
+
+  explEl.textContent = q.expl;
+  explEl.classList.add('show');
+  nextBtn.classList.add('show');
+}
+
+function nextQuestion() {
+  currentIndex++;
+  if (currentIndex >= questions.length) {
+    showResults();
+  } else {
+    renderQuestion();
+  }
+}
+
+function showResults() {
+  document.getElementById('progressWrap').style.display = 'none';
+  quizArea.style.display = 'none';
+
+  progressFill.style.width = '100%';
+
+  const percent = Math.round((score / questions.length) * 100);
+  let message = '';
+  if (percent === 100) message = "Maîtrise parfaite. Vous dominez les conditions et boucles RF.";
+  else if (percent >= 80) message = "Excellent niveau. Quelques subtilités à peaufiner seulement.";
+  else if (percent >= 60) message = "Bonne base. Revoyez les questions ratées attentivement.";
+  else if (percent >= 40) message = "Encore du chemin. Reprenez la documentation officielle RF.";
+  else message = "Bases à consolider. Pratiquez avec des exemples simples.";
+
+  let wrongHTML = '';
+  if (wrongAnswers.length > 0) {
+    wrongHTML = `
+      <div class="review-section">
+        <h2>À revoir <span class="count">${wrongAnswers.length}</span></h2>
+        ${wrongAnswers.map(w => `
+          <div class="review-card">
+            <div class="q-num">Question ${w.num}</div>
+            <div class="q-text">${w.question}</div>
+            <div class="answer-row">
+              <span class="answer-label label-wrong">Votre rép.</span>
+              <span class="answer-text">${w.userAnswer}</span>
+            </div>
+            <div class="answer-row">
+              <span class="answer-label label-right">Correcte</span>
+              <span class="answer-text">${w.correctAnswer}</span>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  } else {
+    wrongHTML = `
+      <div class="perfect-message">
+        Aucune erreur. Toutes vos réponses étaient correctes.
+      </div>
+    `;
+  }
+
+  resultsArea.innerHTML = `
+    <div class="score-card">
+      <div class="score-eyebrow">Résultat final</div>
+      <div class="score-number">${score}<span class="total">/20</span></div>
+      <div class="score-percent">Réussite : <strong>${percent}%</strong></div>
+      <div class="score-message">${message}</div>
+    </div>
+    ${wrongHTML}
+    <div style="text-align:center;">
+      <button class="restart-btn" onclick="restart()">Recommencer le QCM</button>
+    </div>
+  `;
+  resultsArea.classList.add('show');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function restart() {
+  currentIndex = 0;
+  score = 0;
+  wrongAnswers.length = 0;
+  document.getElementById('progressWrap').style.display = 'block';
+  quizArea.style.display = 'block';
+  resultsArea.classList.remove('show');
+  resultsArea.innerHTML = '';
+  renderQuestion();
+}
+
+renderQuestion();
+</script>
+
+</body>
+</html>
