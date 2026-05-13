@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Devoir Pratique · Robot Framework IF & FOR</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,800&family=JetBrains+Mono:wght@400;500;700&family=Inter+Tight:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f5f1ea;
+    --bg-alt: #ebe5d9;
+    --paper: #fdfbf6;
+    --ink: #1a1814;
+    --ink-soft: #4a463e;
+    --accent: #2d5f7a;
+    --accent-soft: #4a85a3;
+    --success: #2d6b3e;
+    --success-bg: #d8e8d4;
+    --line: #d4cdb8;
+    --code-bg: #1f1c17;
+    --code-ink: #e8dfca;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter Tight', sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    min-height: 100vh;
+    padding: 40px 20px;
+    line-height: 1.55;
+    background-image:
+      radial-gradient(circle at 10% 10%, rgba(45, 95, 122, 0.05) 0%, transparent 45%),
+      radial-gradient(circle at 90% 90%, rgba(26, 24, 20, 0.04) 0%, transparent 45%);
+  }
+
+  .container {
+    max-width: 880px;
+    margin: 0 auto;
+  }
+
+  header {
+    border-bottom: 2px solid var(--ink);
+    padding-bottom: 22px;
+    margin-bottom: 35px;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: end;
+    gap: 20px;
+  }
+
+  .title-block .eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--accent);
+    margin-bottom: 8px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .level-badge {
+    background: var(--accent);
+    color: white;
+    padding: 2px 8px;
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+  }
+
+  h1 {
+    font-family: 'Fraunces', serif;
+    font-weight: 800;
+    font-size: clamp(2rem, 5vw, 3.2rem);
+    line-height: 0.95;
+    letter-spacing: -0.02em;
+  }
+
+  h1 em {
+    font-style: italic;
+    color: var(--accent);
+    font-weight: 400;
+  }
+
+  .meta {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--ink-soft);
+    text-align: right;
+    line-height: 1.6;
+  }
+
+  .meta strong { color: var(--ink); font-weight: 700; }
+
+  /* INTRO */
+  .intro {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--accent);
+    padding: 22px 28px;
+    margin-bottom: 35px;
+    font-family: 'Fraunces', serif;
+    font-size: 1.05rem;
+    color: var(--ink-soft);
+    line-height: 1.5;
+  }
+
+  .intro strong { color: var(--ink); font-weight: 600; }
+
+  /* PROGRESS SUMMARY */
+  .summary-bar {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    padding: 16px 24px;
+    margin-bottom: 35px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    position: sticky;
+    top: 15px;
+    z-index: 10;
+    box-shadow: 0 4px 12px -4px rgba(26, 24, 20, 0.1);
+  }
+
+  .summary-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .summary-label {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--ink-soft);
+  }
+
+  .summary-value {
+    font-family: 'Fraunces', serif;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--ink);
+    line-height: 1;
+  }
+
+  .summary-value.done { color: var(--accent); }
+
+  /* EXERCICE */
+  .exercise {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    margin-bottom: 25px;
+    padding: 32px 36px;
+    box-shadow:
+      0 1px 0 var(--line),
+      0 15px 30px -20px rgba(26, 24, 20, 0.12);
+    position: relative;
+  }
+
+  .exercise.completed {
+    border-left: 3px solid var(--success);
+  }
+
+  .ex-header {
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+  }
+
+  .ex-number {
+    font-family: 'Fraunces', serif;
+    font-size: 2.2rem;
+    font-weight: 800;
+    line-height: 1;
+    color: var(--accent);
+    font-style: italic;
+  }
+
+  .ex-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    background: var(--bg-alt);
+    color: var(--ink-soft);
+    padding: 3px 9px;
+    font-weight: 500;
+    border: 1px solid var(--line);
+  }
+
+  .ex-tag.completed {
+    background: var(--success-bg);
+    color: var(--success);
+    border-color: var(--success);
+  }
+
+  .ex-title {
+    font-family: 'Fraunces', serif;
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin-bottom: 14px;
+    color: var(--ink);
+    letter-spacing: -0.01em;
+    line-height: 1.3;
+  }
+
+  .ex-statement {
+    font-family: 'Inter Tight', sans-serif;
+    font-size: 0.98rem;
+    color: var(--ink);
+    margin-bottom: 16px;
+    line-height: 1.55;
+  }
+
+  .ex-statement code {
+    font-family: 'JetBrains Mono', monospace;
+    background: var(--bg-alt);
+    padding: 1px 6px;
+    font-size: 0.85em;
+    color: var(--accent);
+    border: 1px solid var(--line);
+  }
+
+  .ex-context {
+    font-family: 'JetBrains Mono', monospace;
+    background: var(--code-bg);
+    color: var(--code-ink);
+    padding: 16px 20px;
+    font-size: 0.82rem;
+    line-height: 1.65;
+    margin-bottom: 16px;
+    overflow-x: auto;
+    border-left: 3px solid var(--accent);
+    white-space: pre;
+  }
+
+  .ex-context .kw { color: #e8784f; font-weight: 500; }
+  .ex-context .var { color: #8fb8d6; }
+  .ex-context .str { color: #b5cf9a; }
+  .ex-context .com { color: #7a7165; font-style: italic; }
+  .ex-context .num { color: #d4a85a; }
+
+  /* TEXTAREA */
+  .answer-zone {
+    margin-bottom: 16px;
+  }
+
+  .answer-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--ink-soft);
+    margin-bottom: 8px;
+  }
+
+  .answer-label .hint {
+    color: var(--accent);
+    font-style: normal;
+    font-weight: 500;
+  }
+
+  textarea {
+    width: 100%;
+    min-height: 140px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.88rem;
+    line-height: 1.6;
+    padding: 16px 18px;
+    background: #fcf9f2;
+    border: 1px solid var(--line);
+    color: var(--ink);
+    resize: vertical;
+    transition: border-color 0.2s ease, background 0.2s ease;
+    tab-size: 4;
+  }
+
+  textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+    background: var(--paper);
+  }
+
+  textarea::placeholder {
+    color: #b8b0a0;
+    font-style: italic;
+  }
+
+  /* ACTIONS */
+  .actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+
+  .btn {
+    border: none;
+    padding: 10px 20px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .btn-primary {
+    background: var(--ink);
+    color: var(--paper);
+  }
+
+  .btn-primary:hover {
+    background: var(--accent);
+    transform: translateY(-1px);
+  }
+
+  .btn-secondary {
+    background: transparent;
+    color: var(--ink);
+    border: 1px solid var(--ink);
+  }
+
+  .btn-secondary:hover {
+    background: var(--ink);
+    color: var(--paper);
+  }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--ink-soft);
+    border: 1px solid var(--line);
+  }
+
+  .btn-ghost:hover {
+    color: var(--ink);
+    border-color: var(--ink);
+  }
+
+  /* CORRECTION */
+  .correction {
+    display: none;
+    border-top: 1px dashed var(--line);
+    padding-top: 18px;
+    margin-top: 18px;
+    animation: revealDown 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .correction.show { display: block; }
+
+  @keyframes revealDown {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .correction-header {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--success);
+    margin-bottom: 10px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .correction-header::before {
+    content: '✓';
+    background: var(--success);
+    color: white;
+    width: 18px;
+    height: 18px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    border-radius: 50%;
+  }
+
+  .solution-code {
+    font-family: 'JetBrains Mono', monospace;
+    background: var(--code-bg);
+    color: var(--code-ink);
+    padding: 18px 20px;
+    font-size: 0.83rem;
+    line-height: 1.7;
+    overflow-x: auto;
+    border-left: 3px solid var(--success);
+    white-space: pre;
+    margin-bottom: 14px;
+  }
+
+  .solution-code .kw { color: #e8784f; font-weight: 500; }
+  .solution-code .var { color: #8fb8d6; }
+  .solution-code .str { color: #b5cf9a; }
+  .solution-code .com { color: #7a7165; font-style: italic; }
+  .solution-code .num { color: #d4a85a; }
+  .solution-code .sec { color: #c2a4d1; font-weight: 600; }
+
+  .explanation-text {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 1rem;
+    color: var(--ink);
+    padding: 12px 16px;
+    background: var(--bg-alt);
+    border-left: 3px solid var(--ink);
+    line-height: 1.5;
+  }
+
+  .explanation-text strong {
+    font-style: normal;
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  /* FOOTER */
+  footer {
+    text-align: center;
+    padding: 40px 0 20px;
+    border-top: 1px solid var(--line);
+    margin-top: 50px;
+  }
+
+  .footer-text {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    color: var(--ink-soft);
+    font-size: 1rem;
+    margin-bottom: 18px;
+  }
+
+  .reset-all {
+    background: transparent;
+    color: var(--ink-soft);
+    border: 1px solid var(--line);
+    padding: 10px 22px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .reset-all:hover {
+    color: var(--ink);
+    border-color: var(--ink);
+  }
+
+  @media (max-width: 600px) {
+    body { padding: 25px 12px; }
+    header { grid-template-columns: 1fr; }
+    .meta { text-align: left; }
+    .exercise { padding: 24px 20px; }
+    .ex-number { font-size: 1.8rem; }
+    .ex-title { font-size: 1.15rem; }
+    .summary-bar { padding: 12px 16px; }
+    .summary-value { font-size: 1.3rem; }
+    textarea { font-size: 0.82rem; }
+    .ex-context, .solution-code { font-size: 0.75rem; padding: 14px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <div class="title-block">
+      <div class="eyebrow">
+        Devoir pratique · 20 exercices
+        <span class="level-badge">AVANCÉ</span>
+      </div>
+      <h1>Robot Framework <em>IF & FOR</em></h1>
+    </div>
+    <div class="meta">
+      <strong>IF/FOR purs</strong><br>
+      Logique · Syntaxe · Pièges
+    </div>
+  </header>
+
+  <div class="intro">
+    <strong>Consigne.</strong> Pour chaque exercice, écrivez votre solution Robot Framework dans la zone prévue. Quand vous êtes prêt, cliquez sur <strong>Voir la correction</strong> pour comparer. Votre code reste sauvegardé localement entre les sessions.
+  </div>
+
+  <div class="summary-bar">
+    <div class="summary-stat">
+      <span class="summary-label">Exercices traités</span>
+      <span class="summary-value done"><span id="doneCount">0</span> / 20</span>
+    </div>
+    <div class="summary-stat" style="text-align:right;">
+      <span class="summary-label">Corrections vues</span>
+      <span class="summary-value"><span id="seenCount">0</span> / 20</span>
+    </div>
+  </div>
+
+  <div id="exercisesArea"></div>
+
+  <footer>
+    <div class="footer-text">Fin du devoir — bon courage et bon code.</div>
+    <button class="reset-all" onclick="resetAll()">Effacer tout et recommencer</button>
+  </footer>
+</div>
+
+<script>
+const exercises = [
+  {
+    title: "Vérifier la parité d'un nombre",
+    statement: "Écrivez une condition IF/ELSE qui logue 'Pair' si <code>${n}</code> est pair, sinon 'Impair'. Variable d'entrée déjà définie.",
+    context: '<span class="var">${n}</span>=    Set Variable    <span class="num">42</span>',
+    solution: '<span class="kw">IF</span>    <span class="var">${n}</span> % <span class="num">2</span> == <span class="num">0</span>\n    Log    Pair\n<span class="kw">ELSE</span>\n    Log    Impair\n<span class="kw">END</span>',
+    expl: "L'opérateur modulo <strong>%</strong> est évalué nativement dans IF."
+  },
+  {
+    title: "Classifier une note scolaire",
+    statement: "Écrivez une cascade IF / ELSE IF / ELSE qui logue 'Excellent' (≥16), 'Bien' (≥12), 'Passable' (≥10), 'Échec' sinon.",
+    context: '<span class="var">${note}</span>=    Set Variable    <span class="num">13</span>',
+    solution: '<span class="kw">IF</span>    <span class="var">${note}</span> >= <span class="num">16</span>\n    Log    Excellent\n<span class="kw">ELSE IF</span>    <span class="var">${note}</span> >= <span class="num">12</span>\n    Log    Bien\n<span class="kw">ELSE IF</span>    <span class="var">${note}</span> >= <span class="num">10</span>\n    Log    Passable\n<span class="kw">ELSE</span>\n    Log    Échec\n<span class="kw">END</span>',
+    expl: "Attention : <strong>ELSE IF</strong> en deux mots, pas ELSEIF."
+  },
+  {
+    title: "Itérer sur une liste",
+    statement: "Loguez chaque élément de la liste <code>@{fruits}</code> précédé de son index (commencer à 1).",
+    context: '<span class="var">@{fruits}</span>=    Create List    pomme    banane    cerise',
+    solution: '<span class="kw">FOR</span>    <span class="var">${i}</span>    <span class="var">${fruit}</span>    <span class="kw">IN ENUMERATE</span>    @{fruits}    start=<span class="num">1</span>\n    Log    <span class="var">${i}</span> : <span class="var">${fruit}</span>\n<span class="kw">END</span>',
+    expl: "<strong>IN ENUMERATE</strong> avec <strong>start=1</strong> décale l'index."
+  },
+  {
+    title: "Somme d'une plage",
+    statement: "Calculez la somme des entiers de 1 à 100 inclus avec une boucle FOR. Stockez le résultat dans <code>${total}</code>.",
+    context: null,
+    solution: '<span class="kw">VAR</span>    <span class="var">${total}</span>    <span class="num">0</span>\n<span class="kw">FOR</span>    <span class="var">${i}</span>    <span class="kw">IN RANGE</span>    <span class="num">1</span>    <span class="num">101</span>\n    <span class="kw">VAR</span>    <span class="var">${total}</span>    ${{<span class="var">$total</span> + <span class="var">$i</span>}}\n<span class="kw">END</span>\nLog    <span class="var">${total}</span>',
+    expl: "RANGE 1 101 inclut 100. <strong>VAR</strong> écrase la variable existante."
+  },
+  {
+    title: "Filtrer les valeurs valides",
+    statement: "Pour chaque élément de <code>@{values}</code>, loguer uniquement les valeurs strictement positives. Utilisez CONTINUE.",
+    context: '<span class="var">@{values}</span>=    Create List    <span class="num">-3</span>    <span class="num">7</span>    <span class="num">0</span>    <span class="num">-1</span>    <span class="num">12</span>',
+    solution: '<span class="kw">FOR</span>    <span class="var">${v}</span>    <span class="kw">IN</span>    @{values}\n    <span class="kw">IF</span>    <span class="var">${v}</span> <= <span class="num">0</span>\n        <span class="kw">CONTINUE</span>\n    <span class="kw">END</span>\n    Log    <span class="var">${v}</span>\n<span class="kw">END</span>',
+    expl: "<strong>CONTINUE</strong> saute à l'itération suivante sans erreur."
+  },
+  {
+    title: "Trouver le premier multiple",
+    statement: "Parcourez <code>@{nums}</code> et arrêtez-vous au premier multiple de 7. Loguez-le puis sortez avec BREAK.",
+    context: '<span class="var">@{nums}</span>=    Create List    <span class="num">3</span>    <span class="num">8</span>    <span class="num">14</span>    <span class="num">21</span>    <span class="num">5</span>',
+    solution: '<span class="kw">FOR</span>    <span class="var">${n}</span>    <span class="kw">IN</span>    @{nums}\n    <span class="kw">IF</span>    <span class="var">${n}</span> % <span class="num">7</span> == <span class="num">0</span>\n        Log    Trouvé : <span class="var">${n}</span>\n        <span class="kw">BREAK</span>\n    <span class="kw">END</span>\n<span class="kw">END</span>',
+    expl: "<strong>BREAK</strong> sort de la boucle FOR englobante immédiate."
+  },
+  {
+    title: "Validation conditionnelle d'API",
+    statement: "Selon la valeur de <code>${status_code}</code> : 2xx → 'OK', 4xx → 'Erreur client', 5xx → 'Erreur serveur', autre → 'Inconnu'.",
+    context: '<span class="var">${status_code}</span>=    Set Variable    <span class="num">404</span>',
+    solution: '<span class="kw">IF</span>    <span class="num">200</span> <= <span class="var">${status_code}</span> < <span class="num">300</span>\n    Log    OK\n<span class="kw">ELSE IF</span>    <span class="num">400</span> <= <span class="var">${status_code}</span> < <span class="num">500</span>\n    Log    Erreur client\n<span class="kw">ELSE IF</span>    <span class="num">500</span> <= <span class="var">${status_code}</span> < <span class="num">600</span>\n    Log    Erreur serveur\n<span class="kw">ELSE</span>\n    Log    Inconnu\n<span class="kw">END</span>',
+    expl: "Comparaisons chaînées Python type <strong>200 &lt;= x &lt; 300</strong> autorisées."
+  },
+  {
+    title: "Itérer sur un dictionnaire",
+    statement: "Pour chaque paire clé/valeur de <code>&{user}</code>, logguer 'clé = valeur'.",
+    context: '<span class="var">&{user}</span>=    Create Dictionary    nom=Dupont    age=30    ville=Toulouse',
+    solution: '<span class="kw">FOR</span>    <span class="var">${key}</span>    <span class="var">${val}</span>    <span class="kw">IN</span>    &{user}\n    Log    <span class="var">${key}</span> = <span class="var">${val}</span>\n<span class="kw">END</span>',
+    expl: "<strong>&{dict}</strong> dans FOR fournit les paires clé/valeur."
+  },
+  {
+    title: "Compter les occurrences",
+    statement: "Comptez combien de fois la chaîne 'erreur' apparaît dans <code>@{logs}</code>. Résultat dans <code>${count}</code>.",
+    context: '<span class="var">@{logs}</span>=    Create List    info    erreur    warning    erreur    erreur    info',
+    solution: '<span class="kw">VAR</span>    <span class="var">${count}</span>    <span class="num">0</span>\n<span class="kw">FOR</span>    <span class="var">${entry}</span>    <span class="kw">IN</span>    @{logs}\n    <span class="kw">IF</span>    <span class="str">\'${entry}\'</span> == <span class="str">\'erreur\'</span>\n        <span class="kw">VAR</span>    <span class="var">${count}</span>    ${{<span class="var">$count</span> + <span class="num">1</span>}}\n    <span class="kw">END</span>\n<span class="kw">END</span>\nLog    <span class="var">${count}</span>',
+    expl: "Quotes autour de <strong>${entry}</strong> requis pour comparaison string."
+  },
+  {
+    title: "Inverser une liste sans Reverse List",
+    statement: "Inversez <code>@{src}</code> dans <code>@{dst}</code> sans utiliser le mot-clé Reverse List. Utilisez FOR et Insert Into List.",
+    context: '<span class="var">@{src}</span>=    Create List    a    b    c    d',
+    solution: '<span class="var">@{dst}</span>=    Create List\n<span class="kw">FOR</span>    <span class="var">${item}</span>    <span class="kw">IN</span>    @{src}\n    Insert Into List    <span class="var">${dst}</span>    <span class="num">0</span>    <span class="var">${item}</span>\n<span class="kw">END</span>\nLog    <span class="var">${dst}</span>',
+    expl: "Insérer à l'index <strong>0</strong> à chaque tour inverse l'ordre."
+  },
+  {
+    title: "Détecter un palindrome",
+    statement: "Vérifiez si <code>${mot}</code> est un palindrome. Loguez 'Palindrome' ou 'Non palindrome'.",
+    context: '<span class="var">${mot}</span>=    Set Variable    radar',
+    solution: '<span class="kw">IF</span>    <span class="var">$mot</span> == <span class="var">$mot</span>[::-<span class="num">1</span>]\n    Log    Palindrome\n<span class="kw">ELSE</span>\n    Log    Non palindrome\n<span class="kw">END</span>',
+    expl: "<strong>$mot</strong> (sans accolades) passe l'objet Python pour slicing."
+  },
+  {
+    title: "Trouver le maximum",
+    statement: "Sans utiliser le mot-clé Max, trouvez la plus grande valeur de <code>@{nums}</code> avec une boucle.",
+    context: '<span class="var">@{nums}</span>=    Create List    <span class="num">3</span>    <span class="num">17</span>    <span class="num">8</span>    <span class="num">42</span>    <span class="num">25</span>',
+    solution: '<span class="kw">VAR</span>    <span class="var">${max}</span>    <span class="var">${nums}</span>[<span class="num">0</span>]\n<span class="kw">FOR</span>    <span class="var">${n}</span>    <span class="kw">IN</span>    @{nums}\n    <span class="kw">IF</span>    <span class="var">${n}</span> > <span class="var">${max}</span>\n        <span class="kw">VAR</span>    <span class="var">${max}</span>    <span class="var">${n}</span>\n    <span class="kw">END</span>\n<span class="kw">END</span>\nLog    <span class="var">${max}</span>',
+    expl: "Initialiser avec le premier élément évite un cas dégénéré."
+  },
+  {
+    title: "Itération parallèle (ZIP)",
+    statement: "Vous avez deux listes de même taille : <code>@{noms}</code> et <code>@{notes}</code>. Logguer 'nom : note' pour chaque paire.",
+    context: '<span class="var">@{noms}</span>=    Create List    Alice    Bob    Chloé\n<span class="var">@{notes}</span>=    Create List    <span class="num">15</span>    <span class="num">12</span>    <span class="num">18</span>',
+    solution: '<span class="kw">FOR</span>    <span class="var">${nom}</span>    <span class="var">${note}</span>    <span class="kw">IN ZIP</span>    @{noms}    @{notes}\n    Log    <span class="var">${nom}</span> : <span class="var">${note}</span>\n<span class="kw">END</span>',
+    expl: "<strong>IN ZIP</strong> combine deux listes en parallèle, élément par élément."
+  },
+  {
+    title: "Retry conditionnel",
+    statement: "Boucle de 1 à 5 tentatives. Appelez <code>Ping Server</code>. En cas de succès (TRY/EXCEPT), BREAK. Sinon, continuez.",
+    context: null,
+    solution: '<span class="kw">FOR</span>    <span class="var">${tentative}</span>    <span class="kw">IN RANGE</span>    <span class="num">1</span>    <span class="num">6</span>\n    <span class="kw">TRY</span>\n        Ping Server\n        Log    Succès à la tentative <span class="var">${tentative}</span>\n        <span class="kw">BREAK</span>\n    <span class="kw">EXCEPT</span>\n        Log    Échec tentative <span class="var">${tentative}</span>\n        Sleep    <span class="num">1s</span>\n    <span class="kw">END</span>\n<span class="kw">END</span>',
+    expl: "<strong>TRY/EXCEPT</strong> isole l'erreur sans casser la boucle entière."
+  },
+  {
+    title: "Vérifier que tous les éléments respectent une règle",
+    statement: "Vérifiez que tous les éléments de <code>@{values}</code> sont positifs. Stockez True/False dans <code>${all_ok}</code>.",
+    context: '<span class="var">@{values}</span>=    Create List    <span class="num">3</span>    <span class="num">7</span>    <span class="num">2</span>    <span class="num">9</span>',
+    solution: '<span class="kw">VAR</span>    <span class="var">${all_ok}</span>    <span class="str">${True}</span>\n<span class="kw">FOR</span>    <span class="var">${v}</span>    <span class="kw">IN</span>    @{values}\n    <span class="kw">IF</span>    <span class="var">${v}</span> <= <span class="num">0</span>\n        <span class="kw">VAR</span>    <span class="var">${all_ok}</span>    <span class="str">${False}</span>\n        <span class="kw">BREAK</span>\n    <span class="kw">END</span>\n<span class="kw">END</span>\nLog    <span class="var">${all_ok}</span>',
+    expl: "<strong>BREAK</strong> au premier échec évite des itérations inutiles."
+  },
+  {
+    title: "Boucle imbriquée — table de multiplication",
+    statement: "Produisez la table de multiplication de 1 à 3, format 'i x j = résultat'. Utilisez deux FOR imbriqués.",
+    context: null,
+    solution: '<span class="kw">FOR</span>    <span class="var">${i}</span>    <span class="kw">IN RANGE</span>    <span class="num">1</span>    <span class="num">4</span>\n    <span class="kw">FOR</span>    <span class="var">${j}</span>    <span class="kw">IN RANGE</span>    <span class="num">1</span>    <span class="num">4</span>\n        <span class="var">${res}</span>=    Evaluate    <span class="var">${i}</span> * <span class="var">${j}</span>\n        Log    <span class="var">${i}</span> x <span class="var">${j}</span> = <span class="var">${res}</span>\n    <span class="kw">END</span>\n<span class="kw">END</span>',
+    expl: "Chaque FOR a son propre <strong>END</strong>, attention à l'imbrication."
+  },
+  {
+    title: "Conversion ternaire avec IF inline",
+    statement: "Affectez à <code>${label}</code> la valeur 'majeur' si <code>${age}</code> ≥ 18, sinon 'mineur'. Une seule ligne IF inline.",
+    context: '<span class="var">${age}</span>=    Set Variable    <span class="num">16</span>',
+    solution: '<span class="var">${label}</span>=    <span class="kw">IF</span>    <span class="var">${age}</span> >= <span class="num">18</span>    Set Variable    majeur    <span class="kw">ELSE</span>    Set Variable    mineur\nLog    <span class="var">${label}</span>',
+    expl: "L'IF inline assigne via un mot-clé pour chaque branche."
+  },
+  {
+    title: "Skip + Break combinés",
+    statement: "Parcourez de 1 à 20. Loguer uniquement les nombres impairs, et arrêter dès qu'on dépasse 15.",
+    context: null,
+    solution: '<span class="kw">FOR</span>    <span class="var">${i}</span>    <span class="kw">IN RANGE</span>    <span class="num">1</span>    <span class="num">21</span>\n    <span class="kw">IF</span>    <span class="var">${i}</span> > <span class="num">15</span>\n        <span class="kw">BREAK</span>\n    <span class="kw">END</span>\n    <span class="kw">IF</span>    <span class="var">${i}</span> % <span class="num">2</span> == <span class="num">0</span>\n        <span class="kw">CONTINUE</span>\n    <span class="kw">END</span>\n    Log    <span class="var">${i}</span>\n<span class="kw">END</span>',
+    expl: "Ordre des IF : <strong>BREAK</strong> avant <strong>CONTINUE</strong> pour sortir vite."
+  },
+  {
+    title: "Recherche avec retour",
+    statement: "Écrivez un mot-clé <code>Trouver Index</code> qui retourne l'index de <code>${cible}</code> dans <code>@{liste}</code>, ou -1 si absent.",
+    context: '<span class="com"># Appel : ${idx}=    Trouver Index    cerise    @{fruits}</span>',
+    solution: '<span class="sec">*** Keywords ***</span>\nTrouver Index\n    [Arguments]    <span class="var">${cible}</span>    @{liste}\n    <span class="kw">FOR</span>    <span class="var">${i}</span>    <span class="var">${item}</span>    <span class="kw">IN ENUMERATE</span>    @{liste}\n        <span class="kw">IF</span>    <span class="str">\'${item}\'</span> == <span class="str">\'${cible}\'</span>\n            <span class="kw">RETURN</span>    <span class="var">${i}</span>\n        <span class="kw">END</span>\n    <span class="kw">END</span>\n    <span class="kw">RETURN</span>    <span class="num">-1</span>',
+    expl: "<strong>RETURN</strong> sort immédiatement du mot-clé, même imbriqué."
+  },
+  {
+    title: "Synthèse — Validation de formulaire",
+    statement: "Pour chaque champ de <code>&{form}</code>, vérifiez qu'il n'est pas vide. Si tous OK, logger 'Valide'. Sinon, lister les champs vides.",
+    context: '<span class="var">&{form}</span>=    Create Dictionary    nom=Dupont    email=    ville=Paris    tel=',
+    solution: '<span class="var">@{vides}</span>=    Create List\n<span class="kw">FOR</span>    <span class="var">${champ}</span>    <span class="var">${val}</span>    <span class="kw">IN</span>    &{form}\n    <span class="kw">IF</span>    <span class="str">\'${val}\'</span> == <span class="str">\'\'</span>\n        Append To List    <span class="var">${vides}</span>    <span class="var">${champ}</span>\n    <span class="kw">END</span>\n<span class="kw">END</span>\n<span class="kw">IF</span>    len(<span class="var">$vides</span>) == <span class="num">0</span>\n    Log    Valide\n<span class="kw">ELSE</span>\n    Log    Champs vides : <span class="var">${vides}</span>\n<span class="kw">END</span>',
+    expl: "Combinaison <strong>FOR + IF + accumulation</strong> dans une liste — pattern classique."
+  }
+];
+
+const STORAGE_KEY = 'rf_devoir_pratique_v1';
+
+// State management
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+}
+
+function saveState(state) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  } catch {}
+}
+
+let state = loadState();
+
+function renderAll() {
+  const area = document.getElementById('exercisesArea');
+  area.innerHTML = exercises.map((ex, idx) => {
+    const num = idx + 1;
+    const userCode = (state[idx] && state[idx].code) || '';
+    const seen = state[idx] && state[idx].seen;
+    const hasContent = userCode.trim().length > 0;
+    const completedClass = hasContent ? 'completed' : '';
+    const tagClass = hasContent ? 'completed' : '';
+    const tagText = hasContent ? '✓ Traité' : 'À faire';
+
+    return `
+      <article class="exercise ${completedClass}" id="ex-${idx}">
+        <div class="ex-header">
+          <div class="ex-number">${String(num).padStart(2, '0')}</div>
+          <span class="ex-tag ${tagClass}" id="tag-${idx}">${tagText}</span>
+        </div>
+        <h2 class="ex-title">${ex.title}</h2>
+        <p class="ex-statement">${ex.statement}</p>
+        ${ex.context ? `<div class="ex-context">${ex.context}</div>` : ''}
+
+        <div class="answer-zone">
+          <div class="answer-label">
+            <span>Votre solution</span>
+            <span class="hint">Robot Framework · indentation 4 espaces</span>
+          </div>
+          <textarea
+            id="ta-${idx}"
+            placeholder="Écrivez votre code Robot Framework ici..."
+            oninput="updateCode(${idx}, this.value)"
+            onkeydown="handleTab(event, this)"
+          >${escapeHtml(userCode)}</textarea>
+        </div>
+
+        <div class="actions">
+          <button class="btn btn-primary" onclick="toggleCorrection(${idx})" id="btn-${idx}">
+            ${seen ? 'Masquer la correction' : 'Voir la correction'}
+          </button>
+          <button class="btn btn-ghost" onclick="clearCode(${idx})">Effacer ma réponse</button>
+        </div>
+
+        <div class="correction ${seen ? 'show' : ''}" id="corr-${idx}">
+          <div class="correction-header">Correction proposée</div>
+          <div class="solution-code">${ex.solution}</div>
+          <div class="explanation-text">${ex.expl}</div>
+        </div>
+      </article>
+    `;
+  }).join('');
+
+  updateSummary();
+}
+
+function escapeHtml(str) {
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function updateCode(idx, value) {
+  if (!state[idx]) state[idx] = {};
+  state[idx].code = value;
+  saveState(state);
+
+  // Update tag visual
+  const tag = document.getElementById(`tag-${idx}`);
+  const card = document.getElementById(`ex-${idx}`);
+  if (value.trim().length > 0) {
+    tag.textContent = '✓ Traité';
+    tag.classList.add('completed');
+    card.classList.add('completed');
+  } else {
+    tag.textContent = 'À faire';
+    tag.classList.remove('completed');
+    card.classList.remove('completed');
+  }
+  updateSummary();
+}
+
+function toggleCorrection(idx) {
+  const corr = document.getElementById(`corr-${idx}`);
+  const btn = document.getElementById(`btn-${idx}`);
+  const isShown = corr.classList.contains('show');
+
+  if (isShown) {
+    corr.classList.remove('show');
+    btn.textContent = 'Voir la correction';
+    if (state[idx]) state[idx].seen = false;
+  } else {
+    corr.classList.add('show');
+    btn.textContent = 'Masquer la correction';
+    if (!state[idx]) state[idx] = {};
+    state[idx].seen = true;
+  }
+  saveState(state);
+  updateSummary();
+}
+
+function clearCode(idx) {
+  const ta = document.getElementById(`ta-${idx}`);
+  ta.value = '';
+  updateCode(idx, '');
+}
+
+function handleTab(e, ta) {
+  if (e.key === 'Tab') {
+    e.preventDefault();
+    const start = ta.selectionStart;
+    const end = ta.selectionEnd;
+    ta.value = ta.value.substring(0, start) + '    ' + ta.value.substring(end);
+    ta.selectionStart = ta.selectionEnd = start + 4;
+    ta.dispatchEvent(new Event('input'));
+  }
+}
+
+function updateSummary() {
+  let done = 0;
+  let seen = 0;
+  for (let i = 0; i < exercises.length; i++) {
+    if (state[i] && state[i].code && state[i].code.trim().length > 0) done++;
+    if (state[i] && state[i].seen) seen++;
+  }
+  document.getElementById('doneCount').textContent = done;
+  document.getElementById('seenCount').textContent = seen;
+}
+
+function resetAll() {
+  if (!confirm('Effacer toutes vos réponses et corrections vues ?')) return;
+  state = {};
+  saveState(state);
+  renderAll();
+}
+
+renderAll();
+</script>
+
+</body>
+</html>
